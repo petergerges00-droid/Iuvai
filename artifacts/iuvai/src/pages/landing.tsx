@@ -21,8 +21,8 @@ export default function Landing() {
           {/* Futuristic background */}
           <div className="pointer-events-none absolute inset-0">
             {/* Ambient glows */}
-            <div className="absolute left-[-15%] top-[-20%] h-[650px] w-[650px] rounded-full bg-primary/10 blur-[150px]" />
-            <div className="absolute bottom-[-20%] right-[-15%] h-[650px] w-[650px] rounded-full bg-primary/10 blur-[150px]" />
+            <div className="absolute left-[-10%] top-[-20%] h-[600px] w-[600px] rounded-full bg-primary/10 blur-[140px]" />
+            <div className="absolute bottom-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-primary/10 blur-[140px]" />
             {/* Grid */}
             <div
               className="absolute inset-0 opacity-[0.035]"
@@ -34,7 +34,7 @@ export default function Landing() {
             />
           </div>
           <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
-            <div className="max-w-5xl">
+            <div className="max-w-4xl">
               {/* Eyebrow */}
               <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm text-primary">
                 <Sparkles className="h-4 w-4" />
@@ -42,19 +42,17 @@ export default function Landing() {
               </div>
               {/* Main headline */}
               <h1 className="text-5xl font-semibold leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-8xl">
-                <span className="block whitespace-nowrap text-white">
-                  Bridging the gap between
+                <span className="block text-white">
+                  Bridging the gap
                 </span>
-                <span className="block whitespace-nowrap">
+                <span className="block text-white">
+                  between{' '}
                   <span className="text-primary">
                     humanity
                   </span>
-                  <span className="text-white">
-                    {' '}and{' '}
-                  </span>
-                  <span className="text-primary">
-                    AI
-                  </span>
+                </span>
+                <span className="block text-white">
+                  and <span className="text-primary">AI</span>
                 </span>
               </h1>
               <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
@@ -65,13 +63,13 @@ export default function Landing() {
               {/* CTAs */}
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link href="/signup">
-                  <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
+                  <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20">
                     Join as an Expert
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </button>
                 </Link>
                 <Link href="/signup">
-                  <button className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-7 py-4 font-medium backdrop-blur transition-colors hover:bg-muted sm:w-auto">
+                  <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-7 py-4 font-medium backdrop-blur transition-colors hover:bg-muted">
                     Build with IUVAI
                     <Building2 className="h-4 w-4" />
                   </button>
@@ -94,47 +92,40 @@ export default function Landing() {
               </div>
             </div>
             {/* =========================
-                FUTURISTIC HUMAN ↔ AI VISUAL
+                HUMAN / AI VISUALIZATION
             ========================== */}
-            <div className="absolute right-8 top-1/2 hidden h-[430px] w-[430px] -translate-y-1/2 lg:block xl:right-16">
-              {/* Outer rings */}
+            <div className="absolute right-8 top-1/2 hidden h-[360px] w-[360px] -translate-y-1/2 lg:block xl:right-16">
+              {/* Outer circles */}
               <div className="absolute inset-0 rounded-full border border-primary/10" />
               <div className="absolute inset-8 rounded-full border border-primary/15" />
               <div className="absolute inset-16 rounded-full border border-primary/20" />
-              {/* Connecting orbit */}
-              <div className="absolute inset-[44px] rounded-full border border-dashed border-primary/20" />
-              {/* Human node */}
-              <div className="absolute left-2 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-background/80 text-primary shadow-xl shadow-primary/10 backdrop-blur-xl">
-                  <Users className="h-7 w-7" />
-                </div>
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Humanity
-                </span>
-              </div>
-              {/* AI node */}
-              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary shadow-xl shadow-primary/20 backdrop-blur-xl">
-                  <Brain className="h-7 w-7" />
-                </div>
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  AI
-                </span>
-              </div>
-              {/* Central bridge */}
+              {/* Connecting lines */}
+              <div className="absolute left-1/2 top-0 h-16 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-primary/30 to-primary/20" />
+              <div className="absolute bottom-0 left-1/2 h-16 w-px -translate-x-1/2 bg-gradient-to-t from-transparent via-primary/30 to-primary/20" />
+              <div className="absolute left-0 top-1/2 h-px w-16 -translate-y-1/2 bg-gradient-to-r from-transparent via-primary/30 to-primary/20" />
+              <div className="absolute right-0 top-1/2 h-px w-16 -translate-y-1/2 bg-gradient-to-l from-transparent via-primary/30 to-primary/20" />
+              {/* Center */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-primary/30 bg-primary/10 shadow-2xl shadow-primary/20 backdrop-blur-xl">
-                  <div className="absolute inset-3 rounded-full border border-primary/20" />
-                  <Sparkles className="relative z-10 h-9 w-9 text-primary" />
-                  {/* Connection points */}
-                  <div className="absolute left-[-4px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.9)]" />
-                  <div className="absolute right-[-4px] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.9)]" />
+                <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl border border-primary/30 bg-primary/10 shadow-2xl shadow-primary/10 backdrop-blur-xl">
+                  <Brain className="h-12 w-12 text-primary" />
+                  <div className="absolute -right-2 -top-2 h-3 w-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
+                  <div className="absolute -bottom-2 -left-2 h-3 w-3 rounded-full bg-primary shadow-lg shadow-primary/50" />
                 </div>
               </div>
-              {/* Top label */}
-              <div className="absolute left-1/2 top-2 flex -translate-x-1/2 items-center gap-2 text-xs text-muted-foreground">
-                <Globe2 className="h-3.5 w-3.5" />
-                Global intelligence
+              {/* Experts */}
+              <div className="absolute left-1/2 top-8 flex -translate-x-1/2 items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5 text-primary" />
+                Experts
+              </div>
+              {/* Companies */}
+              <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-2 text-xs text-muted-foreground">
+                <Building2 className="h-3.5 w-3.5 text-primary" />
+                Companies
+              </div>
+              {/* Global */}
+              <div className="absolute left-2 top-1/2 flex -translate-y-1/2 items-center gap-2 text-xs text-muted-foreground">
+                <Globe2 className="h-3.5 w-3.5 text-primary" />
+                Global
               </div>
             </div>
           </div>
@@ -177,7 +168,7 @@ export default function Landing() {
         <section className="border-t border-border">
           <div className="grid lg:grid-cols-2">
             {/* Experts */}
-            <div className="relative overflow-hidden border-b p-8 sm:p-12 lg:border-b-0 lg:border-r lg:p-20">
+            <div className="relative overflow-hidden border-b border-border p-8 sm:p-12 lg:border-b-0 lg:border-r lg:p-20">
               <div className="absolute inset-0 bg-primary/[0.025]" />
               <div className="relative max-w-xl">
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
@@ -187,9 +178,9 @@ export default function Landing() {
                   For experts
                 </p>
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Your expertise helps shape tomorrow.
+                  Your expertise helps shaping tomorrow.
                 </h3>
-                <p className="mt-5 text-xl font-medium leading-relaxed text-foreground">
+                <p className="mt-5 text-xl font-medium text-foreground">
                   Get paid to train AI models.
                 </p>
                 <p className="mt-4 leading-relaxed text-muted-foreground">
@@ -378,13 +369,13 @@ export default function Landing() {
             </p>
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/signup">
-                <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
+                <button className="group inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20">
                   Join IUVAI
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
               <Link href="/login">
-                <button className="inline-flex w-full items-center justify-center rounded-xl border border-border px-7 py-4 font-medium transition-colors hover:bg-muted sm:w-auto">
+                <button className="inline-flex items-center justify-center rounded-xl border border-border px-7 py-4 font-medium transition-colors hover:bg-muted">
                   Sign in
                 </button>
               </Link>
