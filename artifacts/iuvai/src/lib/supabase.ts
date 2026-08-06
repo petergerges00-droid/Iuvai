@@ -32,6 +32,8 @@ export interface ExpertProfile {
   previous_ai_experience: string | null;
   availability_hours: number | null;
   created_at: string;
+  resume_path: string | null;
+resume_file_name: string | null;
 }
 
 export interface CompanyProfile {
@@ -132,4 +134,56 @@ export async function getCompanyProfile(userId: string): Promise<CompanyProfile 
 export async function upsertCompanyProfile(profile: Partial<CompanyProfile> & { id: string }) {
   const { error } = await supabase.from('company_profiles').upsert(profile, { onConflict: 'id' });
   if (error) throw new Error(`Failed to save company profile: ${error.message}`);
+}
+
+export async function uploadResume(userId: string, file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+  const filePath = `${userId}/resume.${extension}`;
+
+  // Remove existing resume first
+  const { data: existingFiles } = await supabase.storage
+    .from('resumes')
+    .list(userId);
+
+  if (existingFiles && existingFiles.length > 0) {
+    const filesToRemove = existingFiles.map((file) => `${userId}/${file.name}`);
+    await supabase.storage.from('resumes').remove(filesToRemove);
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from('resumes')
+    .upload(filePath, file, {
+      upsert: true,
+      contentType: file.type,
+    });
+
+  if (uploadError) {
+    throw new Error(`Resume upload failed: ${uploadError.message}`);
+  }
+
+  await upsertExpertProfile({
+    id: userId,
+    resume_path: filePath,
+    resume_file_name: file.name,
+  });
+
+  return filePath;
+}
+
+export async function deleteResume(userId: string) {
+  const { data: files } = await supabase.storage
+    .from('resumes')
+    .list(userId);
+
+  if (files && files.length > 0) {
+    await supabase.storage
+      .from('resumes')
+      .remove(files.map((file) => `${userId}/${file.name}`));
+  }
+
+  await upsertExpertProfile({
+    id: userId,
+    resume_path: null,
+    resume_file_name: null,
+  });
 }
