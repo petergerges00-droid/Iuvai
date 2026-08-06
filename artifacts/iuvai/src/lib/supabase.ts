@@ -119,7 +119,6 @@ export async function upsertExpertProfile(
 
   return data;
 }
-}
 
 export async function getCompanyProfile(userId: string): Promise<CompanyProfile | null> {
   const { data, error } = await supabase
