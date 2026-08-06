@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, ChangeEvent } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
@@ -21,6 +21,7 @@ import {
   FileText,
   Briefcase,
   ChevronRight,
+  Upload,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 export default function ExpertDashboard() {
@@ -29,7 +30,6 @@ export default function ExpertDashboard() {
     useState<ExpertProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     if (!user?.id) return;
     getExpertProfile(user.id)
@@ -40,7 +40,7 @@ export default function ExpertDashboard() {
       .catch((error) => {
         console.error('EXPERT PROFILE ERROR:', error);
       });
-  }, [user]);
+  }, [user?.id]);
   const handleResumeUpload = async (
     event: ChangeEvent<HTMLInputElement>
   ) => {
@@ -52,13 +52,24 @@ export default function ExpertDashboard() {
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError('Please upload a PDF, DOC, or DOCX file.');
+    const allowedExtensions = ['.pdf', '.doc', '.docx'];
+    const fileName = file.name.toLowerCase();
+    const validType =
+      allowedTypes.includes(file.type) ||
+      allowedExtensions.some((extension) =>
+        fileName.endsWith(extension)
+      );
+    if (!validType) {
+      setUploadError(
+        'Please upload a PDF, DOC, or DOCX file.'
+      );
       event.target.value = '';
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Resume must be smaller than 10 MB.');
+      setUploadError(
+        'Resume must be smaller than 10 MB.'
+      );
       event.target.value = '';
       return;
     }
@@ -74,15 +85,15 @@ export default function ExpertDashboard() {
       );
     } finally {
       setIsUploading(false);
-      // Reset the input so the same file can be selected again
       event.target.value = '';
     }
   };
-  const openFilePicker = () => {
-    fileInputRef.current?.click();
-  };
   if (!profile) {
-    return <div className="p-8">Loading profile...</div>;
+    return (
+      <div className="p-8">
+        Loading profile...
+      </div>
+    );
   }
   if (!expertProfile) {
     return (
@@ -98,114 +109,144 @@ export default function ExpertDashboard() {
   }
   return (
     <AppLayout title="Overview">
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Main Column */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Welcome / Verification Status */}
-          <Card className="bg-primary text-primary-foreground overflow-hidden border-none shadow-lg">
-            <CardContent className="p-8">
-              <div className="flex items-start justify-between">
-                <div>
-                  <Badge
-                    variant="secondary"
-                    className="bg-white/20 hover:bg-white/30 text-white border-none mb-4"
-                  >
-                    Verification Pending
-                  </Badge>
-                  <h2 className="text-3xl font-semibold tracking-tight mb-2">
-                    Welcome, {profile.full_name}
-                  </h2>
-                  <p className="text-primary-foreground/80 max-w-md">
-                    Your profile is currently under review by our team.
-                    Once verified, you'll gain access to available
-                    projects matching your expertise in{' '}
-                    {expertProfile.primary_field}.
-                  </p>
-                </div>
-                <div className="hidden sm:flex w-16 h-16 rounded-full bg-white/10 items-center justify-center border border-white/20">
-                  <CheckCircle2 className="w-8 h-8 text-white/50" />
+      <div className="space-y-6">
+        {/* ========================= */}
+        {/* WELCOME / STATUS */}
+        {/* ========================= */}
+        <Card className="bg-primary text-primary-foreground overflow-hidden border-none shadow-lg">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <Badge
+                  variant="secondary"
+                  className="bg-white/20 hover:bg-white/30 text-white border-none mb-4"
+                >
+                  Verification Pending
+                </Badge>
+                <h2 className="text-3xl font-semibold tracking-tight mb-2">
+                  Welcome, {profile.full_name}
+                </h2>
+                <p className="text-primary-foreground/80 max-w-md">
+                  Your profile is currently under review by our
+                  team. Once verified, you'll gain access to
+                  available projects matching your expertise in{' '}
+                  {expertProfile.primary_field}.
+                </p>
+              </div>
+              <div className="hidden sm:flex w-16 h-16 rounded-full bg-white/10 items-center justify-center border border-white/20">
+                <CheckCircle2 className="w-8 h-8 text-white/50" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {/* ========================= */}
+        {/* RESUME */}
+        {/* ========================= */}
+        <Card className="border-2">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Resume
+            </CardTitle>
+            <CardDescription>
+              Upload your current resume for verification and
+              project matching.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {expertProfile.resume_file_name ? (
+              <div className="rounded-lg border bg-muted/30 p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        Current resume
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {expertProfile.resume_file_name}
+                      </p>
+                    </div>
+                  </div>
+                  <label className="shrink-0">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      className="hidden"
+                      onChange={handleResumeUpload}
+                      disabled={isUploading}
+                    />
+                    <Button
+                      type="button"
+                      asChild
+                      disabled={isUploading}
+                    >
+                      <span className="cursor-pointer">
+                        <Upload className="mr-2 h-4 w-4" />
+                        {isUploading
+                          ? 'Uploading...'
+                          : 'Replace Resume'}
+                      </span>
+                    </Button>
+                  </label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-          {/* Resume */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Resume
-              </CardTitle>
-              <CardDescription>
-                Upload your current resume for verification and
-                project matching.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="hidden"
-                onChange={handleResumeUpload}
-                disabled={isUploading}
-              />
-              {expertProfile.resume_file_name ? (
-                <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText className="w-5 h-5 shrink-0 text-primary" />
-                    <span className="text-sm font-medium truncate">
-                      {expertProfile.resume_file_name}
+            ) : (
+              <div className="rounded-xl border-2 border-dashed p-8 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                  <Upload className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">
+                  Upload your resume
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Upload a PDF, DOC, or DOCX file.
+                  Maximum file size is 10 MB.
+                </p>
+                <label className="inline-block mt-5">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={handleResumeUpload}
+                    disabled={isUploading}
+                  />
+                  <Button
+                    type="button"
+                    asChild
+                    disabled={isUploading}
+                  >
+                    <span className="cursor-pointer">
+                      <Upload className="mr-2 h-4 w-4" />
+                      {isUploading
+                        ? 'Uploading...'
+                        : 'Choose Resume'}
                     </span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={openFilePicker}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? 'Uploading...' : 'Replace'}
                   </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center">
-                  <FileText className="w-10 h-10 text-muted-foreground mb-3" />
-                  <span className="font-medium">
-                    No resume uploaded
-                  </span>
-                  <span className="text-sm text-muted-foreground mt-1">
-                    PDF, DOC, or DOCX · Maximum 10 MB
-                  </span>
-                  <Button
-                    type="button"
-                    className="mt-4"
-                    onClick={openFilePicker}
-                    disabled={isUploading}
-                  >
-                    {isUploading
-                      ? 'Uploading...'
-                      : 'Choose File'}
-                  </Button>
-                </div>
-              )}
-              {uploadError && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                  <p className="text-sm text-destructive">
+                </label>
+                {uploadError && (
+                  <p className="mt-4 text-sm text-destructive">
                     {uploadError}
                   </p>
-                </div>
-              )}
-              {!expertProfile.resume_file_name && !uploadError && (
-                <p className="text-xs text-muted-foreground">
-                  Your resume will be securely stored and used for
-                  profile verification and project matching.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          {/* Coming Soon */}
-          <div>
-            <h3 className="text-xl font-semibold tracking-tight mb-4">
+                )}
+              </div>
+            )}
+            {expertProfile.resume_file_name && uploadError && (
+              <p className="mt-4 text-sm text-destructive">
+                {uploadError}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        {/* ========================= */}
+        {/* MAIN CONTENT */}
+        {/* ========================= */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* MAIN COLUMN */}
+          <div className="lg:col-span-2 space-y-6">
+            <h3 className="text-xl font-semibold tracking-tight">
               Coming Soon
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -243,77 +284,80 @@ export default function ExpertDashboard() {
               </Card>
             </div>
           </div>
-        </div>
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Profile Strength */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">
-                Profile Strength
-              </CardTitle>
-              <CardDescription>
-                Complete assessments to increase
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">
-                  Basic info complete
-                </span>
-                <span className="text-sm font-mono text-muted-foreground">
-                  30%
-                </span>
-              </div>
-              <Progress value={30} className="h-2" />
-            </CardContent>
-          </Card>
-          {/* Expertise */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Your Expertise
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">
-                  Domain
+          {/* RIGHT COLUMN */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg">
+                  Profile Strength
+                </CardTitle>
+                <CardDescription>
+                  Complete assessments to increase
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">
+                    Basic info complete
+                  </span>
+                  <span className="text-sm font-mono text-muted-foreground">
+                    30%
+                  </span>
                 </div>
-                <div className="font-medium">
-                  {expertProfile.primary_field}
+                <Progress
+                  value={30}
+                  className="h-2"
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  Your Expertise
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    Domain
+                  </div>
+                  <div className="font-medium">
+                    {expertProfile.primary_field}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground mb-1">
-                  Specialization
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">
+                    Specialization
+                  </div>
+                  <div className="font-medium">
+                    {expertProfile.specialization}
+                  </div>
                 </div>
-                <div className="font-medium">
-                  {expertProfile.specialization}
+                <div>
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Verified Skills
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {expertProfile.skills?.map(
+                      (skill, i) => (
+                        <Badge
+                          key={i}
+                          variant="outline"
+                          className="font-mono font-normal"
+                        >
+                          {skill}
+                        </Badge>
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Verified Skills
+                <div className="pt-4 border-t mt-4 flex items-center text-sm text-amber-600 dark:text-amber-500">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Awaiting credential verification
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {expertProfile.skills?.map((skill, i) => (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className="font-mono font-normal"
-                    >
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div className="pt-4 border-t mt-4 flex items-center text-sm text-amber-600 dark:text-amber-500">
-                <AlertCircle className="w-4 h-4 mr-2" />
-                Awaiting credential verification
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
