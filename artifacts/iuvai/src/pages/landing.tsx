@@ -1,4 +1,5 @@
 import { ArrowRight, BrainCircuit, Building2, ChevronDown, Network, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { IuvaiShell } from "@/components/iuvai/iuvai-shell";
 
 export default function Landing() {
   const scrollTo = (id: string) => {
