@@ -1,0 +1,46 @@
+There are two related bugs in the onboarding flow that need to be fixed.
+
+CURRENT BEHAVIOR:
+
+1. Supabase Auth successfully creates the user. The user appears under Authentication → Users.
+2. After completing the Expert profile and submitting it, no record appears in public.profiles or public.expert_profiles.
+3. After submission, the application redirects the user back to the “What brings you to IUVAI?” Expert vs AI Company selection screen.
+
+EXPECTED BEHAVIOR:
+After an authenticated user selects “I’m an Expert” and submits the expert onboarding form:
+
+1. Use the authenticated Supabase user’s UUID:
+    supabase.auth.getUser()
+2. Create/update the corresponding row in public.profiles:
+    * id = authenticated user’s UUID
+    * full_name
+    * account_type = “expert”
+    * country
+3. Create/update the corresponding row in public.expert_profiles:
+    * id = authenticated user’s UUID
+    * primary_field
+    * specialization
+    * years_experience
+    * highest_qualification
+    * skills
+    * languages
+    * previous_ai_experience
+    * availability_hours
+4. Wait for both database operations to complete successfully.
+5. Check for and display any Supabase database error instead of silently continuing.
+6. Only after successful database writes, redirect the user to the Expert Dashboard.
+7. On subsequent page loads, determine the user’s onboarding state from the authenticated Supabase user and their database records. Do NOT reset them to the Expert/Company selection screen if their profile already exists.
+8. If account_type is already “expert” in public.profiles, send the user directly to the Expert Dashboard.
+
+IMPORTANT:
+
+* Use the existing Supabase project.
+* Use the existing tables.
+* Do not create duplicate tables.
+* Do not use mock data.
+* Do not use localStorage as the source of truth for authentication or onboarding.
+* Preserve Row Level Security.
+* Do not redesign the UI.
+* Add useful error messages if a database operation fails.
+
+Please inspect the current authentication, onboarding submission, database insertion, and routing logic and fix these issues.

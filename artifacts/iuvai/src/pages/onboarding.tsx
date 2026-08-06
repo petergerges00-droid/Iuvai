@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/use-auth';
 import { 
+  supabase,
   upsertProfile, 
   upsertExpertProfile, 
   upsertCompanyProfile,
@@ -57,13 +58,19 @@ const companySchema = z.object({
 });
 
 export default function Onboarding() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
   const [step, setStep] = useState<1 | 2>(1);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If the user already completed onboarding, send them to their dashboard
+  useEffect(() => {
+    if (profile?.account_type === 'expert') setLocation('/dashboard');
+    else if (profile?.account_type === 'company') setLocation('/company-dashboard');
+  }, [profile, setLocation]);
 
   const expertForm = useForm<z.infer<typeof expertSchema>>({
     resolver: zodResolver(expertSchema),

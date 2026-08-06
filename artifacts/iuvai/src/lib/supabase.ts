@@ -81,7 +81,8 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 }
 
 export async function upsertProfile(profile: Partial<Profile> & { id: string }) {
-  return supabase.from('profiles').upsert(profile, { onConflict: 'id' });
+  const { error } = await supabase.from('profiles').upsert(profile, { onConflict: 'id' });
+  if (error) throw new Error(`Failed to save profile: ${error.message}`);
 }
 
 export async function getExpertProfile(userId: string): Promise<ExpertProfile | null> {
@@ -95,7 +96,8 @@ export async function getExpertProfile(userId: string): Promise<ExpertProfile | 
 }
 
 export async function upsertExpertProfile(profile: Partial<ExpertProfile> & { id: string }) {
-  return supabase.from('expert_profiles').upsert(profile, { onConflict: 'id' });
+  const { error } = await supabase.from('expert_profiles').upsert(profile, { onConflict: 'id' });
+  if (error) throw new Error(`Failed to save expert profile: ${error.message}`);
 }
 
 export async function getCompanyProfile(userId: string): Promise<CompanyProfile | null> {
@@ -109,5 +111,6 @@ export async function getCompanyProfile(userId: string): Promise<CompanyProfile 
 }
 
 export async function upsertCompanyProfile(profile: Partial<CompanyProfile> & { id: string }) {
-  return supabase.from('company_profiles').upsert(profile, { onConflict: 'id' });
+  const { error } = await supabase.from('company_profiles').upsert(profile, { onConflict: 'id' });
+  if (error) throw new Error(`Failed to save company profile: ${error.message}`);
 }
