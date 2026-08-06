@@ -42,17 +42,19 @@ export default function Landing() {
               </div>
               {/* Main headline */}
               <h1 className="text-5xl font-semibold leading-[0.95] tracking-[-0.04em] sm:text-6xl lg:text-8xl">
-                <span className="text-white">
-                  Bridging the gap between{' '}
+                <span className="block whitespace-nowrap text-white">
+                  Bridging the gap between
                 </span>
-                <span className="text-primary">
-                  humanity
-                </span>
-                <span className="text-white">
-                  {' '}and{' '}
-                </span>
-                <span className="text-primary">
-                  AI
+                <span className="block whitespace-nowrap">
+                  <span className="text-primary">
+                    humanity
+                  </span>
+                  <span className="text-white">
+                    {' '}and{' '}
+                  </span>
+                  <span className="text-primary">
+                    AI
+                  </span>
                 </span>
               </h1>
               <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
@@ -185,9 +187,12 @@ export default function Landing() {
                   For experts
                 </p>
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Get paid to train AI.
+                  Your expertise helps shape tomorrow.
                 </h3>
-                <p className="mt-5 leading-relaxed text-muted-foreground">
+                <p className="mt-5 text-xl font-medium leading-relaxed text-foreground">
+                  Get paid to train AI models.
+                </p>
+                <p className="mt-4 leading-relaxed text-muted-foreground">
                   Put your knowledge to work on the systems shaping the
                   future of AI. IUVAI gives domain experts access to
                   meaningful AI training, evaluation and research
