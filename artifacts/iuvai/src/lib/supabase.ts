@@ -95,9 +95,28 @@ export async function getExpertProfile(userId: string): Promise<ExpertProfile | 
   return data as ExpertProfile;
 }
 
-export async function upsertExpertProfile(profile: Partial<ExpertProfile> & { id: string }) {
-  const { error } = await supabase.from('expert_profiles').upsert(profile, { onConflict: 'id' });
-  if (error) throw new Error(`Failed to save expert profile: ${error.message}`);
+export async function upsertExpertProfile(
+  profile: Partial<ExpertProfile> & { id: string }
+) {
+  const { data, error } = await supabase
+    .from('expert_profiles')
+    .upsert(profile, { onConflict: 'id' })
+    .select();
+
+  console.log('EXPERT PROFILE UPSERT:', {
+    data,
+    error,
+    profile,
+  });
+
+  if (error) {
+    throw new Error(
+      `Expert profile failed: ${error.message} | Code: ${error.code} | Details: ${error.details} | Hint: ${error.hint}`
+    );
+  }
+
+  return data;
+}
 }
 
 export async function getCompanyProfile(userId: string): Promise<CompanyProfile | null> {
