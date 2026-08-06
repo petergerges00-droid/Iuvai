@@ -58,7 +58,7 @@ const companySchema = z.object({
 });
 
 export default function Onboarding() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
