@@ -1,0 +1,521 @@
+import { Link } from 'wouter';
+import {
+  ArrowRight,
+  Brain,
+  CheckCircle2,
+  ChevronRight,
+  Globe2,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Zap,
+} from 'lucide-react';
+
+const expertBenefits = [
+  'Connect your expertise with AI companies',
+  'Work on projects matched to your domain',
+  'Build your professional AI portfolio',
+  'Choose opportunities that fit your schedule',
+];
+
+const companyBenefits = [
+  'Access qualified domain experts',
+  'Find specialists across medical and technical fields',
+  'Build better AI training and evaluation workflows',
+  'Scale expert capacity when you need it',
+];
+
+const expertise = [
+  'Medicine & Healthcare',
+  'Science',
+  'Engineering',
+  'Technology',
+  'Finance',
+  'Law',
+  'Business',
+  'And more',
+];
+
+export default function Landing() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {/* NAVBAR */}
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+          <Link href="/">
+            <div className="flex cursor-pointer items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Brain className="h-5 w-5" />
+              </div>
+
+              <span className="text-xl font-bold tracking-tight">
+                Iuvai
+              </span>
+            </div>
+          </Link>
+
+          <nav className="hidden items-center gap-8 md:flex">
+            <a
+              href="#how-it-works"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              How it works
+            </a>
+
+            <a
+              href="#experts"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              For Experts
+            </a>
+
+            <a
+              href="#companies"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              For Companies
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <button className="hidden text-sm font-medium transition-colors hover:text-primary sm:block">
+                Log in
+              </button>
+            </Link>
+
+            <Link href="/signup">
+              <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90">
+                Join Iuvai
+              </button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <main>
+        <section className="relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <div className="absolute left-1/2 top-[-300px] h-[650px] w-[650px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+
+            <div className="absolute right-[-200px] top-[300px] h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
+          </div>
+
+          <div className="mx-auto max-w-7xl px-6 pb-24 pt-24 lg:px-8 lg:pb-32 lg:pt-32">
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>Human expertise for the age of AI</span>
+              </div>
+
+              <h1 className="text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
+                The expertise behind
+                <span className="block text-primary">
+                  better AI.
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
+                Iuvai connects specialized professionals with AI
+                companies that need real-world expertise to train,
+                evaluate, and improve intelligent systems.
+              </p>
+
+              <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link href="/signup">
+                  <button className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:opacity-90 sm:w-auto">
+                    Join as an Expert
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </Link>
+
+                <a href="#companies">
+                  <button className="flex w-full items-center justify-center gap-2 rounded-xl border bg-background px-6 py-3.5 font-semibold shadow-sm transition-all hover:bg-muted sm:w-auto">
+                    Hire Experts
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </a>
+              </div>
+
+              <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Domain specialists
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Flexible opportunities
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Global network
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* TRUST STRIP */}
+        <section className="border-y bg-muted/30">
+          <div className="mx-auto grid max-w-7xl gap-8 px-6 py-10 sm:grid-cols-3 lg:px-8">
+            <div className="flex items-center justify-center gap-3 text-center sm:justify-start sm:text-left">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="font-semibold">Verified expertise</p>
+                <p className="text-sm text-muted-foreground">
+                  Credentials and domain knowledge matter.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 text-center sm:justify-start sm:text-left">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Globe2 className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="font-semibold">Global talent</p>
+                <p className="text-sm text-muted-foreground">
+                  Connect with specialists across disciplines.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 text-center sm:justify-start sm:text-left">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+                <p className="font-semibold">Built for AI</p>
+                <p className="text-sm text-muted-foreground">
+                  Expertise applied where AI needs it most.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* HOW IT WORKS */}
+        <section id="how-it-works" className="scroll-mt-20">
+          <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+                How Iuvai works
+              </p>
+
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                Expertise meets opportunity.
+              </h2>
+
+              <p className="mt-4 text-muted-foreground">
+                A simple platform connecting people who know with
+                companies building what comes next.
+              </p>
+            </div>
+
+            <div className="mt-16 grid gap-8 md:grid-cols-3">
+              <StepCard
+                number="01"
+                icon={<Users className="h-6 w-6" />}
+                title="Create your profile"
+                description="Tell Iuvai about your professional background, expertise, and areas of specialization."
+              />
+
+              <StepCard
+                number="02"
+                icon={<Brain className="h-6 w-6" />}
+                title="Get matched"
+                description="Your expertise can be matched with AI training, evaluation, and research opportunities."
+              />
+
+              <StepCard
+                number="03"
+                icon={<Zap className="h-6 w-6" />}
+                title="Make an impact"
+                description="Use your knowledge to help build AI systems that perform better in the real world."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* EXPERTS */}
+        <section id="experts" className="scroll-mt-20 bg-muted/30">
+          <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+            <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+                  For Experts
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Your expertise is valuable to AI.
+                </h2>
+
+                <p className="mt-5 text-lg leading-8 text-muted-foreground">
+                  AI systems need more than data. They need people who
+                  understand medicine, science, engineering, business,
+                  law, and the countless other domains that make up the
+                  real world.
+                </p>
+
+                <div className="mt-8 space-y-4">
+                  {expertBenefits.map((benefit) => (
+                    <div
+                      key={benefit}
+                      className="flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/signup">
+                  <button className="mt-10 group flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-semibold text-primary-foreground transition-all hover:opacity-90">
+                    Become an Iuvai Expert
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </Link>
+              </div>
+
+              <div className="relative">
+                <div className="rounded-3xl border bg-background p-8 shadow-xl">
+                  <div className="mb-8 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Expertise network
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        Built around people
+                      </p>
+                    </div>
+
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+                      <Brain className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {expertise.map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center gap-3 rounded-xl border bg-muted/20 p-4"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">
+                          {item}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* COMPANIES */}
+        <section id="companies" className="scroll-mt-20">
+          <div className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+            <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+              <div className="order-2 lg:order-1">
+                <div className="rounded-3xl border bg-muted/30 p-8">
+                  <div className="rounded-2xl border bg-background p-6 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                      </div>
+
+                      <div>
+                        <p className="font-semibold">
+                          Domain expertise
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Matched to your requirements
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                      <MatchRow label="Medical expertise" />
+                      <MatchRow label="AI evaluation" />
+                      <MatchRow label="Research experience" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="order-1 lg:order-2">
+                <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+                  For Companies
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                  Build AI with people who understand the domain.
+                </h2>
+
+                <p className="mt-5 text-lg leading-8 text-muted-foreground">
+                  Find qualified professionals who can bring real-world
+                  knowledge into your AI development, evaluation, and
+                  training workflows.
+                </p>
+
+                <div className="mt-8 space-y-4">
+                  {companyBenefits.map((benefit) => (
+                    <div
+                      key={benefit}
+                      className="flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link href="/company-dashboard">
+                  <button className="mt-10 group flex items-center gap-2 rounded-xl border bg-background px-6 py-3.5 font-semibold shadow-sm transition-all hover:bg-muted">
+                    Work with Iuvai
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="px-6 pb-24 lg:px-8 lg:pb-32">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-primary px-8 py-16 text-primary-foreground sm:px-16 lg:py-20">
+            <div className="mx-auto max-w-3xl text-center">
+              <Sparkles className="mx-auto h-8 w-8 opacity-80" />
+
+              <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
+                The future of AI needs human expertise.
+              </h2>
+
+              <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-primary-foreground/80">
+                Whether you're an expert looking for meaningful AI
+                opportunities or a company looking for specialized
+                knowledge, Iuvai brings the two together.
+              </p>
+
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <Link href="/signup">
+                  <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-background px-6 py-3.5 font-semibold text-foreground transition-all hover:bg-background/90 sm:w-auto">
+                    Join as an Expert
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+
+                <Link href="/login">
+                  <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary-foreground/30 px-6 py-3.5 font-semibold text-primary-foreground transition-all hover:bg-white/10 sm:w-auto">
+                    Log in
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="border-t">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Brain className="h-4 w-4" />
+            </div>
+
+            <span className="font-bold">Iuvai</span>
+          </div>
+
+          <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
+            <a
+              href="#how-it-works"
+              className="hover:text-foreground"
+            >
+              How it works
+            </a>
+
+            <a
+              href="#experts"
+              className="hover:text-foreground"
+            >
+              Experts
+            </a>
+
+            <a
+              href="#companies"
+              className="hover:text-foreground"
+            >
+              Companies
+            </a>
+
+            <Link href="/login">
+              <span className="cursor-pointer hover:text-foreground">
+                Login
+              </span>
+            </Link>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Iuvai. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function StepCard({
+  number,
+  icon,
+  title,
+  description,
+}: {
+  number: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="relative rounded-2xl border bg-background p-7 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+      <div className="flex items-center justify-between">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          {icon}
+        </div>
+
+        <span className="text-sm font-mono text-muted-foreground">
+          {number}
+        </span>
+      </div>
+
+      <h3 className="mt-6 text-lg font-semibold">{title}</h3>
+
+      <p className="mt-2 leading-7 text-muted-foreground">
+        {description}
+      </p>
+
+      <ChevronRight className="mt-5 h-5 w-5 text-primary" />
+    </div>
+  );
+}
+
+function MatchRow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border p-4">
+      <span className="text-sm font-medium">{label}</span>
+
+      <CheckCircle2 className="h-5 w-5 text-primary" />
+    </div>
+  );
+}
