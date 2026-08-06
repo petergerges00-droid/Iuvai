@@ -12,12 +12,32 @@ export default function ExpertDashboard() {
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      getExpertProfile(user.id).then(setExpertProfile);
-    }
-  }, [user]);
+  if (user?.id) {
+    getExpertProfile(user.id)
+      .then((data) => {
+        console.log('EXPERT PROFILE:', data);
+        setExpertProfile(data);
+      })
+      .catch((error) => {
+        console.error('EXPERT PROFILE ERROR:', error);
+      });
+  }
+}, [user]);
 
-  if (!profile || !expertProfile) return null;
+  if (!profile) {
+  return <div className="p-8">Loading profile...</div>;
+}
+
+if (!expertProfile) {
+  return (
+    <div className="p-8">
+      <h1 className="text-xl font-bold">Expert profile not found</h1>
+      <p className="mt-2 text-muted-foreground">
+        User ID: {user.id}
+      </p>
+    </div>
+  );
+}
 
   return (
     <AppLayout title="Overview">
