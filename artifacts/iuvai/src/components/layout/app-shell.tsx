@@ -5,6 +5,7 @@ interface AppShellProps {
   children: ReactNode;
   showNav?: boolean;
 }
+
 export function AppShell({
   children,
   showNav = true,
