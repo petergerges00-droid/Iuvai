@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "IUVAI"
+description = "IUVAI is a human intelligence infrastructure platform for AI. It connects qualified human experts across different fields with companies and AI projects that need human expertise for AI training, evaluation, and development. The app features Supabase authentication, expert and company onboarding flows, and role-based dashboards."
+version = "1.0.0"
+id = "artifacts/iuvai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19309
+
+[services.development]
+run = "pnpm --filter @workspace/iuvai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/iuvai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/iuvai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19309"
+BASE_PATH = "/"
