@@ -8,6 +8,7 @@ import {
   deleteResume,
 } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertCircle, FileText, Briefcase, ChevronRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
