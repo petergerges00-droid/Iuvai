@@ -82,6 +82,7 @@ export default function Settings() {
       });
       return;
     }
+    
     setIsPasswordLoading(true);
     try {
       const { error } = await updatePassword(newPassword);
