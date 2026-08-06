@@ -1,7 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { AppLayout } from '@/components/layout/app-layout';
-import { getExpertProfile, ExpertProfile } from '@/lib/supabase';
+import {
+  getExpertProfile,
+  ExpertProfile,
+  uploadResume,
+  deleteResume,
+} from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, AlertCircle, FileText, Briefcase, ChevronRight } from 'lucide-react';
@@ -10,6 +15,45 @@ import { Progress } from '@/components/ui/progress';
 export default function ExpertDashboard() {
   const { user, profile } = useAuth();
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+const [uploadError, setUploadError] = useState<string | null>(null);
+  const handleResumeUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+
+  if (!file || !user?.id) return;
+
+  setUploadError(null);
+
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setUploadError('Please upload a PDF, DOC, or DOCX file.');
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    setUploadError('Resume must be smaller than 10 MB.');
+    return;
+  }
+
+  setIsUploading(true);
+
+  try {
+    await uploadResume(user.id, file);
+
+    const updatedProfile = await getExpertProfile(user.id);
+    setExpertProfile(updatedProfile);
+  } catch (error: any) {
+    setUploadError(error.message || 'Failed to upload resume.');
+  } finally {
+    setIsUploading(false);
+    event.target.value = '';
+  }
+};
 
   useEffect(() => {
   if (user?.id) {
@@ -93,6 +137,70 @@ if (!expertProfile) {
           </div>
         </div>
 
+        <Card>
+  <CardHeader>
+    <CardTitle className="text-lg">Resume</CardTitle>
+    <CardDescription>
+      Upload your current resume for verification and project matching.
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent className="space-y-4">
+    {expertProfile.resume_file_name ? (
+      <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <FileText className="w-5 h-5 shrink-0 text-primary" />
+          <span className="text-sm font-medium truncate">
+            {expertProfile.resume_file_name}
+          </span>
+        </div>
+
+        <label className="cursor-pointer shrink-0">
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={handleResumeUpload}
+            disabled={isUploading}
+          />
+          <span className="text-sm font-medium text-primary hover:underline">
+            {isUploading ? 'Uploading...' : 'Replace'}
+          </span>
+        </label>
+      </div>
+    ) : (
+      <label className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 cursor-pointer hover:border-primary/50 transition-colors">
+        <FileText className="w-8 h-8 text-muted-foreground mb-3" />
+        <span className="font-medium">Upload your resume</span>
+        <span className="text-sm text-muted-foreground mt-1">
+          PDF, DOC, or DOCX · Maximum 10 MB
+        </span>
+
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="hidden"
+          onChange={handleResumeUpload}
+          disabled={isUploading}
+        />
+
+        <Button
+          type="button"
+          className="mt-4"
+          disabled={isUploading}
+        >
+          {isUploading ? 'Uploading...' : 'Choose File'}
+        </Button>
+      </label>
+    )}
+
+    {uploadError && (
+      <p className="text-sm text-destructive">
+        {uploadError}
+      </p>
+    )}
+  </CardContent>
+</Card>
         {/* Right Column - Profile Summary */}
         <div className="space-y-6">
           <Card>
