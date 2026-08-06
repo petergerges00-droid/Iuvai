@@ -1,0 +1,152 @@
+Build a production-ready MVP web application for a company called IUVAI.
+
+IUVAI’s positioning:
+“A human intelligence infrastructure for AI.”
+
+IUVAI connects qualified human experts across different fields with companies and AI projects that need human expertise for AI training, evaluation, and development.
+
+TECHNOLOGY:
+
+* React
+* TypeScript
+* Modern responsive UI
+* Supabase for authentication and database
+* Do NOT create a mock backend.
+* Do NOT use localStorage as the authentication system.
+* Connect to my existing Supabase project.
+
+AUTHENTICATION:
+Implement real Supabase authentication:
+
+* Email/password signup
+* Email/password login
+* Logout
+* Password reset
+* Email verification
+
+After signup, ask:
+
+“What brings you to IUVAI?”
+
+Option 1:
+“I’m an Expert”
+“Join the IUVAI network and contribute your expertise to AI projects.”
+
+Option 2:
+“I’m an AI Company”
+“Access verified experts for AI training, evaluation, and development.”
+
+DATABASE:
+Use these existing Supabase tables. Do not recreate them:
+
+public.profiles
+
+* id uuid
+* full_name
+* account_type
+* country
+* created_at
+
+public.expert_profiles
+
+* id uuid
+* primary_field
+* specialization
+* years_experience
+* highest_qualification
+* skills
+* languages
+* previous_ai_experience
+* availability_hours
+* created_at
+
+public.company_profiles
+
+* id uuid
+* company_name
+* website
+* industry
+* company_description
+* company_size
+* created_at
+
+The authenticated Supabase user’s UUID must be used as the profile ID.
+
+EXPERT ONBOARDING:
+Collect:
+
+* Full name
+* Country
+* Primary field
+* Specialization
+* Years of experience
+* Highest qualification
+* Skills
+* Languages
+* Previous AI experience
+* Availability
+
+Save the data to profiles and expert_profiles.
+
+COMPANY ONBOARDING:
+Collect:
+
+* Full name
+* Company name
+* Website
+* Industry
+* Company description
+* Company size
+
+Save the data to profiles and company_profiles.
+
+DASHBOARDS:
+
+Expert dashboard:
+
+* Profile completion
+* Verification status
+* Expertise
+* Assessments
+* Available projects
+* Account settings
+
+Company dashboard:
+
+* Company profile
+* Find experts
+* Submit a project
+* Active projects
+* Account settings
+
+For now, project matching, assessments, payments, and verification can display “Coming soon.” Do not fake functionality.
+
+SECURITY:
+Use Supabase Row Level Security.
+Users must only be able to read and modify their own profile data.
+
+DESIGN:
+IUVAI should feel like a serious global technology company:
+
+* Premium
+* Minimal
+* Professional
+* Modern
+* Clean typography
+* Generous whitespace
+* Subtle futuristic elements
+* Avoid generic “AI robot” imagery
+* Mobile responsive
+
+BUILD ORDER:
+
+1. Authentication
+2. Account type selection
+3. Expert/company onboarding
+4. Database persistence
+5. Dashboard
+6. Logout
+
+Do not build payments, marketplace functionality, expert matching, or AI assessments yet.
+
+After generating the application, verify that the signup flow actually calls Supabase Auth and that data is written to the existing Supabase tables.
