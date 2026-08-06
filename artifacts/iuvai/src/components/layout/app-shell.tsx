@@ -19,46 +19,38 @@ interface AppLayoutProps {
   children: ReactNode;
   title: string;
 }
-/* ============================================================
-   IUVAI LOGO
-   ============================================================ */
-function IuvaiLogo({ mobile = false }: { mobile?: boolean }) {
+/**
+ * Public-facing shell used by the landing page.
+ *
+ * IMPORTANT:
+ * This is intentionally separate from AppLayout.
+ * AppLayout is used by authenticated dashboard pages.
+ */
+interface AppShellProps {
+  children: ReactNode;
+}
+export function AppShell({ children }: AppShellProps) {
   return (
-    <div className="flex items-center gap-3">
-      {/* Minimal AI / neural mark */}
-      <div
-        className={`relative flex items-center justify-center ${
-          mobile ? 'h-8 w-8' : 'h-9 w-9'
-        }`}
-      >
-        <div className="absolute inset-0 rounded-full border border-primary/40" />
-        <div className="absolute h-4 w-4 rounded-full border border-primary/70" />
-        <div className="absolute h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.9)]" />
-        <div className="absolute left-0 top-1/2 h-px w-2 -translate-y-1/2 bg-primary/60" />
-        <div className="absolute right-0 top-1/2 h-px w-2 -translate-y-1/2 bg-primary/60" />
-        <div className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2 bg-primary/60" />
-        <div className="absolute bottom-0 left-1/2 h-2 w-px -translate-x-1/2 bg-primary/60" />
-      </div>
-      <div>
+    <div className="relative min-h-screen w-full overflow-hidden bg-background">
+      {/* Background system */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        {/* Ambient glow */}
+        <div className="absolute -left-40 top-20 h-[500px] w-[500px] rounded-full bg-primary/[0.06] blur-[120px]" />
+        <div className="absolute -right-40 bottom-0 h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[120px]" />
+        {/* Grid */}
         <div
-          className={`font-bold tracking-[0.22em] ${
-            mobile ? 'text-sm' : 'text-sm'
-          }`}
-        >
-          IUVAI
-        </div>
-        {!mobile && (
-          <div className="text-[8px] uppercase tracking-[0.2em] text-muted-foreground/40">
-            Intelligence Infrastructure
-          </div>
-        )}
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
       </div>
+      {children}
     </div>
   );
 }
-/* ============================================================
-   APP LAYOUT
-   ============================================================ */
 export function AppLayout({ children, title }: AppLayoutProps) {
   const { profile } = useAuth();
   const [, setLocation] = useLocation();
@@ -68,9 +60,6 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     setLocation('/login');
   };
   const isExpert = profile?.account_type === 'expert';
-  const homePath = isExpert
-    ? '/dashboard'
-    : '/company-dashboard';
   const navItems = isExpert
     ? [
         {
@@ -110,17 +99,19 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           disabled: true,
         },
       ];
+  const dashboardPath = isExpert
+    ? '/dashboard'
+    : '/company-dashboard';
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden bg-background">
-      {/* =====================================================
-          BACKGROUND SYSTEM
-          ===================================================== */}
+      {/* ===================================================== */}
+      {/* BACKGROUND SYSTEM */}
+      {/* ===================================================== */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        {/* Ambient left glow */}
+        {/* Ambient glow */}
         <div className="absolute -left-40 top-20 h-[500px] w-[500px] rounded-full bg-primary/[0.06] blur-[120px]" />
-        {/* Ambient right glow */}
         <div className="absolute -right-40 bottom-0 h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[120px]" />
-        {/* Subtle technical grid */}
+        {/* Subtle grid */}
         <div
           className="absolute inset-0 opacity-[0.025]"
           style={{
@@ -129,19 +120,21 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             backgroundSize: '48px 48px',
           }}
         />
-        {/* Very subtle center glow */}
-        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.015] blur-[160px]" />
       </div>
-      {/* =====================================================
-          MOBILE HEADER
-          ===================================================== */}
+      {/* ===================================================== */}
+      {/* MOBILE HEADER */}
+      {/* ===================================================== */}
       <div className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-5 backdrop-blur-xl lg:hidden">
         <Link
-          href={homePath}
-          className="flex items-center"
-          onClick={() => setMobileOpen(false)}
+          href={dashboardPath}
+          className="flex items-center gap-2.5"
         >
-          <IuvaiLogo mobile />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary shadow-[0_0_18px_rgba(99,102,241,0.25)]">
+            <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+          </div>
+          <span className="text-sm font-bold tracking-[0.18em]">
+            IUVAI
+          </span>
         </Link>
         <Button
           variant="ghost"
@@ -157,9 +150,9 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           )}
         </Button>
       </div>
-      {/* =====================================================
-          MOBILE NAVIGATION
-          ===================================================== */}
+      {/* ===================================================== */}
+      {/* MOBILE NAV */}
+      {/* ===================================================== */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 bg-background/95 pt-16 backdrop-blur-xl lg:hidden">
           <div className="p-5">
@@ -174,7 +167,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                   {item.disabled ? (
                     <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground/40">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
+                      {item.name}
                       <span className="ml-auto text-[9px] uppercase tracking-widest">
                         Soon
                       </span>
@@ -186,7 +179,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                       className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary"
                     >
                       <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
+                      {item.name}
                       <ChevronRight className="ml-auto h-4 w-4" />
                     </Link>
                   )}
@@ -197,7 +190,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             <Link
               href="/settings"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             >
               <Settings className="h-4 w-4" />
               Settings
@@ -212,17 +205,28 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           </div>
         </div>
       )}
-      {/* =====================================================
-          DESKTOP SIDEBAR
-          ===================================================== */}
+      {/* ===================================================== */}
+      {/* DESKTOP SIDEBAR */}
+      {/* ===================================================== */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-border/60 bg-background/70 backdrop-blur-xl lg:flex lg:flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border/60 px-6">
           <Link
-            href={homePath}
-            className="group flex items-center"
+            href={dashboardPath}
+            className="group flex items-center gap-3"
           >
-            <IuvaiLogo />
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-[0_0_25px_rgba(99,102,241,0.2)] transition-shadow group-hover:shadow-[0_0_35px_rgba(99,102,241,0.35)]">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+              <div className="absolute inset-0 rounded-lg border border-white/20" />
+            </div>
+            <div>
+              <div className="text-sm font-bold tracking-[0.2em]">
+                IUVAI
+              </div>
+              <div className="text-[8px] uppercase tracking-[0.2em] text-muted-foreground/40">
+                Intelligence Infrastructure
+              </div>
+            </div>
           </Link>
         </div>
         {/* Navigation */}
@@ -248,7 +252,6 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                     href={item.path}
                     className="group relative flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/15"
                   >
-                    {/* Active indicator */}
                     <div className="absolute -left-[17px] h-5 w-[2px] rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
@@ -259,9 +262,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             ))}
           </nav>
         </div>
-        {/* ===================================================
-            USER / BOTTOM NAVIGATION
-            =================================================== */}
+        {/* User / Bottom navigation */}
         <div className="border-t border-border/60 p-4">
           {/* User identity */}
           <div className="mb-4 rounded-xl border border-border/50 bg-white/[0.02] p-3">
@@ -304,11 +305,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           </nav>
         </div>
       </aside>
-      {/* =====================================================
-          MAIN CONTENT
-          ===================================================== */}
+      {/* ===================================================== */}
+      {/* MAIN CONTENT */}
+      {/* ===================================================== */}
       <main className="flex min-w-0 flex-1 flex-col pt-16 lg:pt-0">
-        {/* Desktop header */}
+        {/* Header */}
         <header className="hidden h-16 items-center justify-between border-b border-border/60 bg-background/50 px-8 backdrop-blur-xl lg:flex">
           <div>
             <p className="text-[9px] font-medium uppercase tracking-[0.25em] text-muted-foreground/40">
