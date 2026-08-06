@@ -7,6 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.');
 }
 
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ─── Types mirroring existing Supabase tables ──────────────────────────────
