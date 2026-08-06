@@ -16,6 +16,7 @@ import Onboarding from '@/pages/onboarding';
 import ExpertDashboard from '@/pages/expert-dashboard';
 import CompanyDashboard from '@/pages/company-dashboard';
 import Settings from '@/pages/settings';
+import Landing from '@/pages/landing';
 
 const queryClient = new QueryClient();
 
@@ -101,7 +102,7 @@ function RootRedirect() {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={RootRedirect} />
+      <Route path="/" component={Landing} />
       
       {/* Public / Auth routes */}
       <Route path="/login"><PublicRoute component={Login} /></Route>
