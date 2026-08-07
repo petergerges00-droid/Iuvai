@@ -8,7 +8,6 @@ import {
   Plus,
   X,
   ArrowRight,
-  UserCheck,
 } from 'lucide-react';
 
 import { AppLayout } from '@/components/layout/app-layout';
@@ -180,8 +179,7 @@ export default function AdminDashboard() {
             projectForm.duration.trim() ||
             null,
 
-          status:
-            projectForm.status,
+          status: projectForm.status,
         });
 
       setProjects((current) => [
@@ -217,12 +215,6 @@ export default function AdminDashboard() {
       setIsCreatingProject(false);
     }
   }
-
-  /*
-  ============================================================
-  RENDER
-  ============================================================
-  */
 
   return (
     <AppLayout title="Admin">
@@ -271,26 +263,16 @@ export default function AdminDashboard() {
         </div>
 
         {/* =====================================================
-            NOTIFICATION
-        ====================================================== */}
-
-        {error && (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-
-        {/* =====================================================
             STATS
         ====================================================== */}
 
         <div className="grid gap-4 sm:grid-cols-3">
 
-          {/* Experts */}
+          {/* TOTAL EXPERTS */}
 
           <Link
-            href="/admin/projects"
-            className="group rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:bg-muted/30"
+            href="/admin/experts"
+            className="block rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
           >
 
             <div className="flex items-center justify-between">
@@ -299,7 +281,7 @@ export default function AdminDashboard() {
                 Total experts
               </p>
 
-              <Users className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+              <Users className="h-4 w-4 text-muted-foreground" />
 
             </div>
 
@@ -307,14 +289,14 @@ export default function AdminDashboard() {
               {experts.length}
             </p>
 
-            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
-              View project experts
-              <ArrowRight className="h-3 w-3" />
+            <div className="mt-3 flex items-center gap-1 text-xs text-primary">
+              View experts
+              <ArrowRight className="h-3.5 w-3.5" />
             </div>
 
           </Link>
 
-          {/* Active projects */}
+          {/* ACTIVE PROJECTS */}
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
 
@@ -332,43 +314,27 @@ export default function AdminDashboard() {
               {
                 projects.filter(
                   (project) =>
-                    project.status ===
-                      'open' ||
-                    project.status ===
-                      'in_progress'
+                    project.status === 'open' ||
+                    project.status === 'in_progress'
                 ).length
               }
             </p>
 
           </div>
 
-          {/* Total projects */}
+          {/* TOTAL PROJECTS */}
 
-          <Link
-            href="/admin/projects"
-            className="group rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:bg-muted/30"
-          >
+          <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
 
-            <div className="flex items-center justify-between">
-
-              <p className="text-xs text-muted-foreground">
-                Total projects
-              </p>
-
-              <Briefcase className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
-
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Total projects
+            </p>
 
             <p className="mt-3 text-3xl font-semibold">
               {projects.length}
             </p>
 
-            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
-              View projects
-              <ArrowRight className="h-3 w-3" />
-            </div>
-
-          </Link>
+          </div>
 
         </div>
 
@@ -411,7 +377,7 @@ export default function AdminDashboard() {
               className="space-y-5 p-5"
             >
 
-              {/* Project title */}
+              {/* PROJECT TITLE */}
 
               <div>
 
@@ -435,7 +401,7 @@ export default function AdminDashboard() {
 
               </div>
 
-              {/* Description */}
+              {/* DESCRIPTION */}
 
               <div>
 
@@ -461,11 +427,11 @@ export default function AdminDashboard() {
 
               </div>
 
-              {/* Project details */}
+              {/* PROJECT FIELDS */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
-                {/* Field */}
+                {/* PRIMARY FIELD */}
 
                 <div>
 
@@ -490,7 +456,7 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Specialization */}
+                {/* SPECIALIZATION */}
 
                 <div>
 
@@ -515,7 +481,7 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Project type */}
+                {/* PROJECT TYPE */}
 
                 <div>
 
@@ -540,7 +506,7 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Budget */}
+                {/* BUDGET */}
 
                 <div>
 
@@ -565,7 +531,7 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Duration */}
+                {/* DURATION */}
 
                 <div>
 
@@ -590,7 +556,7 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Skills */}
+                {/* REQUIRED SKILLS */}
 
                 <div>
 
@@ -621,7 +587,7 @@ export default function AdminDashboard() {
 
               </div>
 
-              {/* Form actions */}
+              {/* FORM ACTIONS */}
 
               <div className="flex justify-end gap-3 pt-2">
 
@@ -659,6 +625,7 @@ export default function AdminDashboard() {
             </form>
 
           </div>
+
         )}
 
         {/* =====================================================
@@ -667,27 +634,15 @@ export default function AdminDashboard() {
 
         <div className="rounded-2xl border border-border/60 bg-card/70">
 
-          <div className="flex flex-col gap-3 border-b border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="border-b border-border/60 p-5">
 
-            <div>
+            <h3 className="font-medium">
+              Projects
+            </h3>
 
-              <h3 className="font-medium">
-                Projects
-              </h3>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                Projects you are recruiting experts for.
-              </p>
-
-            </div>
-
-            <Link
-              href="/admin/projects"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-            >
-              View all projects
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Projects you are recruiting experts for.
+            </p>
 
           </div>
 
@@ -719,73 +674,65 @@ export default function AdminDashboard() {
 
               {projects.map((project) => (
 
-                <div
+                <Link
                   key={project.id}
-                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-muted/20 md:flex-row md:items-center md:justify-between"
+                  href={`/admin/projects/${project.id}`}
+                  className="block transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
                 >
 
-                  {/* Project information */}
+                  <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
 
-                  <Link
-                    href={`/admin/projects/${project.id}`}
-                    className="min-w-0 flex-1"
-                  >
+                    <div>
 
-                    <p className="font-medium">
-                      {project.title}
-                    </p>
-
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {project.primary_field ||
-                        'Field not specified'}
-
-                      {project.specialization
-                        ? ` · ${project.specialization}`
-                        : ''}
-                    </p>
-
-                    {project.description && (
-                      <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-                        {project.description}
+                      <p className="font-medium">
+                        {project.title}
                       </p>
-                    )}
 
-                    <div className="mt-3 flex flex-wrap gap-2">
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {project.primary_field ||
+                          'Field not specified'}
 
-                      {project.required_skills?.map(
-                        (skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
-                          >
-                            {skill}
-                          </span>
-                        )
+                        {project.specialization
+                          ? ` · ${project.specialization}`
+                          : ''}
+                      </p>
+
+                      {project.description && (
+                        <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
+                          {project.description}
+                        </p>
                       )}
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+
+                        {project.required_skills?.map(
+                          (skill) => (
+
+                            <span
+                              key={skill}
+                              className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
+                            >
+                              {skill}
+                            </span>
+
+                          )
+                        )}
+
+                      </div>
 
                     </div>
 
-                  </Link>
+                    <div className="shrink-0">
 
-                  {/* Project actions */}
+                      <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
+                        {project.status}
+                      </span>
 
-                  <div className="flex shrink-0 items-center gap-3">
-
-                    <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
-                      {project.status}
-                    </span>
-
-                    <Link
-                      href={`/admin/projects/${project.id}/experts`}
-                      className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border/70 px-3 text-xs font-medium transition-colors hover:bg-muted"
-                    >
-                      <Users className="h-3.5 w-3.5" />
-                      Experts
-                    </Link>
+                    </div>
 
                   </div>
 
-                </div>
+                </Link>
 
               ))}
 
@@ -799,15 +746,20 @@ export default function AdminDashboard() {
             EXPERTS
         ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <Link
+          href="/admin/experts"
+          className="block rounded-2xl border border-border/60 bg-card/70 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
+        >
 
-          <div className="flex flex-col gap-3 border-b border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+          {/* EXPERT HEADER */}
+
+          <div className="flex items-center justify-between border-b border-border/60 p-5">
 
             <div>
 
               <div className="flex items-center gap-2">
 
-                <UserCheck className="h-4 w-4 text-primary" />
+                <Users className="h-4 w-4 text-primary" />
 
                 <h3 className="font-medium">
                   Registered experts
@@ -821,20 +773,18 @@ export default function AdminDashboard() {
 
             </div>
 
-            <Link
-              href="/admin/projects"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-            >
-              Manage experts
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
 
           </div>
+
+          {/* EXPERT CONTENT */}
 
           {isLoadingExperts ? (
 
             <div className="flex items-center justify-center p-12">
+
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
+
             </div>
 
           ) : error ? (
@@ -845,18 +795,8 @@ export default function AdminDashboard() {
 
           ) : experts.length === 0 ? (
 
-            <div className="p-8 text-center">
-
-              <Users className="mx-auto h-8 w-8 text-muted-foreground/50" />
-
-              <p className="mt-3 text-sm font-medium">
-                No experts registered yet.
-              </p>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                Experts will appear here once they register with IUVAI.
-              </p>
-
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              No experts registered yet.
             </div>
 
           ) : (
@@ -870,9 +810,7 @@ export default function AdminDashboard() {
                   className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
                 >
 
-                  {/* Expert information */}
-
-                  <div className="min-w-0">
+                  <div>
 
                     <p className="font-medium">
                       {expert.profile?.full_name ||
@@ -880,41 +818,23 @@ export default function AdminDashboard() {
                     </p>
 
                     <p className="mt-1 text-sm text-muted-foreground">
-
                       {expert.primary_field ||
                         'Field not specified'}
 
                       {expert.specialization
                         ? ` · ${expert.specialization}`
                         : ''}
-
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-
                       {expert.profile?.country ||
                         'Country not specified'}
-
                     </p>
 
                   </div>
 
-                  {/* Expert status */}
-
-                  <div className="flex shrink-0 items-center gap-3">
-
-                    <span className="rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-                      Pending review
-                    </span>
-
-                    <Link
-                      href="/admin/projects"
-                      className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border/70 px-3 text-xs font-medium transition-colors hover:bg-muted"
-                    >
-                      <ArrowRight className="h-3.5 w-3.5" />
-                      Review
-                    </Link>
-
+                  <div className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
+                    Pending review
                   </div>
 
                 </div>
@@ -925,7 +845,7 @@ export default function AdminDashboard() {
 
           )}
 
-        </div>
+        </Link>
 
       </div>
 
