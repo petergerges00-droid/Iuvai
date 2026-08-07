@@ -21,6 +21,11 @@ export const supabase = createClient(
 
 export type AccountType = 'expert' | 'company';
 
+export type VerificationStatus =
+  | 'pending'
+  | 'approved'
+  | 'declined';
+
 export type ProjectStatus =
   | 'draft'
   | 'open'
@@ -61,6 +66,8 @@ export interface ExpertProfile {
   created_at: string;
   resume_path: string | null;
   resume_file_name: string | null;
+
+  verification_status: VerificationStatus;
 }
 
 export interface CompanyProfile {
@@ -240,6 +247,28 @@ export async function upsertExpertProfile(
   return data;
 }
 
+export async function updateExpertVerificationStatus(
+  expertId: string,
+  status: VerificationStatus
+): Promise<ExpertProfile> {
+  const { data, error } = await supabase
+    .from('expert_profiles')
+    .update({
+      verification_status: status,
+    })
+    .eq('id', expertId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update verification status: ${error.message}`
+    );
+  }
+
+  return data as ExpertProfile;
+}
+
 // ─────────────────────────────────────────────────────────────
 // COMPANY PROFILE
 // ─────────────────────────────────────────────────────────────
@@ -285,18 +314,9 @@ export async function upsertCompanyProfile(
 // EXPERT DISCOVERY
 // ─────────────────────────────────────────────────────────────
 
-/**
- * Get all expert profiles with their public profiles.
- *
- * This intentionally uses TWO queries instead of a nested
- * Supabase relationship.
- *
- * expert_profiles.id === profiles.id
- */
 export async function getExperts(): Promise<
   ExpertWithProfile[]
 > {
-  // Get expert profiles
   const {
     data: expertProfiles,
     error: expertError,
@@ -306,11 +326,6 @@ export async function getExperts(): Promise<
     .order('created_at', {
       ascending: false,
     });
-
-  console.log('GET EXPERT PROFILES RAW:', {
-    data: expertProfiles,
-    error: expertError,
-  });
 
   if (expertError) {
     console.error(
@@ -330,7 +345,6 @@ export async function getExperts(): Promise<
     return [];
   }
 
-  // Get matching public profiles
   const expertIds = expertProfiles.map(
     (expert) => expert.id
   );
@@ -349,17 +363,7 @@ export async function getExperts(): Promise<
     `)
     .in('id', expertIds);
 
-  console.log('GET EXPERT PUBLIC PROFILES RAW:', {
-    data: profiles,
-    error: profileError,
-  });
-
   if (profileError) {
-    console.error(
-      'GET EXPERT PUBLIC PROFILES ERROR:',
-      profileError
-    );
-
     throw new Error(
       `Failed to load expert profiles: ${profileError.message}`
     );
@@ -379,13 +383,6 @@ export async function getExperts(): Promise<
   })) as ExpertWithProfile[];
 }
 
-/**
- * Search experts by field, specialization,
- * AI experience, country, or name.
- *
- * Uses separate queries to avoid relying on a
- * Supabase foreign-key relationship.
- */
 export async function searchExperts(
   searchTerm: string
 ): Promise<ExpertWithProfile[]> {
@@ -408,11 +405,6 @@ export async function searchExperts(
     });
 
   if (error) {
-    console.error(
-      'SEARCH EXPERTS ERROR:',
-      error
-    );
-
     throw new Error(
       `Failed to search experts: ${error.message}`
     );
@@ -460,9 +452,6 @@ export async function searchExperts(
   })) as ExpertWithProfile[];
 }
 
-/**
- * Get experts by primary field.
- */
 export async function getExpertsByField(
   primaryField: string
 ): Promise<ExpertWithProfile[]> {
@@ -525,9 +514,6 @@ export async function getExpertsByField(
   })) as ExpertWithProfile[];
 }
 
-/**
- * Get one expert with public profile information.
- */
 export async function getExpertWithProfile(
   expertId: string
 ): Promise<ExpertWithProfile | null> {
@@ -565,11 +551,6 @@ export async function getExpertWithProfile(
     .maybeSingle();
 
   if (profileError) {
-    console.error(
-      'GET EXPERT PUBLIC PROFILE ERROR:',
-      profileError
-    );
-
     return {
       ...(expert as ExpertProfile),
       profile: null,
@@ -696,11 +677,6 @@ export async function getAllProjects(): Promise<Project[]> {
     });
 
   if (error) {
-    console.error(
-      'GET ALL PROJECTS ERROR:',
-      error
-    );
-
     throw new Error(
       `Failed to load projects: ${error.message}`
     );
@@ -719,11 +695,6 @@ export async function getAdminProject(
     .single();
 
   if (error) {
-    console.error(
-      'GET ADMIN PROJECT ERROR:',
-      error
-    );
-
     return null;
   }
 
@@ -816,6 +787,42 @@ export async function getExpertProjectRequests(
   }
 
   return (data || []) as ProjectRequest[];
+}
+
+export async function getProjectRequest(
+  requestId: string
+): Promise<ProjectRequest | null> {
+  const { data, error } = await supabase
+    .from('project_requests')
+    .select('*')
+    .eq('id', requestId)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data as ProjectRequest;
+}
+
+export async function getExpertProjectRequestForProject(
+  expertId: string,
+  projectId: string
+): Promise<ProjectRequest | null> {
+  const { data, error } = await supabase
+    .from('project_requests')
+    .select('*')
+    .eq('expert_id', expertId)
+    .eq('project_id', projectId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to check project request: ${error.message}`
+    );
+  }
+
+  return data as ProjectRequest | null;
 }
 
 export async function updateProjectRequestStatus(
@@ -953,16 +960,9 @@ export async function deleteResume(
 // PROJECT ↔ EXPERT ASSIGNMENTS
 // ─────────────────────────────────────────────────────────────
 
-/**
- * Get experts assigned to a project.
- *
- * Uses separate queries rather than relying on a nested
- * Supabase relationship.
- */
 export async function getProjectExperts(
   projectId: string
 ): Promise<ExpertWithProfile[]> {
-  // Get assignment records
   const {
     data: assignments,
     error: assignmentError,
@@ -972,11 +972,6 @@ export async function getProjectExperts(
     .eq('project_id', projectId);
 
   if (assignmentError) {
-    console.error(
-      'GET PROJECT ASSIGNMENTS ERROR:',
-      assignmentError
-    );
-
     throw new Error(
       `Failed to load project assignments: ${assignmentError.message}`
     );
@@ -994,7 +989,6 @@ export async function getProjectExperts(
       assignment.expert_id
   );
 
-  // Get expert profiles
   const {
     data: expertProfiles,
     error: expertError,
@@ -1004,11 +998,6 @@ export async function getProjectExperts(
     .in('id', expertIds);
 
   if (expertError) {
-    console.error(
-      'GET PROJECT EXPERT PROFILES ERROR:',
-      expertError
-    );
-
     throw new Error(
       `Failed to load project experts: ${expertError.message}`
     );
@@ -1021,7 +1010,6 @@ export async function getProjectExperts(
     return [];
   }
 
-  // Get public profiles
   const {
     data: profiles,
     error: profileError,
@@ -1056,9 +1044,6 @@ export async function getProjectExperts(
   })) as ExpertWithProfile[];
 }
 
-/**
- * Get full assignment records for a project.
- */
 export async function getProjectAssignments(
   projectId: string
 ): Promise<ProjectExpert[]> {
@@ -1079,9 +1064,6 @@ export async function getProjectAssignments(
   return (data || []) as ProjectExpert[];
 }
 
-/**
- * Assign an expert to a project.
- */
 export async function assignExpertToProject(
   projectId: string,
   expertId: string,
@@ -1129,9 +1111,6 @@ export async function assignExpertToProject(
   return data as ProjectExpert;
 }
 
-/**
- * Remove an expert from a project.
- */
 export async function removeExpertFromProject(
   projectId: string,
   expertId: string
@@ -1149,9 +1128,6 @@ export async function removeExpertFromProject(
   }
 }
 
-/**
- * Update an expert's project assignment status.
- */
 export async function updateProjectExpertStatus(
   assignmentId: string,
   status: ProjectExpertStatus
@@ -1174,9 +1150,6 @@ export async function updateProjectExpertStatus(
   return data as ProjectExpert;
 }
 
-/**
- * Update assignment notes.
- */
 export async function updateProjectExpertNotes(
   assignmentId: string,
   notes: string | null
@@ -1199,9 +1172,6 @@ export async function updateProjectExpertNotes(
   return data as ProjectExpert;
 }
 
-/**
- * Get all projects an expert has been assigned to.
- */
 export async function getExpertProjects(
   expertId: string
 ): Promise<Project[]> {
@@ -1245,9 +1215,6 @@ export async function getExpertProjects(
   return (data || []) as Project[];
 }
 
-/**
- * Get all assignment records for an expert.
- */
 export async function getExpertAssignments(
   expertId: string
 ): Promise<ProjectExpert[]> {
