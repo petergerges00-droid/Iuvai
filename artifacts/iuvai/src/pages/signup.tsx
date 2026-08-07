@@ -76,7 +76,7 @@ export default function Signup() {
   return (
     <AuthLayout
       title="Join IUVAI"
-      subtitle="Your expertise helps shape tomorrow."
+      subtitle="Your expertise helps shaping tomorrow."
     >
       <div className="relative">
         {/* Futuristic glow */}
