@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'wouter';
+import { IUVAILogo } from '@/components/ui/iuvai-logo';
 import {
   LogOut,
   Settings,
