@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import { IUVAILogo } from '@/components/ui/iuvai-logo';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Home, AlertCircle } from 'lucide-react';
 export default function NotFound() {
@@ -19,19 +20,9 @@ export default function NotFound() {
       </div>
       {/* Content */}
       <div className="relative z-10 w-full max-w-lg px-6 text-center">
-        {/* IUVAI mark */}
+        {/* IUVAI Studio mark */}
         <div className="mb-10 flex items-center justify-center">
-          <Link
-            href="/"
-            className="flex items-center gap-3 transition-opacity hover:opacity-80"
-          >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/20">
-              <div className="h-3 w-3 rounded-full bg-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-[0.2em]">
-              IUVAI
-            </span>
-          </Link>
+          <IUVAILogo href="/" />
         </div>
         {/* Error indicator */}
         <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5">
