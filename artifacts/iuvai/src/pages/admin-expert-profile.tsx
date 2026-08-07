@@ -8,6 +8,13 @@ import {
   Briefcase,
   ChevronRight,
   ShieldCheck,
+  Clock3,
+  GraduationCap,
+  Languages,
+  Brain,
+  FileText,
+  ExternalLink,
+  CheckCircle2,
 } from 'lucide-react';
 
 import { AppLayout } from '@/components/layout/app-layout';
@@ -15,6 +22,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import {
   getExperts,
   getCompanyProjects,
+  getResumeUrl,
   ExpertWithProfile,
   Project,
 } from '@/lib/supabase';
@@ -38,6 +46,9 @@ export default function AdminExpertProfile() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [isOpeningResume, setIsOpeningResume] =
+    useState(false);
+
   const [error, setError] =
     useState<string | null>(null);
 
@@ -59,14 +70,6 @@ export default function AdminExpertProfile() {
           );
         }
 
-        /*
-        --------------------------------------------------------
-        Load all experts.
-        We filter here because the existing getExperts()
-        function already returns ExpertWithProfile[].
-        --------------------------------------------------------
-        */
-
         const experts = await getExperts();
 
         const foundExpert = experts.find(
@@ -81,12 +84,6 @@ export default function AdminExpertProfile() {
         }
 
         setExpert(foundExpert);
-
-        /*
-        --------------------------------------------------------
-        Load available IUVAI projects.
-        --------------------------------------------------------
-        */
 
         const companyProjects =
           await getCompanyProjects(
@@ -115,6 +112,46 @@ export default function AdminExpertProfile() {
 
   /*
   ============================================================
+  VIEW RESUME
+  ============================================================
+  */
+
+  async function handleViewResume() {
+    if (!expert?.resume_path) {
+      return;
+    }
+
+    try {
+      setIsOpeningResume(true);
+      setError(null);
+
+      const url = await getResumeUrl(
+        expert.resume_path
+      );
+
+      window.open(
+        url,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    } catch (err) {
+      console.error(
+        'ADMIN RESUME OPEN ERROR:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to open resume.'
+      );
+    } finally {
+      setIsOpeningResume(false);
+    }
+  }
+
+  /*
+  ============================================================
   LOADING
   ============================================================
   */
@@ -123,7 +160,7 @@ export default function AdminExpertProfile() {
     return (
       <AppLayout title="Expert">
 
-        <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex min-h-[500px] items-center justify-center">
 
           <Loader2 className="h-7 w-7 animate-spin text-primary" />
 
@@ -174,7 +211,7 @@ export default function AdminExpertProfile() {
 
   /*
   ============================================================
-  EXPERT DATA
+  NORMALIZED DATA
   ============================================================
   */
 
@@ -193,6 +230,29 @@ export default function AdminExpertProfile() {
   const specialization =
     expert.specialization ||
     'Specialization not specified';
+
+  const yearsExperience =
+    expert.years_experience != null
+      ? `${expert.years_experience} years`
+      : 'Not specified';
+
+  const qualification =
+    expert.highest_qualification ||
+    'Not specified';
+
+  const availability =
+    expert.availability_hours != null
+      ? `${expert.availability_hours} hrs/week`
+      : 'Not specified';
+
+  const skills =
+    expert.skills || [];
+
+  const languages =
+    expert.languages || [];
+
+  const aiExperience =
+    expert.previous_ai_experience?.trim() || '';
 
   /*
   ============================================================
@@ -221,50 +281,62 @@ export default function AdminExpertProfile() {
             HEADER
             ==================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
-          <div className="border-b border-border/60 p-6">
+          <div className="p-6">
 
-            <div className="flex flex-col gap-5 md:flex-row md:items-center">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 
-              {/* Avatar */}
+              <div className="flex min-w-0 items-center gap-4">
 
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 text-primary">
+                {/* Avatar */}
 
-                <span className="text-xl font-semibold">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 text-primary">
 
-                  {name
-                    .charAt(0)
-                    .toUpperCase()}
+                  <span className="text-xl font-semibold">
 
-                </span>
+                    {name
+                      .charAt(0)
+                      .toUpperCase()}
 
-              </div>
-
-              {/* Identity */}
-
-              <div className="min-w-0 flex-1">
-
-                <div className="flex items-center gap-2">
-
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-primary">
-                    IUVAI Expert
-                  </p>
+                  </span>
 
                 </div>
 
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                  {name}
-                </h2>
+                {/* Identity */}
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {primaryField}
-                  {specialization
-                    ? ` · ${specialization}`
-                    : ''}
-                </p>
+                <div className="min-w-0">
+
+                  <div className="flex items-center gap-2">
+
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-primary">
+                      IUVAI Expert
+                    </p>
+
+                  </div>
+
+                  <h2 className="mt-2 truncate text-2xl font-semibold tracking-tight">
+                    {name}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {primaryField}
+                    {specialization
+                      ? ` · ${specialization}`
+                      : ''}
+                  </p>
+
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+
+                    <MapPin className="h-3.5 w-3.5" />
+
+                    {country}
+
+                  </div>
+
+                </div>
 
               </div>
 
@@ -272,8 +344,12 @@ export default function AdminExpertProfile() {
 
               <div className="shrink-0">
 
-                <span className="rounded-full border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5 text-xs text-yellow-600 dark:text-yellow-400">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5 text-xs text-yellow-600 dark:text-yellow-400">
+
+                  <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
+
                   Pending review
+
                 </span>
 
               </div>
@@ -282,89 +358,355 @@ export default function AdminExpertProfile() {
 
           </div>
 
-          {/* ==================================================
-              BASIC INFORMATION
-              ================================================== */}
-
-          <div className="grid gap-px bg-border/60 md:grid-cols-3">
-
-            <div className="bg-card/70 p-5">
-
-              <div className="flex items-center gap-2">
-
-                <User className="h-4 w-4 text-muted-foreground" />
-
-                <p className="text-xs text-muted-foreground">
-                  Primary field
-                </p>
-
-              </div>
-
-              <p className="mt-2 text-sm font-medium">
-                {primaryField}
-              </p>
-
-            </div>
-
-            <div className="bg-card/70 p-5">
-
-              <div className="flex items-center gap-2">
-
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-
-                <p className="text-xs text-muted-foreground">
-                  Specialization
-                </p>
-
-              </div>
-
-              <p className="mt-2 text-sm font-medium">
-                {specialization}
-              </p>
-
-            </div>
-
-            <div className="bg-card/70 p-5">
-
-              <div className="flex items-center gap-2">
-
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-
-                <p className="text-xs text-muted-foreground">
-                  Country
-                </p>
-
-              </div>
-
-              <p className="mt-2 text-sm font-medium">
-                {country}
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
+        </section>
 
         {/* ====================================================
-            PROJECTS
+            PROFESSIONAL OVERVIEW
             ==================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
             <h3 className="font-medium">
-              Projects
+              Professional overview
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Select a project to review this expert for that project.
+              Core professional information submitted by the expert.
+            </p>
+
+          </div>
+
+          <div className="grid gap-px bg-border/60 sm:grid-cols-2 lg:grid-cols-4">
+
+            <ProfileStat
+              icon={
+                <User className="h-4 w-4" />
+              }
+              label="Primary field"
+              value={primaryField}
+            />
+
+            <ProfileStat
+              icon={
+                <Briefcase className="h-4 w-4" />
+              }
+              label="Specialization"
+              value={specialization}
+            />
+
+            <ProfileStat
+              icon={
+                <Clock3 className="h-4 w-4" />
+              }
+              label="Experience"
+              value={yearsExperience}
+            />
+
+            <ProfileStat
+              icon={
+                <GraduationCap className="h-4 w-4" />
+              }
+              label="Highest qualification"
+              value={qualification}
+            />
+
+          </div>
+
+          <div className="border-t border-border/60">
+
+            <ProfileStat
+              icon={
+                <Clock3 className="h-4 w-4" />
+              }
+              label="Availability"
+              value={availability}
+              fullWidth
+            />
+
+          </div>
+
+        </section>
+
+        {/* ====================================================
+            SKILLS + LANGUAGES
+            ==================================================== */}
+
+        <div className="grid gap-6 md:grid-cols-2">
+
+          {/* Skills */}
+
+          <section className="rounded-2xl border border-border/60 bg-card/70">
+
+            <div className="border-b border-border/60 p-5">
+
+              <div className="flex items-center gap-2">
+
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+
+                <h3 className="font-medium">
+                  Skills
+                </h3>
+
+              </div>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Skills and areas of expertise submitted by the expert.
+              </p>
+
+            </div>
+
+            <div className="p-5">
+
+              {skills.length > 0 ? (
+
+                <div className="flex flex-wrap gap-2">
+
+                  {skills.map(
+                    (skill, index) => (
+
+                      <span
+                        key={`${skill}-${index}`}
+                        className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground"
+                      >
+                        {skill}
+                      </span>
+
+                    )
+                  )}
+
+                </div>
+
+              ) : (
+
+                <EmptyState text="No skills listed." />
+
+              )}
+
+            </div>
+
+          </section>
+
+          {/* Languages */}
+
+          <section className="rounded-2xl border border-border/60 bg-card/70">
+
+            <div className="border-b border-border/60 p-5">
+
+              <div className="flex items-center gap-2">
+
+                <Languages className="h-4 w-4 text-primary" />
+
+                <h3 className="font-medium">
+                  Languages
+                </h3>
+
+              </div>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Languages the expert reported being able to work in.
+              </p>
+
+            </div>
+
+            <div className="p-5">
+
+              {languages.length > 0 ? (
+
+                <div className="flex flex-wrap gap-2">
+
+                  {languages.map(
+                    (language, index) => (
+
+                      <span
+                        key={`${language}-${index}`}
+                        className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground"
+                      >
+                        {language}
+                      </span>
+
+                    )
+                  )}
+
+                </div>
+
+              ) : (
+
+                <EmptyState text="No languages listed." />
+
+              )}
+
+            </div>
+
+          </section>
+
+        </div>
+
+        {/* ====================================================
+            AI EXPERIENCE
+            ==================================================== */}
+
+        <section className="rounded-2xl border border-border/60 bg-card/70">
+
+          <div className="border-b border-border/60 p-5">
+
+            <div className="flex items-center gap-2">
+
+              <Brain className="h-4 w-4 text-primary" />
+
+              <h3 className="font-medium">
+                Previous AI experience
+              </h3>
+
+            </div>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              AI evaluation, annotation, training, data work,
+              or other relevant AI experience.
+            </p>
+
+          </div>
+
+          <div className="p-5">
+
+            {aiExperience ? (
+
+              <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+
+                <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                  {aiExperience}
+                </p>
+
+              </div>
+
+            ) : (
+
+              <EmptyState text="No previous AI experience provided." />
+
+            )}
+
+          </div>
+
+        </section>
+
+        {/* ====================================================
+            RESUME
+            ==================================================== */}
+
+        <section className="rounded-2xl border border-border/60 bg-card/70">
+
+          <div className="border-b border-border/60 p-5">
+
+            <div className="flex items-center gap-2">
+
+              <FileText className="h-4 w-4 text-primary" />
+
+              <h3 className="font-medium">
+                Resume / CV
+              </h3>
+
+            </div>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Review the expert's submitted professional resume.
+            </p>
+
+          </div>
+
+          <div className="p-5">
+
+            {expert.resume_path ? (
+
+              <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/60 bg-muted/40">
+
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+
+                  </div>
+
+                  <div>
+
+                    <p className="text-sm font-medium">
+
+                      {expert.resume_file_name ||
+                        'Expert resume'}
+
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Private document
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleViewResume}
+                  disabled={isOpeningResume}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 px-4 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                >
+
+                  {isOpeningResume ? (
+
+                    <Loader2 className="h-4 w-4 animate-spin" />
+
+                  ) : (
+
+                    <ExternalLink className="h-4 w-4" />
+
+                  )}
+
+                  {isOpeningResume
+                    ? 'Opening...'
+                    : 'View resume'}
+
+                </button>
+
+              </div>
+
+            ) : (
+
+              <EmptyState text="No resume uploaded." />
+
+            )}
+
+          </div>
+
+        </section>
+
+        {/* ====================================================
+            PROJECT REVIEW
+            ==================================================== */}
+
+        <section className="rounded-2xl border border-border/60 bg-card/70">
+
+          <div className="border-b border-border/60 p-5">
+
+            <div className="flex items-center gap-2">
+
+              <Briefcase className="h-4 w-4 text-primary" />
+
+              <h3 className="font-medium">
+                Project review
+              </h3>
+
+            </div>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Select a project to evaluate this expert against its
+              requirements.
             </p>
 
           </div>
 
           {projects.length === 0 ? (
+
             <div className="p-10 text-center">
 
               <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/40" />
@@ -386,24 +728,35 @@ export default function AdminExpertProfile() {
               </Link>
 
             </div>
+
           ) : (
+
             <div className="divide-y divide-border/60">
 
               {projects.map(
                 (project) => (
+
                   <Link
                     key={project.id}
                     href={`/admin/projects/${project.id}/experts/${expert.id}`}
                     className="group block transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
                   >
 
-                    <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between">
 
                       <div className="min-w-0">
 
-                        <p className="font-medium">
-                          {project.title}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+
+                          <p className="font-medium">
+                            {project.title}
+                          </p>
+
+                          <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-medium text-primary">
+                            {project.status}
+                          </span>
+
+                        </div>
 
                         <p className="mt-1 text-sm text-muted-foreground">
 
@@ -417,32 +770,41 @@ export default function AdminExpertProfile() {
                         </p>
 
                         {project.description && (
-                          <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
+
+                          <p className="mt-2 max-w-3xl text-xs leading-5 text-muted-foreground">
                             {project.description}
                           </p>
+
                         )}
 
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        {project.required_skills &&
+                          project.required_skills.length > 0 && (
 
-                          {project.required_skills?.map(
-                            (skill) => (
-                              <span
-                                key={skill}
-                                className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
-                              >
-                                {skill}
-                              </span>
-                            )
+                            <div className="mt-3 flex flex-wrap gap-2">
+
+                              {project.required_skills.map(
+                                (skill, index) => (
+
+                                  <span
+                                    key={`${skill}-${index}`}
+                                    className="rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] text-muted-foreground"
+                                  >
+                                    {skill}
+                                  </span>
+
+                                )
+                              )}
+
+                            </div>
+
                           )}
-
-                        </div>
 
                       </div>
 
                       <div className="flex shrink-0 items-center gap-3">
 
-                        <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
-                          {project.status}
+                        <span className="text-xs text-muted-foreground">
+                          Review expert
                         </span>
 
                         <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -452,16 +814,84 @@ export default function AdminExpertProfile() {
                     </div>
 
                   </Link>
+
                 )
               )}
 
             </div>
+
           )}
 
-        </div>
+        </section>
 
       </div>
 
     </AppLayout>
+  );
+}
+
+/*
+============================================================
+PROFILE STAT
+============================================================
+*/
+
+function ProfileStat({
+  icon,
+  label,
+  value,
+  fullWidth = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div
+      className={`bg-card/70 p-5 ${
+        fullWidth ? 'w-full' : ''
+      }`}
+    >
+
+      <div className="flex items-center gap-2">
+
+        <span className="text-muted-foreground">
+          {icon}
+        </span>
+
+        <p className="text-xs text-muted-foreground">
+          {label}
+        </p>
+
+      </div>
+
+      <p className="mt-2 text-sm font-medium">
+        {value}
+      </p>
+
+    </div>
+  );
+}
+
+/*
+============================================================
+EMPTY STATE
+============================================================
+*/
+
+function EmptyState({
+  text,
+}: {
+  text: string;
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-border/60 bg-background/30 p-5 text-center">
+
+      <p className="text-sm text-muted-foreground">
+        {text}
+      </p>
+
+    </div>
   );
 }
