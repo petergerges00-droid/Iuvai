@@ -744,3 +744,161 @@ export async function deleteResume(
     resume_file_name: null,
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// PROJECT ↔ EXPERT ASSIGNMENTS
+// ─────────────────────────────────────────────────────────────
+
+export type ProjectExpertStatus =
+  | 'assigned'
+  | 'accepted'
+  | 'declined'
+  | 'completed';
+
+export interface ProjectExpert {
+  id: string;
+  project_id: string;
+  expert_id: string;
+  status: ProjectExpertStatus;
+  assigned_at: string;
+  notes: string | null;
+}
+
+/**
+ * Get experts assigned to a project.
+ */
+export async function getProjectExperts(
+  projectId: string
+): Promise<ExpertWithProfile[]> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .select(`
+      expert_id,
+      expert_profiles (
+        *,
+        profiles (
+          id,
+          full_name,
+          account_type,
+          country,
+          created_at
+        )
+      )
+    `)
+    .eq('project_id', projectId);
+
+  if (error) {
+    console.error(
+      'GET PROJECT EXPERTS ERROR:',
+      error
+    );
+
+    throw new Error(
+      `Failed to load project experts: ${error.message}`
+    );
+  }
+
+  return (data || []).map((row: any) => ({
+    ...row.expert_profiles,
+    profile:
+      row.expert_profiles?.profiles || null,
+  }));
+}
+
+/**
+ * Assign an expert to a project.
+ */
+export async function assignExpertToProject(
+  projectId: string,
+  expertId: string,
+  notes?: string
+): Promise<ProjectExpert> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .insert({
+      project_id: projectId,
+      expert_id: expertId,
+      status: 'assigned',
+      notes: notes || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to assign expert: ${error.message}`
+    );
+  }
+
+  return data as ProjectExpert;
+}
+
+/**
+ * Remove an expert from a project.
+ */
+export async function removeExpertFromProject(
+  projectId: string,
+  expertId: string
+) {
+  const { error } = await supabase
+    .from('project_experts')
+    .delete()
+    .eq('project_id', projectId)
+    .eq('expert_id', expertId);
+
+  if (error) {
+    throw new Error(
+      `Failed to remove expert: ${error.message}`
+    );
+  }
+}
+
+/**
+ * Update an expert's project assignment status.
+ */
+export async function updateProjectExpertStatus(
+  assignmentId: string,
+  status: ProjectExpertStatus
+): Promise<ProjectExpert> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .update({
+      status,
+    })
+    .eq('id', assignmentId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update assignment: ${error.message}`
+    );
+  }
+
+  return data as ProjectExpert;
+}
+
+/**
+ * Get all projects an expert has been assigned to.
+ */
+export async function getExpertProjects(
+  expertId: string
+): Promise<Project[]> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .select(`
+      project_id,
+      projects (*)
+    `)
+    .eq('expert_id', expertId);
+
+  if (error) {
+    throw new Error(
+      `Failed to load expert projects: ${error.message}`
+    );
+  }
+
+  return (data || [])
+    .map((row: any) => row.projects)
+    .filter(Boolean) as Project[];
+}
