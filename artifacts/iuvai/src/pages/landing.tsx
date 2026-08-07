@@ -35,7 +35,7 @@ export default function Landing() {
             className="absolute inset-0 opacity-[0.035]"
             style={{
               backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.9) 1px, transparent 1px)',
+                'linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.9) 1px, transparent 1px)',
               backgroundSize: '56px 56px',
             }}
           />
@@ -48,23 +48,7 @@ export default function Landing() {
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
 
             {/* Logo */}
-            <Link
-              href="/"
-              className="group flex items-center gap-3"
-            >
-              {/* Two circles + smaller center dot */}
-              <div className="relative flex h-9 w-9 items-center justify-center">
-                <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_18px_rgba(99,102,241,0.35)]" />
-                <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300 group-hover:border-primary/80 group-hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]" />
-
-                {/* ONLY CHANGE: smaller center dot */}
-                <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
-              </div>
-
-              <span className="text-base font-semibold tracking-[0.22em]">
-                IUVAI
-              </span>
-            </Link>
+            <IUVAILogo href="/" />
 
             {/* Desktop Navigation */}
             <nav className="hidden items-center gap-8 md:flex">
@@ -596,33 +580,18 @@ export default function Landing() {
         ====================================================== */}
         <footer className="border-t border-border/70">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center">
 
-    <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_18px_rgba(99,102,241,0.35)]" />
-
-    <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300 group-hover:border-primary/80 group-hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]" />
-
-    {/* Smaller center dot — circles unchanged */}
-
-    <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-
-  </div>
-
-  <span className="text-base font-semibold tracking-[0.22em]">
-
-    IUVAI
-
-  </span>
-            </div>
+            {/* Footer Logo */}
+            <IUVAILogo href="/" />
 
             <p className="text-center text-sm text-muted-foreground">
               Bridging the gap between humanity and AI.
             </p>
 
             <div className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} IUVAI
+              © {new Date().getFullYear()} IUVAI Studio
             </div>
+
           </div>
         </footer>
 
