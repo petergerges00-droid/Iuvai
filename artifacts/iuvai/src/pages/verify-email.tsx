@@ -11,7 +11,7 @@ export default function VerifyEmail() {
   return (
     <AuthLayout
       title="Verify your identity"
-      subtitle="You're one step away from joining IUVAI."
+      subtitle="You're one step away from joining IUVAI Studio."
     >
       <div className="relative">
         {/* Futuristic glow */}
@@ -36,7 +36,7 @@ export default function VerifyEmail() {
           <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
             We've sent a verification link to your email address.
             Click the link to verify your identity and continue
-            setting up your IUVAI profile.
+            setting up your IUVAI Studio profile.
           </p>
           {/* Information card */}
           <div className="mt-7 w-full rounded-xl border border-border/60 bg-muted/20 p-4 text-left">
@@ -74,7 +74,7 @@ export default function VerifyEmail() {
           <div className="mt-10 pt-6 border-t border-border/60 w-full">
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">
-                IUVAI
+                IUVAI Studio
               </span>{' '}
               — A human intelligence infrastructure powering
               tomorrow's AI.
