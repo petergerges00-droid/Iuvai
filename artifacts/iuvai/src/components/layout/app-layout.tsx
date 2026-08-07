@@ -83,9 +83,8 @@ export function AppLayout({
     },
     {
       name: 'Experts',
-      path: '/admin',
+      path: '/admin/experts',
       icon: Users,
-      disabled: true,
     },
   ];
 
@@ -192,10 +191,6 @@ export function AppLayout({
           href={homePath}
           className="group flex items-center gap-3"
         >
-
-          {/* =================================================
-              EXACT SAME LOGO AS LANDING PAGE
-              ================================================= */}
 
           <div className="relative flex h-9 w-9 items-center justify-center">
 
@@ -329,10 +324,6 @@ export function AppLayout({
             href={homePath}
             className="group flex items-center gap-3"
           >
-
-            {/* =================================================
-                EXACT SAME LOGO AS LANDING PAGE
-                ================================================= */}
 
             <div className="relative flex h-9 w-9 items-center justify-center">
 
