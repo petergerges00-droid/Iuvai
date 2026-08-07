@@ -19,12 +19,12 @@ export default function Landing() {
 
   return (
     <AppShell>
-      <main className="min-h-screen overflow-hidden bg-background text-foreground">
+      <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
 
         {/* =====================================================
             GLOBAL GRID / FUTURISTIC BACKGROUND
         ====================================================== */}
-        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
           <div className="absolute -left-48 top-20 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-[140px]" />
           <div className="absolute -right-48 top-[45%] h-[600px] w-[600px] rounded-full bg-primary/[0.05] blur-[140px]" />
           <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[140px]" />
