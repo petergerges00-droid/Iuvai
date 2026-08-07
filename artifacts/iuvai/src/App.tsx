@@ -29,6 +29,7 @@ import AdminExpertReview from '@/pages/admin-expert-review';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
+import AdminExperts from '@/pages/admin-experts';
 const queryClient = new QueryClient();
 /*
 ============================================================
@@ -312,6 +313,9 @@ function AppRouter() {
       <Route path="/admin/projects/:projectId/experts">
         <AdminRoute component={ProjectExperts} />
       </Route>
+      <Route path="/admin/experts">
+  <AdminRoute component={AdminExperts} />
+</Route>
       {/* ======================================================
           ADMIN — EXPERT REVIEW
           
