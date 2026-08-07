@@ -22,7 +22,10 @@ import Onboarding from '@/pages/onboarding';
 
 import ExpertDashboard from '@/pages/expert-dashboard';
 import CompanyDashboard from '@/pages/company-dashboard';
+
 import AdminDashboard from '@/pages/admin-dashboard';
+import AdminProjects from '@/pages/admin-projects';
+
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
@@ -90,33 +93,21 @@ function PublicRoute({
   useEffect(() => {
     if (isLoading || !session) return;
 
-    /*
-    Admin takes priority over account type.
-    */
     if (isAdminUser(user?.id)) {
       setLocation('/admin');
       return;
     }
 
-    /*
-    Logged in but onboarding has not been completed.
-    */
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
 
-    /*
-    Expert account.
-    */
     if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
 
-    /*
-    Company account.
-    */
     if (profile.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
@@ -157,25 +148,16 @@ function OnboardingRoute({
   useEffect(() => {
     if (isLoading) return;
 
-    /*
-    Not authenticated.
-    */
     if (!session) {
       setLocation('/login');
       return;
     }
 
-    /*
-    Admin account does not need onboarding.
-    */
     if (isAdminUser(user?.id)) {
       setLocation('/admin');
       return;
     }
 
-    /*
-    Onboarding already completed.
-    */
     if (profile?.account_type === 'expert') {
       setLocation('/dashboard');
       return;
@@ -201,10 +183,6 @@ function OnboardingRoute({
     return <FullPageLoader />;
   }
 
-  /*
-  If account type hasn't been selected,
-  show onboarding.
-  */
   if (!profile?.account_type) {
     return <Component />;
   }
@@ -231,25 +209,16 @@ function ProtectedRoute({
   useEffect(() => {
     if (isLoading) return;
 
-    /*
-    Not logged in.
-    */
     if (!session) {
       setLocation('/login');
       return;
     }
 
-    /*
-    Logged in but onboarding is incomplete.
-    */
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
 
-    /*
-    User is trying to access the wrong dashboard.
-    */
     if (
       requireAccountType &&
       profile.account_type !== requireAccountType
@@ -311,17 +280,11 @@ function AdminRoute({
   useEffect(() => {
     if (isLoading) return;
 
-    /*
-    Not authenticated.
-    */
     if (!session) {
       setLocation('/login');
       return;
     }
 
-    /*
-    Authenticated but not the IUVAI admin.
-    */
     if (!isAdminUser(user?.id)) {
       setLocation('/company-dashboard');
       return;
@@ -407,8 +370,23 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          ADMIN — PROJECT EXPERTS
+          ADMIN — PROJECTS
           
+          This is the main admin project list.
+
+          Example:
+          /admin/projects
+          ====================================================== */}
+
+      <Route path="/admin/projects">
+        <AdminRoute component={AdminProjects} />
+      </Route>
+
+      {/* ======================================================
+          ADMIN — PROJECT EXPERTS
+
+          This route must come after /admin/projects.
+
           Example:
           /admin/projects/PROJECT_ID/experts
           ====================================================== */}
