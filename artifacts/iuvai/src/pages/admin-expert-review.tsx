@@ -53,17 +53,12 @@ export default function AdminExpertReview() {
   const [isOpeningResume, setIsOpeningResume] =
     useState(false);
 
-  const [error, setError] = useState<string | null>(
-    null
-  );
-
-  const [success, setSuccess] = useState<string | null>(
-    null
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   /*
    * ============================================================
-   * LOAD PROJECT + EXPERT
+   * LOAD REVIEW
    * ============================================================
    */
 
@@ -156,25 +151,20 @@ export default function AdminExpertReview() {
       };
     }
 
+    const normalize = (value: string | null) =>
+      value?.trim().toLowerCase() || '';
+
     const projectField =
-      project.primary_field
-        ?.trim()
-        .toLowerCase();
+      normalize(project.primary_field);
 
     const expertField =
-      expert.primary_field
-        ?.trim()
-        .toLowerCase();
+      normalize(expert.primary_field);
 
     const projectSpecialization =
-      project.specialization
-        ?.trim()
-        .toLowerCase();
+      normalize(project.specialization);
 
     const expertSpecialization =
-      expert.specialization
-        ?.trim()
-        .toLowerCase();
+      normalize(expert.specialization);
 
     const fieldMatch =
       Boolean(
@@ -231,12 +221,9 @@ export default function AdminExpertReview() {
       );
 
     /*
-     * Simple initial scoring model.
+     * Preliminary matching score.
      *
-     * Field: 30%
-     * Specialization: 30%
-     * Skills: 25%
-     * AI experience: 15%
+     * This is NOT the final hiring decision.
      */
 
     let score = 0;
@@ -301,7 +288,7 @@ export default function AdminExpertReview() {
       ]);
 
       setSuccess(
-        'Expert successfully assigned to this project.'
+        'Expert approved and assigned to this project.'
       );
     } catch (err) {
       console.error(
@@ -321,7 +308,7 @@ export default function AdminExpertReview() {
 
   /*
    * ============================================================
-   * REMOVE EXPERT
+   * REMOVE / REJECT
    * ============================================================
    */
 
@@ -444,7 +431,7 @@ export default function AdminExpertReview() {
 
   /*
    * ============================================================
-   * ERROR / MISSING DATA
+   * ERROR
    * ============================================================
    */
 
@@ -456,7 +443,7 @@ export default function AdminExpertReview() {
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to matching
@@ -489,7 +476,7 @@ export default function AdminExpertReview() {
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to matching
@@ -511,7 +498,7 @@ export default function AdminExpertReview() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Review this expert before assigning them to the project.
+                Review this expert before approving them for the project.
               </p>
             </div>
 
@@ -536,7 +523,7 @@ export default function AdminExpertReview() {
         )}
 
         {/* ======================================================
-            EXPERT HEADER CARD
+            EXPERT HEADER
             ====================================================== */}
 
         <div className="rounded-2xl border border-border/60 bg-card/70">
@@ -581,11 +568,15 @@ export default function AdminExpertReview() {
             <div className="shrink-0 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-4 text-center">
 
               <p className="text-[10px] uppercase tracking-[0.2em] text-primary">
-                Match
+                Preliminary match
               </p>
 
               <p className="mt-1 text-3xl font-semibold text-primary">
                 {matchAnalysis.score}%
+              </p>
+
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Automated assessment
               </p>
 
             </div>
@@ -598,7 +589,7 @@ export default function AdminExpertReview() {
             PROJECT CONTEXT
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
@@ -606,82 +597,62 @@ export default function AdminExpertReview() {
               <Briefcase className="h-4 w-4 text-primary" />
 
               <h3 className="font-medium">
-                Project
+                Project context
               </h3>
             </div>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Expert is being reviewed for this project.
+              The project this expert is being evaluated for.
             </p>
 
           </div>
 
           <div className="grid gap-5 p-5 md:grid-cols-2">
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Project
-              </p>
+            <InfoItem
+              label="Project"
+              value={project.title}
+            />
 
-              <p className="mt-1 text-sm font-medium">
-                {project.title}
-              </p>
-            </div>
+            <InfoItem
+              label="Project type"
+              value={
+                project.project_type ||
+                'Not specified'
+              }
+            />
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Project type
-              </p>
+            <InfoItem
+              label="Field"
+              value={
+                project.primary_field ||
+                'Not specified'
+              }
+            />
 
-              <p className="mt-1 text-sm font-medium">
-                {project.project_type ||
-                  'Not specified'}
-              </p>
-            </div>
+            <InfoItem
+              label="Specialization"
+              value={
+                project.specialization ||
+                'Not specified'
+              }
+            />
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Field
-              </p>
+            <InfoItem
+              label="Budget"
+              value={
+                project.budget ||
+                'Not specified'
+              }
+            />
 
-              <p className="mt-1 text-sm font-medium">
-                {project.primary_field ||
-                  'Not specified'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Specialization
-              </p>
-
-              <p className="mt-1 text-sm font-medium">
-                {project.specialization ||
-                  'Not specified'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Budget
-              </p>
-
-              <p className="mt-1 text-sm font-medium">
-                {project.budget ||
-                  'Not specified'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Duration
-              </p>
-
-              <p className="mt-1 text-sm font-medium">
-                {project.duration ||
-                  'Not specified'}
-              </p>
-            </div>
+            <InfoItem
+              label="Duration"
+              value={
+                project.duration ||
+                'Not specified'
+              }
+            />
 
           </div>
 
@@ -699,13 +670,13 @@ export default function AdminExpertReview() {
             </div>
           )}
 
-        </div>
+        </section>
 
         {/* ======================================================
             PROFESSIONAL PROFILE
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
@@ -714,75 +685,58 @@ export default function AdminExpertReview() {
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Background and professional information.
+              Professional background submitted by the expert.
             </p>
 
           </div>
 
           <div className="grid gap-5 p-5 sm:grid-cols-2 lg:grid-cols-4">
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Primary field
-              </p>
+            <InfoItem
+              label="Primary field"
+              value={
+                expert.primary_field ||
+                'Not specified'
+              }
+            />
 
-              <p className="mt-1 text-sm font-medium">
-                {expert.primary_field ||
-                  'Not specified'}
-              </p>
-            </div>
+            <InfoItem
+              label="Specialization"
+              value={
+                expert.specialization ||
+                'Not specified'
+              }
+            />
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Specialization
-              </p>
-
-              <p className="mt-1 text-sm font-medium">
-                {expert.specialization ||
-                  'Not specified'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Experience
-              </p>
-
-              <p className="mt-1 text-sm font-medium">
-                {expert.years_experience != null
+            <InfoItem
+              label="Experience"
+              value={
+                expert.years_experience != null
                   ? `${expert.years_experience} years`
-                  : 'Not specified'}
-              </p>
-            </div>
+                  : 'Not specified'
+              }
+            />
 
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Highest qualification
-              </p>
+            <InfoItem
+              label="Highest qualification"
+              value={
+                expert.highest_qualification ||
+                'Not specified'
+              }
+            />
 
-              <p className="mt-1 text-sm font-medium">
-                {expert.highest_qualification ||
-                  'Not specified'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Availability
-              </p>
-
-              <p className="mt-1 flex items-center gap-1.5 text-sm font-medium">
-                <Clock3 className="h-3.5 w-3.5 text-muted-foreground" />
-
-                {expert.availability_hours != null
+            <InfoItem
+              label="Availability"
+              value={
+                expert.availability_hours != null
                   ? `${expert.availability_hours} hrs/week`
-                  : 'Not specified'}
-              </p>
-            </div>
+                  : 'Not specified'
+              }
+            />
 
           </div>
 
-        </div>
+        </section>
 
         {/* ======================================================
             SKILLS + LANGUAGES
@@ -790,9 +744,7 @@ export default function AdminExpertReview() {
 
         <div className="grid gap-6 md:grid-cols-2">
 
-          {/* Skills */}
-
-          <div className="rounded-2xl border border-border/60 bg-card/70">
+          <section className="rounded-2xl border border-border/60 bg-card/70">
 
             <div className="border-b border-border/60 p-5">
               <h3 className="font-medium">
@@ -806,16 +758,14 @@ export default function AdminExpertReview() {
               expert.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
 
-                  {expert.skills.map(
-                    (skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs text-muted-foreground"
-                      >
-                        {skill}
-                      </span>
-                    )
-                  )}
+                  {expert.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs text-muted-foreground"
+                    >
+                      {skill}
+                    </span>
+                  ))}
 
                 </div>
               ) : (
@@ -826,11 +776,9 @@ export default function AdminExpertReview() {
 
             </div>
 
-          </div>
+          </section>
 
-          {/* Languages */}
-
-          <div className="rounded-2xl border border-border/60 bg-card/70">
+          <section className="rounded-2xl border border-border/60 bg-card/70">
 
             <div className="border-b border-border/60 p-5">
               <h3 className="font-medium">
@@ -864,7 +812,7 @@ export default function AdminExpertReview() {
 
             </div>
 
-          </div>
+          </section>
 
         </div>
 
@@ -872,7 +820,7 @@ export default function AdminExpertReview() {
             AI EXPERIENCE
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
@@ -881,7 +829,8 @@ export default function AdminExpertReview() {
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Relevant experience working with AI, evaluation, annotation, or related projects.
+              Experience with AI evaluation, annotation, training,
+              data work, or related projects.
             </p>
 
           </div>
@@ -900,13 +849,13 @@ export default function AdminExpertReview() {
 
           </div>
 
-        </div>
+        </section>
 
         {/* ======================================================
             RESUME
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
@@ -915,7 +864,7 @@ export default function AdminExpertReview() {
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Review the expert's submitted CV.
+              Review the expert's submitted CV before approval.
             </p>
 
           </div>
@@ -956,9 +905,8 @@ export default function AdminExpertReview() {
                 type="button"
                 onClick={handleViewResume}
                 disabled={isOpeningResume}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 px-4 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 px-4 text-sm font-medium hover:bg-muted disabled:opacity-50"
               >
-
                 {isOpeningResume ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -968,19 +916,18 @@ export default function AdminExpertReview() {
                 {isOpeningResume
                   ? 'Opening...'
                   : 'View resume'}
-
               </button>
             )}
 
           </div>
 
-        </div>
+        </section>
 
         {/* ======================================================
             MATCH ANALYSIS
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
@@ -989,26 +936,23 @@ export default function AdminExpertReview() {
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Initial matching analysis based on the project's requirements.
+              Automated preliminary assessment. Final approval remains
+              an IUVAI administrative decision.
             </p>
 
           </div>
 
-          <div className="space-y-4 p-5">
-
-            {/* Field */}
+          <div className="space-y-3 p-5">
 
             <MatchRow
               label="Primary field"
               matched={matchAnalysis.field}
               detail={
                 matchAnalysis.field
-                  ? 'Strong field match'
-                  : 'Field does not clearly match'
+                  ? 'Field appears compatible.'
+                  : 'No clear field match.'
               }
             />
-
-            {/* Specialization */}
 
             <MatchRow
               label="Specialization"
@@ -1017,12 +961,10 @@ export default function AdminExpertReview() {
               }
               detail={
                 matchAnalysis.specialization
-                  ? 'Strong specialization match'
-                  : 'Specialization does not clearly match'
+                  ? 'Specialization appears compatible.'
+                  : 'No clear specialization match.'
               }
             />
-
-            {/* Skills */}
 
             <MatchRow
               label="Required skills"
@@ -1032,12 +974,10 @@ export default function AdminExpertReview() {
               }
               detail={
                 matchAnalysis.totalSkills === 0
-                  ? 'No specific skills required'
-                  : `${matchAnalysis.skillsMatched} of ${matchAnalysis.totalSkills} required skills matched`
+                  ? 'No specific skills required.'
+                  : `${matchAnalysis.skillsMatched} of ${matchAnalysis.totalSkills} required skills matched.`
               }
             />
-
-            {/* AI experience */}
 
             <MatchRow
               label="AI experience"
@@ -1046,88 +986,74 @@ export default function AdminExpertReview() {
               }
               detail={
                 matchAnalysis.aiExperience
-                  ? 'AI experience provided'
-                  : 'No previous AI experience provided'
+                  ? 'AI experience provided.'
+                  : 'No previous AI experience provided.'
               }
             />
 
           </div>
 
-        </div>
+        </section>
 
         {/* ======================================================
-            ASSIGNMENT
+            DECISION / ASSIGNMENT
             ====================================================== */}
 
-        <div className="rounded-2xl border border-border/60 bg-card/70">
+        <section className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
 
             <h3 className="font-medium">
-              Project assignment
+              Review decision
             </h3>
 
             <p className="mt-1 text-xs text-muted-foreground">
-              Control this expert's assignment to the project.
+              Approve the expert for this project or remove them
+              from consideration.
             </p>
 
           </div>
 
-          <div className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between">
+          <div className="p-5">
 
-            <div>
+            {isAssigned ? (
 
-              {isAssigned ? (
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
-                <>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-start gap-3">
 
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <Check className="h-4 w-4 text-primary" />
-                    </div>
-
-                    <p className="text-sm font-medium">
-                      Assigned to this project
-                    </p>
-
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Check className="h-4 w-4 text-primary" />
                   </div>
 
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Status:{' '}
-                    {currentAssignment?.status.replace(
-                      '_',
-                      ' '
-                    )}
-                  </p>
-                </>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Expert approved
+                    </p>
 
-              ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      This expert is currently assigned to this project.
+                    </p>
 
-                <>
-                  <p className="text-sm font-medium">
-                    Expert is not assigned
-                  </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Assignment status:{' '}
+                      <span className="font-medium text-foreground">
+                        {currentAssignment?.status.replace(
+                          '_',
+                          ' '
+                        )}
+                      </span>
+                    </p>
+                  </div>
 
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Assign this expert if they are suitable for the project.
-                  </p>
-                </>
-
-              )}
-
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-
-              {isAssigned ? (
+                </div>
 
                 <button
                   type="button"
                   onClick={handleRemove}
                   disabled={isRemoving}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-destructive/30 px-4 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-destructive/30 px-4 text-sm font-medium text-destructive hover:bg-destructive/5 disabled:opacity-50"
                 >
-
                   {isRemoving ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -1136,42 +1062,101 @@ export default function AdminExpertReview() {
 
                   {isRemoving
                     ? 'Removing...'
-                    : 'Remove expert'}
-
+                    : 'Remove from project'}
                 </button>
 
-              ) : (
+              </div>
 
-                <button
-                  type="button"
-                  onClick={handleAssign}
-                  disabled={isAssigning}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
+            ) : (
 
-                  {isAssigning ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <UserPlus className="h-4 w-4" />
-                  )}
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
-                  {isAssigning
-                    ? 'Assigning...'
-                    : 'Assign expert'}
+                <div>
 
-                </button>
+                  <p className="text-sm font-medium">
+                    Awaiting review decision
+                  </p>
 
-              )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Review the profile, resume, experience,
+                    and match analysis before assigning.
+                  </p>
 
-            </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+
+                  <button
+                    type="button"
+                    onClick={handleRemove}
+                    disabled={isRemoving}
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 px-4 text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    {isRemoving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+
+                    Decline
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAssign}
+                    disabled={isAssigning}
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isAssigning ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+
+                    {isAssigning
+                      ? 'Approving...'
+                      : 'Approve & assign'}
+                  </button>
+
+                </div>
+
+              </div>
+
+            )}
 
           </div>
 
-        </div>
+        </section>
 
       </div>
 
     </AppLayout>
+  );
+}
+
+/*
+ * ============================================================
+ * INFO ITEM
+ * ============================================================
+ */
+
+function InfoItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">
+        {label}
+      </p>
+
+      <p className="mt-1 text-sm font-medium">
+        {value}
+      </p>
+    </div>
   );
 }
 
