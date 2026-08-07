@@ -596,15 +596,23 @@ export default function Landing() {
         <footer className="border-t border-border/70">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-7 w-7 items-center justify-center">
-                <div className="absolute left-0 h-5 w-5 rounded-full border border-primary/60" />
-                <div className="absolute right-0 h-5 w-5 rounded-full border border-primary/40" />
-                <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary" />
-              </div>
+              <div className="relative flex h-9 w-9 items-center justify-center">
 
-              <span className="font-semibold tracking-[0.2em]">
-                IUVAI
-              </span>
+    <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_18px_rgba(99,102,241,0.35)]" />
+
+    <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300 group-hover:border-primary/80 group-hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]" />
+
+    {/* Smaller center dot — circles unchanged */}
+
+    <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+
+  </div>
+
+  <span className="text-base font-semibold tracking-[0.22em]">
+
+    IUVAI
+
+  </span>
             </div>
 
             <p className="text-center text-sm text-muted-foreground">
