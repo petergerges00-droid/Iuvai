@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { updatePassword } from '@/lib/supabase';
-import { AuthLayout } from '@/components/components/auth-layout';
+import { AuthLayout } from '@/components/layout/auth-layout';
 import { Button } from '@/components/ui/button';
 import {
   Form,
