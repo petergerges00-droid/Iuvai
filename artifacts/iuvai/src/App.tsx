@@ -29,14 +29,14 @@ const queryClient = new QueryClient();
 ADMIN ACCOUNT
 ============================================================
 This is your IUVAI operator/admin account.
-Your current Supabase user ID:
+Current Supabase user ID:
 0f29b27d-45b6-4377-9242-e983f95039af
-For the MVP, we identify the admin account directly by
-Supabase user ID.
+For the MVP, the admin account is identified directly
+by Supabase user ID.
 IMPORTANT:
-This is only frontend routing protection. Any sensitive
-admin database operations must ALSO be protected by
-Supabase RLS policies.
+This is frontend routing protection only.
+Sensitive admin database operations must ALSO be
+protected using Supabase RLS policies.
 ============================================================
 */
 const ADMIN_USER_ID =
@@ -59,6 +59,7 @@ function isAdminUser(userId: string | undefined) {
 }
 /* ============================================================
    PUBLIC ROUTE
+   Redirects authenticated users away from login/signup.
    ============================================================ */
 interface PublicRouteProps {
   component: React.ComponentType;
@@ -164,6 +165,10 @@ function OnboardingRoute({
   if (!session) {
     return <FullPageLoader />;
   }
+  /*
+  If account type hasn't been selected,
+  show onboarding.
+  */
   if (!profile?.account_type) {
     return <Component />;
   }
@@ -283,57 +288,18 @@ function AdminRoute({
   return <Component />;
 }
 /* ============================================================
-   ROOT ROUTE
-   ============================================================ */
-function RootRedirect() {
-  const { session, user, profile, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
-  useEffect(() => {
-    if (isLoading) return;
-    if (!session) {
-      setLocation('/login');
-      return;
-    }
-    /*
-    Admin takes priority.
-    */
-    if (isAdminUser(user?.id)) {
-      setLocation('/admin');
-      return;
-    }
-    if (!profile?.account_type) {
-      setLocation('/onboarding');
-      return;
-    }
-    if (profile.account_type === 'expert') {
-      setLocation('/dashboard');
-      return;
-    }
-    if (profile.account_type === 'company') {
-      setLocation('/company-dashboard');
-      return;
-    }
-  }, [
-    session,
-    user,
-    profile,
-    isLoading,
-    setLocation,
-  ]);
-  return <FullPageLoader />;
-}
-/* ============================================================
    ROUTER
    ============================================================ */
 function AppRouter() {
   return (
     <Switch>
       {/* ======================================================
-          ROOT
+          PUBLIC LANDING PAGE
           ====================================================== */}
-      <Route path="/">
-        <RootRedirect />
-      </Route>
+      <Route
+        path="/"
+        component={Landing}
+      />
       {/* ======================================================
           PUBLIC / AUTH
           ====================================================== */}
