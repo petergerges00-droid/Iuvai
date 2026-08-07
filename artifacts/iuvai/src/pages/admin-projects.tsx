@@ -25,7 +25,10 @@ export default function AdminProjects() {
         const data = await getAllProjects();
         setProjects(data);
       } catch (err) {
-        console.error('ADMIN PROJECT LOAD ERROR:', err);
+        console.error(
+          'ADMIN PROJECT LOAD ERROR:',
+          err
+        );
         setError(
           err instanceof Error
             ? err.message
@@ -40,7 +43,9 @@ export default function AdminProjects() {
   return (
     <AppLayout title="Projects">
       <div className="space-y-8">
-        {/* Header */}
+        {/* ======================================================
+            HEADER
+            ====================================================== */}
         <div>
           <div className="flex items-center gap-2">
             <FolderKanban className="h-4 w-4 text-primary" />
@@ -55,7 +60,9 @@ export default function AdminProjects() {
             Review projects and connect them with suitable experts.
           </p>
         </div>
-        {/* Stats */}
+        {/* ======================================================
+            STATS
+            ====================================================== */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
@@ -78,7 +85,8 @@ export default function AdminProjects() {
             <p className="mt-3 text-3xl font-semibold">
               {
                 projects.filter(
-                  (project) => project.status === 'open'
+                  (project) =>
+                    project.status === 'open'
                 ).length
               }
             </p>
@@ -100,7 +108,9 @@ export default function AdminProjects() {
             </p>
           </div>
         </div>
-        {/* Project list */}
+        {/* ======================================================
+            PROJECT LIST
+            ====================================================== */}
         <div className="rounded-2xl border border-border/60 bg-card/70">
           <div className="border-b border-border/60 p-5">
             <h3 className="font-medium">
@@ -110,15 +120,18 @@ export default function AdminProjects() {
               Projects available for expert matching.
             </p>
           </div>
+          {/* LOADING */}
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : error ? (
+            /* ERROR */
             <div className="p-6 text-sm text-destructive">
               {error}
             </div>
           ) : projects.length === 0 ? (
+            /* EMPTY */
             <div className="p-10 text-center">
               <FolderKanban className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium">
@@ -129,11 +142,20 @@ export default function AdminProjects() {
               </p>
             </div>
           ) : (
+            /* PROJECTS */
             <div className="divide-y divide-border/60">
               {projects.map((project) => (
                 <button
                   key={project.id}
                   type="button"
+                  /*
+                   * Navigate directly to the existing
+                   * ProjectExperts page.
+                   *
+                   * This matches the route in App.tsx:
+                   *
+                   * /admin/projects/:projectId/experts
+                   */
                   onClick={() => {
                     setLocation(
                       `/admin/projects/${project.id}/experts`
