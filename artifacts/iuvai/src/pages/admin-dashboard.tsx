@@ -7,8 +7,12 @@ import {
   Briefcase,
   Plus,
   X,
+  ArrowRight,
+  UserCheck,
 } from 'lucide-react';
+
 import { AppLayout } from '@/components/layout/app-layout';
+
 import {
   getExperts,
   ExpertWithProfile,
@@ -21,15 +25,24 @@ const ADMIN_COMPANY_ID =
   '0f29b27d-45b6-4377-9242-e983f95039af';
 
 export default function AdminDashboard() {
-  const [experts, setExperts] = useState<ExpertWithProfile[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [experts, setExperts] =
+    useState<ExpertWithProfile[]>([]);
+
+  const [projects, setProjects] =
+    useState<Project[]>([]);
+
   const [isLoadingExperts, setIsLoadingExperts] =
     useState(true);
+
   const [isLoadingProjects, setIsLoadingProjects] =
     useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
   const [showProjectForm, setShowProjectForm] =
     useState(false);
+
   const [isCreatingProject, setIsCreatingProject] =
     useState(false);
 
@@ -50,6 +63,7 @@ export default function AdminDashboard() {
   LOAD EXPERTS
   ============================================================
   */
+
   useEffect(() => {
     async function loadExperts() {
       try {
@@ -57,6 +71,7 @@ export default function AdminDashboard() {
         setError(null);
 
         const data = await getExperts();
+
         setExperts(data);
       } catch (err) {
         console.error(
@@ -82,13 +97,16 @@ export default function AdminDashboard() {
   LOAD PROJECTS
   ============================================================
   */
+
   useEffect(() => {
     async function loadProjects() {
       try {
         setIsLoadingProjects(true);
 
         const data =
-          await getCompanyProjects(ADMIN_COMPANY_ID);
+          await getCompanyProjects(
+            ADMIN_COMPANY_ID
+          );
 
         setProjects(data);
       } catch (err) {
@@ -109,6 +127,7 @@ export default function AdminDashboard() {
   CREATE PROJECT
   ============================================================
   */
+
   async function handleCreateProject(
     event: React.FormEvent
   ) {
@@ -122,28 +141,48 @@ export default function AdminDashboard() {
       setIsCreatingProject(true);
       setError(null);
 
-      const newProject = await createProject({
-        company_id: ADMIN_COMPANY_ID,
-        title: projectForm.title.trim(),
-        description:
-          projectForm.description.trim() || null,
-        primary_field:
-          projectForm.primary_field.trim() || null,
-        specialization:
-          projectForm.specialization.trim() || null,
-        required_skills:
-          projectForm.required_skills
-            .split(',')
-            .map((skill) => skill.trim())
-            .filter(Boolean),
-        project_type:
-          projectForm.project_type.trim() || null,
-        budget:
-          projectForm.budget.trim() || null,
-        duration:
-          projectForm.duration.trim() || null,
-        status: projectForm.status,
-      });
+      const newProject =
+        await createProject({
+          company_id: ADMIN_COMPANY_ID,
+
+          title:
+            projectForm.title.trim(),
+
+          description:
+            projectForm.description.trim() ||
+            null,
+
+          primary_field:
+            projectForm.primary_field.trim() ||
+            null,
+
+          specialization:
+            projectForm.specialization.trim() ||
+            null,
+
+          required_skills:
+            projectForm.required_skills
+              .split(',')
+              .map((skill) =>
+                skill.trim()
+              )
+              .filter(Boolean),
+
+          project_type:
+            projectForm.project_type.trim() ||
+            null,
+
+          budget:
+            projectForm.budget.trim() ||
+            null,
+
+          duration:
+            projectForm.duration.trim() ||
+            null,
+
+          status:
+            projectForm.status,
+        });
 
       setProjects((current) => [
         newProject,
@@ -179,21 +218,33 @@ export default function AdminDashboard() {
     }
   }
 
+  /*
+  ============================================================
+  RENDER
+  ============================================================
+  */
+
   return (
     <AppLayout title="Admin">
+
       <div className="space-y-8">
 
         {/* =====================================================
             HEADER
         ====================================================== */}
+
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+
           <div>
+
             <div className="flex items-center gap-2">
+
               <ShieldCheck className="h-4 w-4 text-primary" />
 
               <p className="text-[10px] uppercase tracking-[0.25em] text-primary">
                 IUVAI / Internal
               </p>
+
             </div>
 
             <h2 className="mt-2 text-2xl font-semibold tracking-tight">
@@ -203,6 +254,7 @@ export default function AdminDashboard() {
             <p className="mt-2 text-sm text-muted-foreground">
               Manage the expert network and projects.
             </p>
+
           </div>
 
           <button
@@ -215,67 +267,123 @@ export default function AdminDashboard() {
             <Plus className="h-4 w-4" />
             Add project
           </button>
+
         </div>
+
+        {/* =====================================================
+            NOTIFICATION
+        ====================================================== */}
+
+        {error && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         {/* =====================================================
             STATS
         ====================================================== */}
+
         <div className="grid gap-4 sm:grid-cols-3">
 
-          <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
+          {/* Experts */}
+
+          <Link
+            href="/admin/projects"
+            className="group rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:bg-muted/30"
+          >
+
             <div className="flex items-center justify-between">
+
               <p className="text-xs text-muted-foreground">
                 Total experts
               </p>
 
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+
             </div>
 
             <p className="mt-3 text-3xl font-semibold">
               {experts.length}
             </p>
-          </div>
+
+            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
+              View project experts
+              <ArrowRight className="h-3 w-3" />
+            </div>
+
+          </Link>
+
+          {/* Active projects */}
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
+
             <div className="flex items-center justify-between">
+
               <p className="text-xs text-muted-foreground">
                 Active projects
               </p>
 
               <Briefcase className="h-4 w-4 text-muted-foreground" />
+
             </div>
 
             <p className="mt-3 text-3xl font-semibold">
               {
                 projects.filter(
                   (project) =>
-                    project.status === 'open' ||
-                    project.status === 'in_progress'
+                    project.status ===
+                      'open' ||
+                    project.status ===
+                      'in_progress'
                 ).length
               }
             </p>
+
           </div>
 
-          <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
-            <p className="text-xs text-muted-foreground">
-              Total projects
-            </p>
+          {/* Total projects */}
+
+          <Link
+            href="/admin/projects"
+            className="group rounded-2xl border border-border/60 bg-card/70 p-5 transition-colors hover:bg-muted/30"
+          >
+
+            <div className="flex items-center justify-between">
+
+              <p className="text-xs text-muted-foreground">
+                Total projects
+              </p>
+
+              <Briefcase className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+
+            </div>
 
             <p className="mt-3 text-3xl font-semibold">
               {projects.length}
             </p>
-          </div>
+
+            <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
+              View projects
+              <ArrowRight className="h-3 w-3" />
+            </div>
+
+          </Link>
 
         </div>
 
         {/* =====================================================
             CREATE PROJECT FORM
         ====================================================== */}
+
         {showProjectForm && (
+
           <div className="rounded-2xl border border-border/60 bg-card/70">
 
             <div className="flex items-center justify-between border-b border-border/60 p-5">
+
               <div>
+
                 <h3 className="font-medium">
                   Add project
                 </h3>
@@ -283,6 +391,7 @@ export default function AdminDashboard() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Add an external AI project that IUVAI will recruit experts for.
                 </p>
+
               </div>
 
               <button
@@ -294,6 +403,7 @@ export default function AdminDashboard() {
               >
                 <X className="h-4 w-4" />
               </button>
+
             </div>
 
             <form
@@ -301,7 +411,10 @@ export default function AdminDashboard() {
               className="space-y-5 p-5"
             >
 
+              {/* Project title */}
+
               <div>
+
                 <label className="text-sm font-medium">
                   Project title
                 </label>
@@ -311,22 +424,29 @@ export default function AdminDashboard() {
                   onChange={(event) =>
                     setProjectForm({
                       ...projectForm,
-                      title: event.target.value,
+                      title:
+                        event.target.value,
                     })
                   }
                   placeholder="Medical AI evaluation project"
                   className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   required
                 />
+
               </div>
 
+              {/* Description */}
+
               <div>
+
                 <label className="text-sm font-medium">
                   Description
                 </label>
 
                 <textarea
-                  value={projectForm.description}
+                  value={
+                    projectForm.description
+                  }
                   onChange={(event) =>
                     setProjectForm({
                       ...projectForm,
@@ -338,17 +458,25 @@ export default function AdminDashboard() {
                   rows={4}
                   className="mt-2 w-full rounded-lg border border-border/70 bg-background px-3 py-3 text-sm outline-none focus:border-primary"
                 />
+
               </div>
+
+              {/* Project details */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
+                {/* Field */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Primary field
                   </label>
 
                   <input
-                    value={projectForm.primary_field}
+                    value={
+                      projectForm.primary_field
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -359,15 +487,21 @@ export default function AdminDashboard() {
                     placeholder="Medicine"
                     className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+
                 </div>
 
+                {/* Specialization */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Specialization
                   </label>
 
                   <input
-                    value={projectForm.specialization}
+                    value={
+                      projectForm.specialization
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -378,15 +512,21 @@ export default function AdminDashboard() {
                     placeholder="Neurosurgery"
                     className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+
                 </div>
 
+                {/* Project type */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Project type
                   </label>
 
                   <input
-                    value={projectForm.project_type}
+                    value={
+                      projectForm.project_type
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -397,15 +537,21 @@ export default function AdminDashboard() {
                     placeholder="AI evaluation / annotation"
                     className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+
                 </div>
 
+                {/* Budget */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Budget
                   </label>
 
                   <input
-                    value={projectForm.budget}
+                    value={
+                      projectForm.budget
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -416,15 +562,21 @@ export default function AdminDashboard() {
                     placeholder="$25/hour"
                     className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+
                 </div>
 
+                {/* Duration */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Duration
                   </label>
 
                   <input
-                    value={projectForm.duration}
+                    value={
+                      projectForm.duration
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -435,15 +587,21 @@ export default function AdminDashboard() {
                     placeholder="4 weeks"
                     className="mt-2 h-11 w-full rounded-lg border border-border/70 bg-background px-3 text-sm outline-none focus:border-primary"
                   />
+
                 </div>
 
+                {/* Skills */}
+
                 <div>
+
                   <label className="text-sm font-medium">
                     Required skills
                   </label>
 
                   <input
-                    value={projectForm.required_skills}
+                    value={
+                      projectForm.required_skills
+                    }
                     onChange={(event) =>
                       setProjectForm({
                         ...projectForm,
@@ -458,9 +616,12 @@ export default function AdminDashboard() {
                   <p className="mt-1 text-[11px] text-muted-foreground">
                     Separate skills with commas.
                   </p>
+
                 </div>
 
               </div>
+
+              {/* Form actions */}
 
               <div className="flex justify-end gap-3 pt-2">
 
@@ -476,9 +637,12 @@ export default function AdminDashboard() {
 
                 <button
                   type="submit"
-                  disabled={isCreatingProject}
+                  disabled={
+                    isCreatingProject
+                  }
                   className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 >
+
                   {isCreatingProject ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -487,35 +651,56 @@ export default function AdminDashboard() {
                   ) : (
                     'Create project'
                   )}
+
                 </button>
 
               </div>
 
             </form>
+
           </div>
         )}
 
         {/* =====================================================
             PROJECTS
         ====================================================== */}
+
         <div className="rounded-2xl border border-border/60 bg-card/70">
 
-          <div className="border-b border-border/60 p-5">
-            <h3 className="font-medium">
-              Projects
-            </h3>
+          <div className="flex flex-col gap-3 border-b border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between">
 
-            <p className="mt-1 text-xs text-muted-foreground">
-              Projects you are recruiting experts for.
-            </p>
+            <div>
+
+              <h3 className="font-medium">
+                Projects
+              </h3>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Projects you are recruiting experts for.
+              </p>
+
+            </div>
+
+            <Link
+              href="/admin/projects"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              View all projects
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
           </div>
 
           {isLoadingProjects ? (
+
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+
           ) : projects.length === 0 ? (
+
             <div className="p-10 text-center">
+
               <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
 
               <p className="mt-3 text-sm font-medium">
@@ -525,63 +710,87 @@ export default function AdminDashboard() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Add your first external project to begin recruiting experts.
               </p>
+
             </div>
+
           ) : (
+
             <div className="divide-y divide-border/60">
 
               {projects.map((project) => (
-                <Link
+
+                <div
                   key={project.id}
-                  href={`/admin/projects/${project.id}`}
-                  className="block transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
+                  className="flex flex-col gap-4 p-5 transition-colors hover:bg-muted/20 md:flex-row md:items-center md:justify-between"
                 >
-                  <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
 
-                    <div>
-                      <p className="font-medium">
-                        {project.title}
+                  {/* Project information */}
+
+                  <Link
+                    href={`/admin/projects/${project.id}`}
+                    className="min-w-0 flex-1"
+                  >
+
+                    <p className="font-medium">
+                      {project.title}
+                    </p>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {project.primary_field ||
+                        'Field not specified'}
+
+                      {project.specialization
+                        ? ` · ${project.specialization}`
+                        : ''}
+                    </p>
+
+                    {project.description && (
+                      <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
+                        {project.description}
                       </p>
+                    )}
 
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {project.primary_field ||
-                          'Field not specified'}
+                    <div className="mt-3 flex flex-wrap gap-2">
 
-                        {project.specialization
-                          ? ` · ${project.specialization}`
-                          : ''}
-                      </p>
-
-                      {project.description && (
-                        <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-                          {project.description}
-                        </p>
+                      {project.required_skills?.map(
+                        (skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
+                          >
+                            {skill}
+                          </span>
+                        )
                       )}
 
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {project.required_skills?.map(
-                          (skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
-                            >
-                              {skill}
-                            </span>
-                          )
-                        )}
-                      </div>
                     </div>
 
-                    <div className="shrink-0">
-                      <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
-                        {project.status}
-                      </span>
-                    </div>
+                  </Link>
+
+                  {/* Project actions */}
+
+                  <div className="flex shrink-0 items-center gap-3">
+
+                    <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
+                      {project.status}
+                    </span>
+
+                    <Link
+                      href={`/admin/projects/${project.id}/experts`}
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border/70 px-3 text-xs font-medium transition-colors hover:bg-muted"
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      Experts
+                    </Link>
 
                   </div>
-                </Link>
+
+                </div>
+
               ))}
 
             </div>
+
           )}
 
         </div>
@@ -589,73 +798,137 @@ export default function AdminDashboard() {
         {/* =====================================================
             EXPERTS
         ====================================================== */}
+
         <div className="rounded-2xl border border-border/60 bg-card/70">
 
-          <div className="border-b border-border/60 p-5">
-            <h3 className="font-medium">
-              Registered experts
-            </h3>
+          <div className="flex flex-col gap-3 border-b border-border/60 p-5 sm:flex-row sm:items-center sm:justify-between">
 
-            <p className="mt-1 text-xs text-muted-foreground">
-              Experts currently registered with IUVAI.
-            </p>
+            <div>
+
+              <div className="flex items-center gap-2">
+
+                <UserCheck className="h-4 w-4 text-primary" />
+
+                <h3 className="font-medium">
+                  Registered experts
+                </h3>
+
+              </div>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Experts currently registered with IUVAI.
+              </p>
+
+            </div>
+
+            <Link
+              href="/admin/projects"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+            >
+              Manage experts
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+
           </div>
 
           {isLoadingExperts ? (
+
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+
           ) : error ? (
+
             <div className="p-6 text-sm text-destructive">
               {error}
             </div>
+
           ) : experts.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              No experts registered yet.
+
+            <div className="p-8 text-center">
+
+              <Users className="mx-auto h-8 w-8 text-muted-foreground/50" />
+
+              <p className="mt-3 text-sm font-medium">
+                No experts registered yet.
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Experts will appear here once they register with IUVAI.
+              </p>
+
             </div>
+
           ) : (
+
             <div className="divide-y divide-border/60">
 
               {experts.map((expert) => (
+
                 <div
                   key={expert.id}
                   className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
                 >
 
-                  <div>
+                  {/* Expert information */}
+
+                  <div className="min-w-0">
+
                     <p className="font-medium">
                       {expert.profile?.full_name ||
                         'Unnamed expert'}
                     </p>
 
                     <p className="mt-1 text-sm text-muted-foreground">
+
                       {expert.primary_field ||
                         'Field not specified'}
 
                       {expert.specialization
                         ? ` · ${expert.specialization}`
                         : ''}
+
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
+
                       {expert.profile?.country ||
                         'Country not specified'}
+
                     </p>
+
                   </div>
 
-                  <div className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
-                    Pending review
+                  {/* Expert status */}
+
+                  <div className="flex shrink-0 items-center gap-3">
+
+                    <span className="rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+                      Pending review
+                    </span>
+
+                    <Link
+                      href="/admin/projects"
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border/70 px-3 text-xs font-medium transition-colors hover:bg-muted"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" />
+                      Review
+                    </Link>
+
                   </div>
 
                 </div>
+
               ))}
 
             </div>
+
           )}
 
         </div>
 
       </div>
+
     </AppLayout>
   );
 }
