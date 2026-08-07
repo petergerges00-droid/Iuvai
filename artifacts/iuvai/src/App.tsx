@@ -327,6 +327,9 @@ function AppRouter() {
       <Route path="/admin/projects/:projectId/experts/:expertId">
         <AdminRoute component={AdminExpertReview} />
       </Route>
+      <Route path="/admin/experts/:expertId">
+  <AdminRoute component={AdminExpertProfile} />
+</Route>
       {/* ======================================================
           ADMIN — SINGLE PROJECT
           
