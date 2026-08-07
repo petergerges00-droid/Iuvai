@@ -19,7 +19,7 @@ interface AppLayoutProps {
   children: ReactNode;
   title: string;
 }
-export function AppLayout({ children, title }: AppLayoutProps) {
+export default function AppLayout({ children, title }: AppLayoutProps) {
   const { profile } = useAuth();
   const [, setLocation] = useLocation();
   const handleSignOut = async () => {
