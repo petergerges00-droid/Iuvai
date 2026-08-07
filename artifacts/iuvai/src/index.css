@@ -291,3 +291,11 @@
     inset: -1px;
   }
 }
+
+a {
+  cursor: pointer;
+}
+a,
+button {
+  cursor: pointer;
+}
