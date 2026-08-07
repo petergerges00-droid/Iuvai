@@ -42,19 +42,6 @@ export default function AdminProjects() {
     }
     loadProjects();
   }, []);
-  function openProject(projectId: string) {
-    const destination =
-      `/admin/projects/${projectId}/experts`;
-    console.log(
-      'OPENING PROJECT:',
-      projectId
-    );
-    console.log(
-      'NAVIGATING TO:',
-      destination
-    );
-    window.location.href = destination;
-  }
   return (
     <AppLayout title="Projects">
       <div className="space-y-8">
@@ -75,7 +62,6 @@ export default function AdminProjects() {
         </div>
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-3">
-          {/* Total projects */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -87,7 +73,6 @@ export default function AdminProjects() {
               {projects.length}
             </p>
           </div>
-          {/* Open */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -104,7 +89,6 @@ export default function AdminProjects() {
               }
             </p>
           </div>
-          {/* In progress */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -132,17 +116,14 @@ export default function AdminProjects() {
               Projects available for expert matching.
             </p>
           </div>
-          {/* Loading */}
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          /* Error */
           ) : error ? (
             <div className="p-6 text-sm text-destructive">
               {error}
             </div>
-          /* No projects */
           ) : projects.length === 0 ? (
             <div className="p-10 text-center">
               <FolderKanban className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -153,17 +134,13 @@ export default function AdminProjects() {
                 Projects you add to IUVAI will appear here.
               </p>
             </div>
-          /* Projects */
           ) : (
             <div className="divide-y divide-border/60">
               {projects.map((project) => (
-                <button
+                <a
                   key={project.id}
-                  type="button"
-                  onClick={() =>
-                    openProject(project.id)
-                  }
-                  className="group flex w-full cursor-pointer flex-col gap-4 p-5 text-left transition hover:bg-muted/30 md:flex-row md:items-center md:justify-between"
+                  href={`/admin/projects/${project.id}/experts`}
+                  className="group relative z-10 flex w-full cursor-pointer flex-col gap-4 p-5 text-left transition hover:bg-muted/30 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
@@ -211,7 +188,7 @@ export default function AdminProjects() {
                     </div>
                   </div>
                   <ChevronRight className="hidden h-5 w-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 md:block" />
-                </button>
+                </a>
               ))}
             </div>
           )}
