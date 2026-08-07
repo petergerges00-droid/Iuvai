@@ -93,7 +93,7 @@ export default function ForgotPassword() {
         </div>
         <div className="mt-8 text-center">
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40">
-            IUVAI · Human Intelligence Infrastructure
+            IUVAI Studio
           </p>
         </div>
       </AuthLayout>
@@ -164,7 +164,7 @@ export default function ForgotPassword() {
       </div>
       <div className="mt-10 text-center">
         <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40">
-          IUVAI · Human Intelligence Infrastructure
+          IUVAI Studio
         </p>
       </div>
     </AuthLayout>
