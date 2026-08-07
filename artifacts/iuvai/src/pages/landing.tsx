@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import { IUVAILogo } from '@/components/ui/iuvai-logo';
 import {
   ArrowRight,
   Brain,
