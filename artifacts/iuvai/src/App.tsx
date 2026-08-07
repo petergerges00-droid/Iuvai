@@ -36,6 +36,7 @@ import AdminExpertProfile from '@/pages/admin-expert-profile';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
+import ExpertProfile from '@/pages/expert-profile';
 
 const queryClient = new QueryClient();
 
@@ -535,7 +536,12 @@ function AppRouter() {
           component={AdminProjects}
         />
       </Route>
-
+<Route path="/expert-profile">
+  <ProtectedRoute
+    component={ExpertProfile}
+    requireAccountType="expert"
+  />
+</Route>
       {/* ======================================================
           EXPERT DASHBOARD
           ====================================================== */}
