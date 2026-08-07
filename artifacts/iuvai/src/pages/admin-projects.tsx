@@ -23,6 +23,7 @@ export default function AdminProjects() {
         setIsLoading(true);
         setError(null);
         const data = await getAllProjects();
+        console.log('ADMIN PROJECTS LOADED:', data);
         setProjects(data);
       } catch (err) {
         console.error(
@@ -40,12 +41,23 @@ export default function AdminProjects() {
     }
     loadProjects();
   }, []);
+  function openProject(projectId: string) {
+    const destination =
+      `/admin/projects/${projectId}/experts`;
+    console.log(
+      'OPENING PROJECT:',
+      projectId
+    );
+    console.log(
+      'NAVIGATING TO:',
+      destination
+    );
+    setLocation(destination);
+  }
   return (
     <AppLayout title="Projects">
       <div className="space-y-8">
-        {/* ======================================================
-            HEADER
-            ====================================================== */}
+        {/* Header */}
         <div>
           <div className="flex items-center gap-2">
             <FolderKanban className="h-4 w-4 text-primary" />
@@ -60,9 +72,7 @@ export default function AdminProjects() {
             Review projects and connect them with suitable experts.
           </p>
         </div>
-        {/* ======================================================
-            STATS
-            ====================================================== */}
+        {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
@@ -108,9 +118,7 @@ export default function AdminProjects() {
             </p>
           </div>
         </div>
-        {/* ======================================================
-            PROJECT LIST
-            ====================================================== */}
+        {/* Project list */}
         <div className="rounded-2xl border border-border/60 bg-card/70">
           <div className="border-b border-border/60 p-5">
             <h3 className="font-medium">
@@ -120,18 +128,15 @@ export default function AdminProjects() {
               Projects available for expert matching.
             </p>
           </div>
-          {/* LOADING */}
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : error ? (
-            /* ERROR */
             <div className="p-6 text-sm text-destructive">
               {error}
             </div>
           ) : projects.length === 0 ? (
-            /* EMPTY */
             <div className="p-10 text-center">
               <FolderKanban className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium">
@@ -142,26 +147,15 @@ export default function AdminProjects() {
               </p>
             </div>
           ) : (
-            /* PROJECTS */
             <div className="divide-y divide-border/60">
               {projects.map((project) => (
                 <button
                   key={project.id}
                   type="button"
-                  /*
-                   * Navigate directly to the existing
-                   * ProjectExperts page.
-                   *
-                   * This matches the route in App.tsx:
-                   *
-                   * /admin/projects/:projectId/experts
-                   */
-                  onClick={() => {
-                    setLocation(
-                      `/admin/projects/${project.id}/experts`
-                    );
-                  }}
-                  className="group flex w-full flex-col gap-4 p-5 text-left transition hover:bg-muted/30 md:flex-row md:items-center md:justify-between"
+                  onClick={() =>
+                    openProject(project.id)
+                  }
+                  className="group flex w-full cursor-pointer flex-col gap-4 p-5 text-left transition hover:bg-muted/30 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
