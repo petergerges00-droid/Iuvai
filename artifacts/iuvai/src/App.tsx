@@ -364,7 +364,10 @@ function AppRouter() {
       <Route path="/onboarding">
         <OnboardingRoute component={Onboarding} />
       </Route>
-
+<Route
+  path="/admin/projects/:projectId/experts/:expertId"
+  component={AdminExpertReview}
+/>
       {/* ======================================================
           ADMIN DASHBOARD
           ====================================================== */}
