@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
+import { Link } from 'wouter';
 import {
   Loader2,
   ShieldCheck,
@@ -10,47 +11,25 @@ import {
 import { AppLayout } from '@/components/layout/app-layout';
 import {
   getExperts,
+  ExpertWithProfile,
   getCompanyProjects,
   createProject,
-  type ExpertWithProfile,
-  type Project,
+  Project,
 } from '@/lib/supabase';
 
-/*
-============================================================
-IUVAI ADMIN COMPANY
-============================================================
-This is the same ID used for the admin account.
-============================================================
-*/
 const ADMIN_COMPANY_ID =
   '0f29b27d-45b6-4377-9242-e983f95039af';
 
 export default function AdminDashboard() {
-  /*
-  ============================================================
-  STATE
-  ============================================================
-  */
-
   const [experts, setExperts] = useState<ExpertWithProfile[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-
   const [isLoadingExperts, setIsLoadingExperts] =
     useState(true);
-
   const [isLoadingProjects, setIsLoadingProjects] =
     useState(true);
-
-  const [expertsError, setExpertsError] =
-    useState<string | null>(null);
-
-  const [projectsError, setProjectsError] =
-    useState<string | null>(null);
-
+  const [error, setError] = useState<string | null>(null);
   const [showProjectForm, setShowProjectForm] =
     useState(false);
-
   const [isCreatingProject, setIsCreatingProject] =
     useState(false);
 
@@ -71,46 +50,31 @@ export default function AdminDashboard() {
   LOAD EXPERTS
   ============================================================
   */
-
   useEffect(() => {
-    let isMounted = true;
-
     async function loadExperts() {
       try {
         setIsLoadingExperts(true);
-        setExpertsError(null);
+        setError(null);
 
         const data = await getExperts();
-
-        if (!isMounted) return;
-
-        setExperts(Array.isArray(data) ? data : []);
+        setExperts(data);
       } catch (err) {
         console.error(
-          'ADMIN DASHBOARD - EXPERT LOAD ERROR:',
+          'ADMIN EXPERT LOAD ERROR:',
           err
         );
 
-        if (!isMounted) return;
-
-        setExperts([]);
-        setExpertsError(
+        setError(
           err instanceof Error
             ? err.message
-            : 'Unable to load experts.'
+            : 'Failed to load experts.'
         );
       } finally {
-        if (isMounted) {
-          setIsLoadingExperts(false);
-        }
+        setIsLoadingExperts(false);
       }
     }
 
     loadExperts();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   /*
@@ -118,47 +82,26 @@ export default function AdminDashboard() {
   LOAD PROJECTS
   ============================================================
   */
-
   useEffect(() => {
-    let isMounted = true;
-
     async function loadProjects() {
       try {
         setIsLoadingProjects(true);
-        setProjectsError(null);
 
         const data =
           await getCompanyProjects(ADMIN_COMPANY_ID);
 
-        if (!isMounted) return;
-
-        setProjects(Array.isArray(data) ? data : []);
+        setProjects(data);
       } catch (err) {
         console.error(
-          'ADMIN DASHBOARD - PROJECT LOAD ERROR:',
+          'ADMIN PROJECT LOAD ERROR:',
           err
         );
-
-        if (!isMounted) return;
-
-        setProjects([]);
-        setProjectsError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load projects.'
-        );
       } finally {
-        if (isMounted) {
-          setIsLoadingProjects(false);
-        }
+        setIsLoadingProjects(false);
       }
     }
 
     loadProjects();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   /*
@@ -166,9 +109,8 @@ export default function AdminDashboard() {
   CREATE PROJECT
   ============================================================
   */
-
   async function handleCreateProject(
-    event: FormEvent<HTMLFormElement>
+    event: React.FormEvent
   ) {
     event.preventDefault();
 
@@ -178,36 +120,28 @@ export default function AdminDashboard() {
 
     try {
       setIsCreatingProject(true);
+      setError(null);
 
       const newProject = await createProject({
         company_id: ADMIN_COMPANY_ID,
-
         title: projectForm.title.trim(),
-
         description:
           projectForm.description.trim() || null,
-
         primary_field:
           projectForm.primary_field.trim() || null,
-
         specialization:
           projectForm.specialization.trim() || null,
-
         required_skills:
           projectForm.required_skills
             .split(',')
             .map((skill) => skill.trim())
             .filter(Boolean),
-
         project_type:
           projectForm.project_type.trim() || null,
-
         budget:
           projectForm.budget.trim() || null,
-
         duration:
           projectForm.duration.trim() || null,
-
         status: projectForm.status,
       });
 
@@ -231,11 +165,11 @@ export default function AdminDashboard() {
       setShowProjectForm(false);
     } catch (err) {
       console.error(
-        'ADMIN DASHBOARD - CREATE PROJECT ERROR:',
+        'CREATE PROJECT ERROR:',
         err
       );
 
-      setProjectsError(
+      setError(
         err instanceof Error
           ? err.message
           : 'Failed to create project.'
@@ -245,32 +179,13 @@ export default function AdminDashboard() {
     }
   }
 
-  /*
-  ============================================================
-  DERIVED STATS
-  ============================================================
-  */
-
-  const activeProjects = projects.filter(
-    (project) =>
-      project.status === 'open' ||
-      project.status === 'in_progress'
-  );
-
-  /*
-  ============================================================
-  RENDER
-  ============================================================
-  */
-
   return (
     <AppLayout title="Admin">
       <div className="space-y-8">
 
-        {/* ====================================================
+        {/* =====================================================
             HEADER
-        ==================================================== */}
-
+        ====================================================== */}
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -292,7 +207,9 @@ export default function AdminDashboard() {
 
           <button
             type="button"
-            onClick={() => setShowProjectForm(true)}
+            onClick={() =>
+              setShowProjectForm(true)
+            }
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
@@ -300,13 +217,10 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* ====================================================
+        {/* =====================================================
             STATS
-        ==================================================== */}
-
+        ====================================================== */}
         <div className="grid gap-4 sm:grid-cols-3">
-
-          {/* Experts */}
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
@@ -318,15 +232,9 @@ export default function AdminDashboard() {
             </div>
 
             <p className="mt-3 text-3xl font-semibold">
-              {isLoadingExperts ? (
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-              ) : (
-                experts.length
-              )}
+              {experts.length}
             </p>
           </div>
-
-          {/* Active projects */}
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
@@ -338,15 +246,15 @@ export default function AdminDashboard() {
             </div>
 
             <p className="mt-3 text-3xl font-semibold">
-              {isLoadingProjects ? (
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-              ) : (
-                activeProjects.length
-              )}
+              {
+                projects.filter(
+                  (project) =>
+                    project.status === 'open' ||
+                    project.status === 'in_progress'
+                ).length
+              }
             </p>
           </div>
-
-          {/* Total projects */}
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <p className="text-xs text-muted-foreground">
@@ -354,19 +262,15 @@ export default function AdminDashboard() {
             </p>
 
             <p className="mt-3 text-3xl font-semibold">
-              {isLoadingProjects ? (
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-              ) : (
-                projects.length
-              )}
+              {projects.length}
             </p>
           </div>
+
         </div>
 
-        {/* ====================================================
+        {/* =====================================================
             CREATE PROJECT FORM
-        ==================================================== */}
-
+        ====================================================== */}
         {showProjectForm && (
           <div className="rounded-2xl border border-border/60 bg-card/70">
 
@@ -397,8 +301,6 @@ export default function AdminDashboard() {
               className="space-y-5 p-5"
             >
 
-              {/* Title */}
-
               <div>
                 <label className="text-sm font-medium">
                   Project title
@@ -417,8 +319,6 @@ export default function AdminDashboard() {
                   required
                 />
               </div>
-
-              {/* Description */}
 
               <div>
                 <label className="text-sm font-medium">
@@ -439,8 +339,6 @@ export default function AdminDashboard() {
                   className="mt-2 w-full rounded-lg border border-border/70 bg-background px-3 py-3 text-sm outline-none focus:border-primary"
                 />
               </div>
-
-              {/* Fields */}
 
               <div className="grid gap-5 md:grid-cols-2">
 
@@ -561,9 +459,8 @@ export default function AdminDashboard() {
                     Separate skills with commas.
                   </p>
                 </div>
-              </div>
 
-              {/* Buttons */}
+              </div>
 
               <div className="flex justify-end gap-3 pt-2">
 
@@ -591,15 +488,16 @@ export default function AdminDashboard() {
                     'Create project'
                   )}
                 </button>
+
               </div>
+
             </form>
           </div>
         )}
 
-        {/* ====================================================
+        {/* =====================================================
             PROJECTS
-        ==================================================== */}
-
+        ====================================================== */}
         <div className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
@@ -616,19 +514,8 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : projectsError ? (
-            <div className="p-6">
-              <p className="text-sm font-medium text-destructive">
-                Unable to load projects
-              </p>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                {projectsError}
-              </p>
-            </div>
           ) : projects.length === 0 ? (
             <div className="p-10 text-center">
-
               <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/50" />
 
               <p className="mt-3 text-sm font-medium">
@@ -643,69 +530,68 @@ export default function AdminDashboard() {
             <div className="divide-y divide-border/60">
 
               {projects.map((project) => (
-                <div
+                <Link
                   key={project.id}
-                  className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
+                  href={`/admin/projects/${project.id}`}
+                  className="block transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
                 >
+                  <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
 
-                  <div>
-
-                    <p className="font-medium">
-                      {project.title}
-                    </p>
-
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {project.primary_field ||
-                        'Field not specified'}
-
-                      {project.specialization
-                        ? ` · ${project.specialization}`
-                        : ''}
-                    </p>
-
-                    {project.description && (
-                      <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
-                        {project.description}
+                    <div>
+                      <p className="font-medium">
+                        {project.title}
                       </p>
-                    )}
 
-                    {project.required_skills &&
-                      project.required_skills.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {project.required_skills.map(
-                            (skill) => (
-                              <span
-                                key={skill}
-                                className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
-                              >
-                                {skill}
-                              </span>
-                            )
-                          )}
-                        </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {project.primary_field ||
+                          'Field not specified'}
+
+                        {project.specialization
+                          ? ` · ${project.specialization}`
+                          : ''}
+                      </p>
+
+                      {project.description && (
+                        <p className="mt-2 max-w-2xl text-xs text-muted-foreground">
+                          {project.description}
+                        </p>
                       )}
-                  </div>
 
-                  <div className="shrink-0">
-                    <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
-                      {project.status}
-                    </span>
-                  </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {project.required_skills?.map(
+                          (skill) => (
+                            <span
+                              key={skill}
+                              className="rounded-full border border-border/60 px-2.5 py-1 text-[11px] text-muted-foreground"
+                            >
+                              {skill}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
 
-                </div>
+                    <div className="shrink-0">
+                      <span className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
+                        {project.status}
+                      </span>
+                    </div>
+
+                  </div>
+                </Link>
               ))}
+
             </div>
           )}
+
         </div>
 
-        {/* ====================================================
+        {/* =====================================================
             EXPERTS
-        ==================================================== */}
-
+        ====================================================== */}
         <div className="rounded-2xl border border-border/60 bg-card/70">
 
           <div className="border-b border-border/60 p-5">
-
             <h3 className="font-medium">
               Registered experts
             </h3>
@@ -713,24 +599,15 @@ export default function AdminDashboard() {
             <p className="mt-1 text-xs text-muted-foreground">
               Experts currently registered with IUVAI.
             </p>
-
           </div>
 
           {isLoadingExperts ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : expertsError ? (
-            <div className="p-6">
-
-              <p className="text-sm font-medium text-destructive">
-                Unable to load experts
-              </p>
-
-              <p className="mt-1 text-xs text-muted-foreground">
-                {expertsError}
-              </p>
-
+          ) : error ? (
+            <div className="p-6 text-sm text-destructive">
+              {error}
             </div>
           ) : experts.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
@@ -746,7 +623,6 @@ export default function AdminDashboard() {
                 >
 
                   <div>
-
                     <p className="font-medium">
                       {expert.profile?.full_name ||
                         'Unnamed expert'}
@@ -765,7 +641,6 @@ export default function AdminDashboard() {
                       {expert.profile?.country ||
                         'Country not specified'}
                     </p>
-
                   </div>
 
                   <div className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
@@ -777,6 +652,7 @@ export default function AdminDashboard() {
 
             </div>
           )}
+
         </div>
 
       </div>
