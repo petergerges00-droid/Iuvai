@@ -215,12 +215,15 @@ export default function Onboarding() {
           <button
             type="button"
             onClick={() => setLocation('/')}
-            className="flex items-center gap-3 transition-opacity hover:opacity-80"
+            className="group flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-lg shadow-primary/20">
-              <div className="h-2.5 w-2.5 rounded-full bg-primary-foreground" />
+            {/* IUVAI locked logo */}
+            <div className="relative h-8 w-8 shrink-0">
+              <div className="absolute left-0 top-0 h-6 w-6 rounded-full bg-primary" />
+              <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full border-2 border-primary bg-background" />
+              <div className="absolute left-[9px] top-[9px] h-2.5 w-2.5 rounded-full bg-primary-foreground" />
             </div>
-            <span className="text-sm font-bold tracking-[0.22em]">
+            <span className="text-sm font-bold tracking-[0.22em] text-foreground">
               IUVAI
             </span>
           </button>
@@ -306,7 +309,7 @@ export default function Onboarding() {
                 onClick={() =>
                   handleTypeSelect('expert')
                 }
-                className="group text-left"
+                className="group cursor-pointer text-left"
               >
                 <div className="relative h-full overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/5">
                   <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
@@ -355,7 +358,7 @@ export default function Onboarding() {
                 onClick={() =>
                   handleTypeSelect('company')
                 }
-                className="group text-left"
+                className="group cursor-pointer text-left"
               >
                 <div className="relative h-full overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/5">
                   <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-primary/5 blur-3xl transition-all group-hover:bg-primary/10" />
@@ -516,7 +519,7 @@ export default function Onboarding() {
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Medicine, Law, Linguistics..."
+                                    placeholder="Law, Finance, Engineering, Linguistics..."
                                     {...field}
                                     className="h-11"
                                   />
@@ -535,7 +538,7 @@ export default function Onboarding() {
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Neurosurgery, IP Law..."
+                                    placeholder="Cybersecurity, Robotics, Economics..."
                                     {...field}
                                     className="h-11"
                                   />
@@ -629,7 +632,7 @@ export default function Onboarding() {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Clinical diagnosis, Research, Python..."
+                                  placeholder="Research, Programming, Analysis, Technical Writing..."
                                   {...field}
                                   className="h-11"
                                 />
@@ -676,7 +679,7 @@ export default function Onboarding() {
                               </FormLabel>
                               <FormControl>
                                 <Textarea
-                                  placeholder="Describe any previous experience with AI evaluation, data annotation, RLHF, model testing, or related work."
+                                  placeholder="Describe any previous experience with AI evaluation, data annotation, RLHF, model testing, AI research, or related work."
                                   {...field}
                                   className="min-h-[110px] resize-none"
                                 />
@@ -879,7 +882,7 @@ export default function Onboarding() {
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Healthcare AI, Robotics..."
+                                    placeholder="AI, Robotics, Fintech, Enterprise Software..."
                                     {...field}
                                     className="h-11"
                                   />
