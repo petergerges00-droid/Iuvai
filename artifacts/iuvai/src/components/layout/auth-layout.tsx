@@ -14,12 +14,14 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] lg:px-20 lg:border-r border-border bg-card relative z-10 shadow-2xl">
         <div className="w-full max-w-sm mx-auto">
           <div className="mb-12">
-            <div className="text-2xl font-bold tracking-tight text-primary font-sans flex items-center gap-2 mb-16">
-              <div className="w-6 h-6 bg-primary rounded-sm flex items-center justify-center">
-                <div className="w-2 h-2 bg-primary-foreground rounded-full" />
-              </div>
-              IUVAI
-            </div>
+            <div className="text-2xl font-bold tracking-tight text-primary font-sans flex items-center gap-3 mb-16">
+  <div className="relative flex h-9 w-9 items-center justify-center">
+    <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300" />
+    <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300" />
+    <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
+  </div>
+  IUVAI
+</div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
