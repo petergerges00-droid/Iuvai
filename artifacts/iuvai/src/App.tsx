@@ -28,7 +28,7 @@ import CompanyDashboard from '@/pages/company-dashboard';
 
 import AdminDashboard from '@/pages/admin-dashboard';
 import AdminProjects from '@/pages/admin-projects';
-
+import AdminProjectExperts from '@/pages/admin-project-experts';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
