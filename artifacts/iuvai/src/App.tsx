@@ -22,6 +22,7 @@ import CompanyDashboard from '@/pages/company-dashboard';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
+import AdminDashboard from '@/pages/admin-dashboard';
 const queryClient = new QueryClient();
 /* ============================================================
    LOADER
