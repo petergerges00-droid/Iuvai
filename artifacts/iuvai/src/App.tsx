@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
@@ -372,9 +375,7 @@ function AppRouter() {
       {/* ======================================================
           ADMIN — PROJECTS
           
-          This is the main admin project list.
-
-          Example:
+          Main project list:
           /admin/projects
           ====================================================== */}
 
@@ -383,9 +384,27 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          ADMIN — PROJECT EXPERTS
+          ADMIN — SINGLE PROJECT
+          
+          IMPORTANT:
+          This route fixes the "Page Not Found" problem when
+          clicking a specific project from the admin dashboard.
 
-          This route must come after /admin/projects.
+          Example:
+          /admin/projects/123456
+          
+          The project ID is available inside AdminProjects
+          through Wouter's route parameters.
+          ====================================================== */}
+
+      <Route path="/admin/projects/:projectId">
+        <AdminRoute component={AdminProjects} />
+      </Route>
+
+      {/* ======================================================
+          ADMIN — PROJECT EXPERTS
+          
+          This route must remain after the single-project route.
 
           Example:
           /admin/projects/PROJECT_ID/experts
