@@ -6,14 +6,12 @@ import {
   Users,
   ChevronRight,
 } from 'lucide-react';
-import { useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
 import {
   getAllProjects,
   Project,
 } from '@/lib/supabase';
 export default function AdminProjects() {
-  const [, setLocation] = useLocation();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +21,10 @@ export default function AdminProjects() {
         setIsLoading(true);
         setError(null);
         const data = await getAllProjects();
-        console.log('ADMIN PROJECTS LOADED:', data);
+        console.log(
+          'ADMIN PROJECTS LOADED:',
+          data
+        );
         setProjects(data);
       } catch (err) {
         console.error(
@@ -52,7 +53,7 @@ export default function AdminProjects() {
       'NAVIGATING TO:',
       destination
     );
-    setLocation(destination);
+    window.location.href = destination;
   }
   return (
     <AppLayout title="Projects">
@@ -74,6 +75,7 @@ export default function AdminProjects() {
         </div>
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-3">
+          {/* Total projects */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -85,6 +87,7 @@ export default function AdminProjects() {
               {projects.length}
             </p>
           </div>
+          {/* Open */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -101,6 +104,7 @@ export default function AdminProjects() {
               }
             </p>
           </div>
+          {/* In progress */}
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
@@ -128,14 +132,17 @@ export default function AdminProjects() {
               Projects available for expert matching.
             </p>
           </div>
+          {/* Loading */}
           {isLoading ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
+          /* Error */
           ) : error ? (
             <div className="p-6 text-sm text-destructive">
               {error}
             </div>
+          /* No projects */
           ) : projects.length === 0 ? (
             <div className="p-10 text-center">
               <FolderKanban className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -146,6 +153,7 @@ export default function AdminProjects() {
                 Projects you add to IUVAI will appear here.
               </p>
             </div>
+          /* Projects */
           ) : (
             <div className="divide-y divide-border/60">
               {projects.map((project) => (
