@@ -14,7 +14,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] xl:w-[560px] lg:px-20 lg:border-r border-border bg-card relative z-10 shadow-2xl">
         <div className="w-full max-w-sm mx-auto">
           <div className="mb-12">
-            <div className="text-2xl font-bold tracking-tight text-primary font-sans flex items-center gap-3 mb-16">
+           <div className="text-2xl font-bold tracking-tight text-foreground font-sans flex items-center gap-3 mb-16">
   <div className="relative flex h-9 w-9 items-center justify-center">
     <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300" />
     <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300" />
