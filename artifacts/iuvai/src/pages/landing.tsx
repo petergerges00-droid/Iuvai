@@ -344,7 +344,7 @@ export default function Landing() {
                 </p>
 
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Your expertise helps shaping tomorrow.
+                 Be a part of tomorrow.
                 </h3>
 
                 <p className="mt-4 text-xl font-medium text-foreground">
