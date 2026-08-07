@@ -9,7 +9,9 @@ import {
   useLocation,
 } from 'wouter';
 import { Loader2 } from 'lucide-react';
+
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
+
 import NotFound from '@/pages/not-found';
 import Login from '@/pages/login';
 import Signup from '@/pages/signup';
@@ -23,10 +25,23 @@ import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
 import AdminDashboard from '@/pages/admin-dashboard';
+
 const queryClient = new QueryClient();
-/* ============================================================
-   LOADER
-   ============================================================ */
+
+/*
+============================================================
+ADMIN
+============================================================
+*/
+
+const ADMIN_USER_ID = '0f29b27d-45b6-4377-9242-e983f95039af';
+
+/*
+============================================================
+LOADER
+============================================================
+*/
+
 function FullPageLoader() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-background">
@@ -34,30 +49,39 @@ function FullPageLoader() {
     </div>
   );
 }
-/* ============================================================
-   PUBLIC ROUTE
-   Redirects authenticated users away from login/signup pages.
-   ============================================================ */
+
+/*
+============================================================
+PUBLIC ROUTE
+Redirects authenticated users away from login/signup pages.
+============================================================
+*/
+
 interface PublicRouteProps {
   component: React.ComponentType;
 }
+
 function PublicRoute({
   component: Component,
 }: PublicRouteProps) {
   const { session, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
   useEffect(() => {
     if (isLoading || !session) return;
+
     // Logged in but onboarding has not been completed.
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
+
     // Expert account.
     if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
+
     // Company account.
     if (profile.account_type === 'company') {
       setLocation('/company-dashboard');
@@ -69,94 +93,109 @@ function PublicRoute({
     isLoading,
     setLocation,
   ]);
+
   if (isLoading) {
     return <FullPageLoader />;
   }
-  // Session exists and redirect is being handled above.
+
   if (session) {
     return <FullPageLoader />;
   }
+
   return <Component />;
 }
-/* ============================================================
-   ONBOARDING ROUTE
-   This route is intentionally different from ProtectedRoute.
-   
-   A logged-in user WITHOUT an account_type must be allowed
-   to access onboarding, because onboarding is where the
-   account_type is selected.
-   ============================================================ */
+
+/*
+============================================================
+ONBOARDING ROUTE
+============================================================
+*/
+
 interface OnboardingRouteProps {
   component: React.ComponentType;
 }
+
 function OnboardingRoute({
   component: Component,
 }: OnboardingRouteProps) {
   const { session, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
   useEffect(() => {
     if (isLoading) return;
+
     // Not authenticated.
     if (!session) {
       setLocation('/login');
       return;
     }
+
     // Onboarding already completed.
     if (profile?.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
+
     if (profile?.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
     }
-    // If there is no account type, remain on onboarding.
   }, [
     session,
     profile,
     isLoading,
     setLocation,
   ]);
-  // Wait for authentication to initialize.
+
   if (isLoading) {
     return <FullPageLoader />;
   }
-  // Not logged in.
+
   if (!session) {
     return <FullPageLoader />;
   }
-  // If onboarding is incomplete, SHOW THE ONBOARDING PAGE.
+
+  // If onboarding is incomplete, show it.
   if (!profile?.account_type) {
     return <Component />;
   }
-  // Account type exists, redirect is being handled above.
+
   return <FullPageLoader />;
 }
-/* ============================================================
-   PROTECTED ROUTE
-   ============================================================ */
+
+/*
+============================================================
+PROTECTED ROUTE
+============================================================
+*/
+
 interface ProtectedRouteProps {
   component: React.ComponentType;
   requireAccountType?: 'expert' | 'company';
 }
+
 function ProtectedRoute({
   component: Component,
   requireAccountType,
 }: ProtectedRouteProps) {
   const { session, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
   useEffect(() => {
     if (isLoading) return;
+
     // Not logged in.
     if (!session) {
       setLocation('/login');
       return;
     }
+
     // Logged in but onboarding is incomplete.
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
+
     // User is trying to access the wrong dashboard.
     if (
       requireAccountType &&
@@ -175,51 +214,119 @@ function ProtectedRoute({
     requireAccountType,
     setLocation,
   ]);
-  // Authentication still loading.
+
   if (isLoading) {
     return <FullPageLoader />;
   }
-  // Not authenticated.
+
   if (!session) {
     return <FullPageLoader />;
   }
-  // Profile unavailable.
+
   if (!profile) {
     return <FullPageLoader />;
   }
-  // Account type not configured.
+
   if (!profile.account_type) {
     return <FullPageLoader />;
   }
-  // Wrong account type.
+
   if (
     requireAccountType &&
     profile.account_type !== requireAccountType
   ) {
     return <FullPageLoader />;
   }
+
   return <Component />;
 }
-/* ============================================================
-   ROOT ROUTE
-   ============================================================ */
-function RootRedirect() {
-  const { session, profile, isLoading } = useAuth();
+
+/*
+============================================================
+ADMIN ROUTE
+Only your specific Supabase user ID can access this route.
+============================================================
+*/
+
+interface AdminRouteProps {
+  component: React.ComponentType;
+}
+
+function AdminRoute({
+  component: Component,
+}: AdminRouteProps) {
+  const { session, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
   useEffect(() => {
     if (isLoading) return;
+
+    // Not logged in.
     if (!session) {
       setLocation('/login');
       return;
     }
+
+    // Logged in but not the administrator.
+    if (session.user.id !== ADMIN_USER_ID) {
+      setLocation('/dashboard');
+      return;
+    }
+  }, [
+    session,
+    isLoading,
+    setLocation,
+  ]);
+
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
+
+  if (!session) {
+    return <FullPageLoader />;
+  }
+
+  if (session.user.id !== ADMIN_USER_ID) {
+    return <FullPageLoader />;
+  }
+
+  return <Component />;
+}
+
+/*
+============================================================
+ROOT ROUTE
+============================================================
+*/
+
+function RootRedirect() {
+  const { session, profile, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!session) {
+      setLocation('/login');
+      return;
+    }
+
+    // Admin gets the admin dashboard.
+    if (session.user.id === ADMIN_USER_ID) {
+      setLocation('/admin');
+      return;
+    }
+
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
+
     if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
+
     if (profile.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
@@ -230,109 +337,150 @@ function RootRedirect() {
     isLoading,
     setLocation,
   ]);
+
   return <FullPageLoader />;
 }
-/* ============================================================
-   ROUTER
-   ============================================================ */
+
+/*
+============================================================
+ROUTER
+============================================================
+*/
+
 function AppRouter() {
   return (
     <Switch>
+
       {/* ======================================================
           LANDING
           ====================================================== */}
+
       <Route
         path="/"
         component={Landing}
       />
+
       {/* ======================================================
           PUBLIC / AUTH
           ====================================================== */}
+
       <Route path="/login">
         <PublicRoute component={Login} />
       </Route>
+
       <Route path="/signup">
         <PublicRoute component={Signup} />
       </Route>
+
       <Route
         path="/verify-email"
         component={VerifyEmail}
       />
+
       <Route path="/forgot-password">
         <PublicRoute component={ForgotPassword} />
       </Route>
+
       <Route path="/reset-password">
         <PublicRoute component={ResetPassword} />
       </Route>
+
       {/* ======================================================
           ONBOARDING
-          
-          IMPORTANT:
-          Do NOT use ProtectedRoute here.
-          Users without account_type need access to this page.
           ====================================================== */}
+
       <Route path="/onboarding">
         <OnboardingRoute component={Onboarding} />
       </Route>
+
       {/* ======================================================
           EXPERT DASHBOARD
           ====================================================== */}
+
       <Route path="/dashboard">
         <ProtectedRoute
           component={ExpertDashboard}
           requireAccountType="expert"
         />
       </Route>
+
       {/* ======================================================
           COMPANY DASHBOARD
           ====================================================== */}
+
       <Route path="/company-dashboard">
         <ProtectedRoute
           component={CompanyDashboard}
           requireAccountType="company"
         />
       </Route>
+
       {/* ======================================================
           COMPANY — FIND EXPERTS
           ====================================================== */}
-     <Route path="/company/find-experts">
-  <ProtectedRoute
-    component={FindExperts}
-    requireAccountType="company"
-  />
-</Route>
+
+      <Route path="/company/find-experts">
+        <ProtectedRoute
+          component={FindExperts}
+          requireAccountType="company"
+        />
+      </Route>
+
+      {/* ======================================================
+          ADMIN DASHBOARD
+          ====================================================== */}
+
+      <Route path="/admin">
+        <AdminRoute component={AdminDashboard} />
+      </Route>
+
       {/* ======================================================
           SETTINGS
           ====================================================== */}
+
       <Route path="/settings">
         <ProtectedRoute component={Settings} />
       </Route>
+
       {/* ======================================================
           FALLBACK
           ====================================================== */}
+
       <Route component={NotFound} />
+
     </Switch>
   );
 }
-/* ============================================================
-   APP
-   ============================================================ */
+
+/*
+============================================================
+APP
+============================================================
+*/
+
 function App() {
   const basePath = import.meta.env.BASE_URL.replace(
     /\/$/,
     ''
   );
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+
         <TooltipProvider>
+
           <WouterRouter base={basePath}>
             <AppRouter />
           </WouterRouter>
+
           <Toaster />
+
         </TooltipProvider>
+
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
 export default App;
