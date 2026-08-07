@@ -33,6 +33,7 @@ import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
 import ProjectExperts from '@/pages/ProjectExperts';
+import AdminExpertReview from '@/pages/admin-expert-review';
 
 const queryClient = new QueryClient();
 
