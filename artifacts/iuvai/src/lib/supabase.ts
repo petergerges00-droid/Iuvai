@@ -33,6 +33,12 @@ export type ProjectRequestStatus =
   | 'rejected'
   | 'cancelled';
 
+export type ProjectExpertStatus =
+  | 'assigned'
+  | 'accepted'
+  | 'declined'
+  | 'completed';
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -95,6 +101,15 @@ export interface ProjectRequest {
   status: ProjectRequestStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProjectExpert {
+  id: string;
+  project_id: string;
+  expert_id: string;
+  status: ProjectExpertStatus;
+  assigned_at: string;
+  notes: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -268,12 +283,21 @@ export async function upsertCompanyProfile(
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Get all expert profiles with their basic account information.
+ * Get all expert profiles.
  */
 export async function getExperts(): Promise<ExpertWithProfile[]> {
   const { data, error } = await supabase
     .from('expert_profiles')
-    .select('*')
+    .select(`
+      *,
+      profiles (
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      )
+    `)
     .order('created_at', {
       ascending: false,
     });
@@ -289,14 +313,16 @@ export async function getExperts(): Promise<ExpertWithProfile[]> {
     );
   }
 
-  return (data || []).map((expert) => ({
+  return (data || []).map((expert: any) => ({
     ...expert,
-    profile: null,
+    profile: expert.profiles || null,
+    profiles: undefined,
   }));
 }
+
 /**
  * Search experts by field, specialization,
- * skills, country, or name.
+ * AI experience, country, or name.
  */
 export async function searchExperts(
   searchTerm: string
@@ -321,8 +347,8 @@ export async function searchExperts(
     `)
     .or(
       `primary_field.ilike.%${term}%,` +
-        `specialization.ilike.%${term}%,` +
-        `previous_ai_experience.ilike.%${term}%`
+      `specialization.ilike.%${term}%,` +
+      `previous_ai_experience.ilike.%${term}%`
     )
     .order('created_at', {
       ascending: false,
@@ -386,8 +412,7 @@ export async function getExpertsByField(
 }
 
 /**
- * Get a single expert together with their
- * public profile information.
+ * Get one expert with public profile information.
  */
 export async function getExpertWithProfile(
   expertId: string
@@ -422,7 +447,7 @@ export async function getExpertWithProfile(
 }
 
 // ─────────────────────────────────────────────────────────────
-// PROJECTS
+// COMPANY PROJECTS
 // ─────────────────────────────────────────────────────────────
 
 /**
@@ -433,7 +458,7 @@ export async function createProject(
     Project,
     'id' | 'created_at' | 'updated_at'
   >
-) {
+): Promise<Project> {
   const { data, error } = await supabase
     .from('projects')
     .insert(project)
@@ -501,7 +526,7 @@ export async function getProject(
 export async function updateProject(
   projectId: string,
   updates: Partial<Project>
-) {
+): Promise<Project> {
   const { data, error } = await supabase
     .from('projects')
     .update(updates)
@@ -537,6 +562,87 @@ export async function deleteProject(
 }
 
 // ─────────────────────────────────────────────────────────────
+// ADMIN PROJECT MANAGEMENT
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Get ALL projects in IUVAI.
+ *
+ * This is intended for the IUVAI operator/admin dashboard.
+ * RLS must allow the admin account to read these records.
+ */
+export async function getAllProjects(): Promise<Project[]> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    console.error(
+      'GET ALL PROJECTS ERROR:',
+      error
+    );
+
+    throw new Error(
+      `Failed to load projects: ${error.message}`
+    );
+  }
+
+  return (data || []) as Project[];
+}
+
+/**
+ * Get a project for the admin/project-management UI.
+ */
+export async function getAdminProject(
+  projectId: string
+): Promise<Project | null> {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (error) {
+    console.error(
+      'GET ADMIN PROJECT ERROR:',
+      error
+    );
+    return null;
+  }
+
+  return data as Project;
+}
+
+/**
+ * Update project status from the admin dashboard.
+ */
+export async function updateProjectStatus(
+  projectId: string,
+  status: ProjectStatus
+): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', projectId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update project status: ${error.message}`
+    );
+  }
+
+  return data as Project;
+}
+
+// ─────────────────────────────────────────────────────────────
 // PROJECT REQUESTS
 // ─────────────────────────────────────────────────────────────
 
@@ -548,7 +654,7 @@ export async function createProjectRequest(
     ProjectRequest,
     'id' | 'created_at' | 'updated_at'
   >
-) {
+): Promise<ProjectRequest> {
   const { data, error } = await supabase
     .from('project_requests')
     .insert(request)
@@ -616,7 +722,7 @@ export async function getExpertProjectRequests(
 export async function updateProjectRequestStatus(
   requestId: string,
   status: ProjectRequestStatus
-) {
+): Promise<ProjectRequest> {
   const { data, error } = await supabase
     .from('project_requests')
     .update({
@@ -650,7 +756,6 @@ export async function uploadResume(
 
   const filePath = `${userId}/resume.${extension}`;
 
-  // Remove existing resume first.
   const { data: existingFiles } =
     await supabase.storage
       .from('resumes')
@@ -749,21 +854,6 @@ export async function deleteResume(
 // PROJECT ↔ EXPERT ASSIGNMENTS
 // ─────────────────────────────────────────────────────────────
 
-export type ProjectExpertStatus =
-  | 'assigned'
-  | 'accepted'
-  | 'declined'
-  | 'completed';
-
-export interface ProjectExpert {
-  id: string;
-  project_id: string;
-  expert_id: string;
-  status: ProjectExpertStatus;
-  assigned_at: string;
-  notes: string | null;
-}
-
 /**
  * Get experts assigned to a project.
  */
@@ -806,6 +896,32 @@ export async function getProjectExperts(
 }
 
 /**
+ * Get full assignment records for a project.
+ *
+ * Unlike getProjectExperts(), this returns the assignment
+ * ID and status as well as the expert.
+ */
+export async function getProjectAssignments(
+  projectId: string
+): Promise<ProjectExpert[]> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('assigned_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load project assignments: ${error.message}`
+    );
+  }
+
+  return (data || []) as ProjectExpert[];
+}
+
+/**
  * Assign an expert to a project.
  */
 export async function assignExpertToProject(
@@ -813,6 +929,30 @@ export async function assignExpertToProject(
   expertId: string,
   notes?: string
 ): Promise<ProjectExpert> {
+  /*
+   * Check first so the admin UI gets a useful error
+   * instead of creating duplicate assignments.
+   */
+  const { data: existing, error: existingError } =
+    await supabase
+      .from('project_experts')
+      .select('id')
+      .eq('project_id', projectId)
+      .eq('expert_id', expertId)
+      .maybeSingle();
+
+  if (existingError) {
+    throw new Error(
+      `Failed to check existing assignment: ${existingError.message}`
+    );
+  }
+
+  if (existing) {
+    throw new Error(
+      'This expert is already assigned to this project.'
+    );
+  }
+
   const { data, error } = await supabase
     .from('project_experts')
     .insert({
@@ -879,6 +1019,31 @@ export async function updateProjectExpertStatus(
 }
 
 /**
+ * Update assignment notes.
+ */
+export async function updateProjectExpertNotes(
+  assignmentId: string,
+  notes: string | null
+): Promise<ProjectExpert> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .update({
+      notes,
+    })
+    .eq('id', assignmentId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update assignment notes: ${error.message}`
+    );
+  }
+
+  return data as ProjectExpert;
+}
+
+/**
  * Get all projects an expert has been assigned to.
  */
 export async function getExpertProjects(
@@ -901,4 +1066,27 @@ export async function getExpertProjects(
   return (data || [])
     .map((row: any) => row.projects)
     .filter(Boolean) as Project[];
+}
+
+/**
+ * Get all assignment records for an expert.
+ */
+export async function getExpertAssignments(
+  expertId: string
+): Promise<ProjectExpert[]> {
+  const { data, error } = await supabase
+    .from('project_experts')
+    .select('*')
+    .eq('expert_id', expertId)
+    .order('assigned_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load expert assignments: ${error.message}`
+    );
+  }
+
+  return (data || []) as ProjectExpert[];
 }
