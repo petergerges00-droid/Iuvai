@@ -294,12 +294,12 @@ function AppRouter() {
       {/* ======================================================
           COMPANY — FIND EXPERTS
           ====================================================== */}
-      <Route path="/company-dashboard/experts">
-        <ProtectedRoute
-          component={FindExperts}
-          requireAccountType="company"
-        />
-      </Route>
+     <Route path="/company/find-experts">
+  <ProtectedRoute
+    component={FindExperts}
+    requireAccountType="company"
+  />
+</Route>
       {/* ======================================================
           SETTINGS
           ====================================================== */}
