@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { updatePassword } from '@/lib/supabase';
-import { AuthLayout } from '@/components/layout/auth-layout';
+import { AuthLayout } from '@/components/ui/auth-layout';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -21,6 +21,7 @@ import {
   ArrowUpRight,
   ShieldCheck,
 } from 'lucide-react';
+
 const formSchema = z
   .object({
     password: z
@@ -32,10 +33,12 @@ const formSchema = z
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
+
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,12 +46,15 @@ export default function ResetPassword() {
       confirmPassword: '',
     },
   });
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+
     try {
       // Supabase automatically uses the recovery session
       // established from the password-reset link.
       const { error } = await updatePassword(values.password);
+
       if (error) {
         toast({
           variant: 'destructive',
@@ -57,10 +63,12 @@ export default function ResetPassword() {
         });
         return;
       }
+
       toast({
         title: 'Password updated',
         description: 'Your password has been changed successfully.',
       });
+
       setLocation('/login');
     } catch (error) {
       toast({
@@ -72,6 +80,7 @@ export default function ResetPassword() {
       setIsLoading(false);
     }
   }
+
   return (
     <AuthLayout
       title="Set new password"
@@ -80,21 +89,26 @@ export default function ResetPassword() {
       <div className="relative">
         {/* Ambient futuristic accent */}
         <div className="pointer-events-none absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+
         {/* Security indicator */}
         <div className="relative mb-7 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
             <ShieldCheck className="h-4 w-4" strokeWidth={1.7} />
           </div>
+
           <div>
             <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-primary/80">
               Account security
             </p>
+
             <p className="mt-0.5 text-xs text-muted-foreground">
               Choose a password you haven't used before.
             </p>
           </div>
         </div>
+
         <div className="mb-7 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -109,6 +123,7 @@ export default function ResetPassword() {
                   <FormLabel className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                     New password
                   </FormLabel>
+
                   <FormControl>
                     <Input
                       type="password"
@@ -118,13 +133,16 @@ export default function ResetPassword() {
                       className="h-12 border-white/10 bg-white/[0.035] text-sm transition-all placeholder:text-muted-foreground/40 focus:border-primary/50 focus:bg-white/[0.05] focus:ring-1 focus:ring-primary/20"
                     />
                   </FormControl>
+
                   <FormMessage className="text-xs" />
+
                   <p className="text-[11px] leading-5 text-muted-foreground/50">
                     Minimum 8 characters.
                   </p>
                 </FormItem>
               )}
             />
+
             {/* Confirm password */}
             <FormField
               control={form.control}
@@ -134,6 +152,7 @@ export default function ResetPassword() {
                   <FormLabel className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                     Confirm password
                   </FormLabel>
+
                   <FormControl>
                     <Input
                       type="password"
@@ -143,10 +162,12 @@ export default function ResetPassword() {
                       className="h-12 border-white/10 bg-white/[0.035] text-sm transition-all placeholder:text-muted-foreground/40 focus:border-primary/50 focus:bg-white/[0.05] focus:ring-1 focus:ring-primary/20"
                     />
                   </FormControl>
+
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
+
             {/* Submit */}
             <Button
               type="submit"
@@ -167,10 +188,11 @@ export default function ResetPassword() {
             </Button>
           </form>
         </Form>
+
         {/* Brand footer */}
         <div className="mt-10 text-center">
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40">
-            IUVAI · Human Intelligence Infrastructure
+            IUVAI Studio
           </p>
         </div>
       </div>
