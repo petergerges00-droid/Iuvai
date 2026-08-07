@@ -22,6 +22,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+
 const formSchema = z.object({
   email: z
     .string()
@@ -30,15 +31,19 @@ const formSchema = z.object({
     .string()
     .min(1, 'Password is required'),
 });
+
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
   const {
     session,
     profile,
     isLoading: authLoading,
   } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,6 +51,7 @@ export default function Login() {
       password: '',
     },
   });
+
   /*
    * Once authentication and profile loading are complete,
    * send the user directly to the correct workspace.
@@ -54,14 +60,17 @@ export default function Login() {
     if (authLoading || !session) {
       return;
     }
+
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
+
     if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
+
     if (profile.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
@@ -72,15 +81,18 @@ export default function Login() {
     authLoading,
     setLocation,
   ]);
+
   async function onSubmit(
     values: z.infer<typeof formSchema>
   ) {
     setIsLoading(true);
+
     try {
       const { error } = await signIn(
         values.email,
         values.password
       );
+
       if (error) {
         toast({
           variant: 'destructive',
@@ -89,6 +101,7 @@ export default function Login() {
         });
         return;
       }
+
       /*
        * Do NOT redirect here.
        *
@@ -107,6 +120,7 @@ export default function Login() {
       setIsLoading(false);
     }
   }
+
   /*
    * While an authenticated user is being routed,
    * don't show the login form again.
@@ -118,10 +132,11 @@ export default function Login() {
       </div>
     );
   }
+
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to the IUVAI network."
+      subtitle="Sign in to the IUVAI Studio network."
     >
       <div className="space-y-7">
         {/* Security indicator */}
@@ -129,15 +144,18 @@ export default function Login() {
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
             <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
+
           <div>
             <p className="text-xs font-medium text-foreground">
               Secure access
             </p>
+
             <p className="text-[11px] text-muted-foreground">
-              Your IUVAI workspace is protected.
+              Your IUVAI Studio workspace is protected.
             </p>
           </div>
         </div>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -152,6 +170,7 @@ export default function Login() {
                   <FormLabel className="text-sm">
                     Email
                   </FormLabel>
+
                   <FormControl>
                     <Input
                       type="email"
@@ -161,10 +180,12 @@ export default function Login() {
                       className="h-12 border-border/70 bg-background/70 transition-all focus:border-primary focus:ring-primary/20"
                     />
                   </FormControl>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             {/* PASSWORD */}
             <FormField
               control={form.control}
@@ -175,6 +196,7 @@ export default function Login() {
                     <FormLabel className="text-sm">
                       Password
                     </FormLabel>
+
                     <Link
                       href="/forgot-password"
                       className="text-xs font-medium text-primary transition-colors hover:text-primary/80 hover:underline underline-offset-4"
@@ -182,6 +204,7 @@ export default function Login() {
                       Forgot password?
                     </Link>
                   </div>
+
                   <FormControl>
                     <Input
                       type="password"
@@ -190,10 +213,12 @@ export default function Login() {
                       className="h-12 border-border/70 bg-background/70 transition-all focus:border-primary focus:ring-primary/20"
                     />
                   </FormControl>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             {/* SIGN IN */}
             <Button
               type="submit"
@@ -214,17 +239,20 @@ export default function Login() {
             </Button>
           </form>
         </Form>
+
         {/* DIVIDER */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border/60" />
           </div>
+
           <div className="relative flex justify-center text-[11px] uppercase tracking-[0.2em]">
             <span className="bg-background px-3 text-muted-foreground">
-              New to IUVAI
+              New to IUVAI Studio
             </span>
           </div>
         </div>
+
         {/* SIGN UP */}
         <div className="text-center">
           <Link
@@ -235,6 +263,7 @@ export default function Login() {
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
+
         <p className="pt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
           A human intelligence infrastructure
           <br />
