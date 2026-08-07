@@ -47,15 +47,21 @@ function PublicRoute({
   const [, setLocation] = useLocation();
   useEffect(() => {
     if (isLoading || !session) return;
+    // Logged in but onboarding has not been completed.
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
+    // Expert account.
     if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
-    setLocation('/company-dashboard');
+    // Company account.
+    if (profile.account_type === 'company') {
+      setLocation('/company-dashboard');
+      return;
+    }
   }, [
     session,
     profile,
@@ -65,10 +71,65 @@ function PublicRoute({
   if (isLoading) {
     return <FullPageLoader />;
   }
+  // Session exists and redirect is being handled above.
   if (session) {
     return <FullPageLoader />;
   }
   return <Component />;
+}
+/* ============================================================
+   ONBOARDING ROUTE
+   This route is intentionally different from ProtectedRoute.
+   
+   A logged-in user WITHOUT an account_type must be allowed
+   to access onboarding, because onboarding is where the
+   account_type is selected.
+   ============================================================ */
+interface OnboardingRouteProps {
+  component: React.ComponentType;
+}
+function OnboardingRoute({
+  component: Component,
+}: OnboardingRouteProps) {
+  const { session, profile, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (isLoading) return;
+    // Not authenticated.
+    if (!session) {
+      setLocation('/login');
+      return;
+    }
+    // Onboarding already completed.
+    if (profile?.account_type === 'expert') {
+      setLocation('/dashboard');
+      return;
+    }
+    if (profile?.account_type === 'company') {
+      setLocation('/company-dashboard');
+      return;
+    }
+    // If there is no account type, remain on onboarding.
+  }, [
+    session,
+    profile,
+    isLoading,
+    setLocation,
+  ]);
+  // Wait for authentication to initialize.
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
+  // Not logged in.
+  if (!session) {
+    return <FullPageLoader />;
+  }
+  // If onboarding is incomplete, SHOW THE ONBOARDING PAGE.
+  if (!profile?.account_type) {
+    return <Component />;
+  }
+  // Account type exists, redirect is being handled above.
+  return <FullPageLoader />;
 }
 /* ============================================================
    PROTECTED ROUTE
@@ -85,24 +146,24 @@ function ProtectedRoute({
   const [, setLocation] = useLocation();
   useEffect(() => {
     if (isLoading) return;
-    /* Not logged in */
+    // Not logged in.
     if (!session) {
       setLocation('/login');
       return;
     }
-    /* Logged in but account type has not been selected */
+    // Logged in but onboarding is incomplete.
     if (!profile?.account_type) {
       setLocation('/onboarding');
       return;
     }
-    /* User is trying to access the wrong dashboard */
+    // User is trying to access the wrong dashboard.
     if (
       requireAccountType &&
       profile.account_type !== requireAccountType
     ) {
       if (profile.account_type === 'expert') {
         setLocation('/dashboard');
-      } else {
+      } else if (profile.account_type === 'company') {
         setLocation('/company-dashboard');
       }
     }
@@ -113,23 +174,23 @@ function ProtectedRoute({
     requireAccountType,
     setLocation,
   ]);
-  /* Authentication still loading */
+  // Authentication still loading.
   if (isLoading) {
     return <FullPageLoader />;
   }
-  /* Not authenticated */
+  // Not authenticated.
   if (!session) {
     return <FullPageLoader />;
   }
-  /* Profile still unavailable */
+  // Profile unavailable.
   if (!profile) {
     return <FullPageLoader />;
   }
-  /* Account type not configured */
+  // Account type not configured.
   if (!profile.account_type) {
     return <FullPageLoader />;
   }
-  /* Wrong account type */
+  // Wrong account type.
   if (
     requireAccountType &&
     profile.account_type !== requireAccountType
@@ -158,7 +219,10 @@ function RootRedirect() {
       setLocation('/dashboard');
       return;
     }
-    setLocation('/company-dashboard');
+    if (profile.account_type === 'company') {
+      setLocation('/company-dashboard');
+      return;
+    }
   }, [
     session,
     profile,
@@ -201,9 +265,13 @@ function AppRouter() {
       </Route>
       {/* ======================================================
           ONBOARDING
+          
+          IMPORTANT:
+          Do NOT use ProtectedRoute here.
+          Users without account_type need access to this page.
           ====================================================== */}
       <Route path="/onboarding">
-        <ProtectedRoute component={Onboarding} />
+        <OnboardingRoute component={Onboarding} />
       </Route>
       {/* ======================================================
           EXPERT DASHBOARD
