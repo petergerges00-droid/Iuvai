@@ -29,7 +29,7 @@ export default function Landing() {
           <div className="absolute -right-48 top-[45%] h-[600px] w-[600px] rounded-full bg-primary/[0.05] blur-[140px]" />
           <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[140px]" />
 
-          {/* Subtle global grid */}
+          {/* Subtle Grid */}
           <div
             className="absolute inset-0 opacity-[0.035]"
             style={{
@@ -51,11 +51,13 @@ export default function Landing() {
               href="/"
               className="group flex items-center gap-3"
             >
-              {/* Two circles + center dot */}
+              {/* Two circles + smaller center dot */}
               <div className="relative flex h-9 w-9 items-center justify-center">
                 <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_18px_rgba(99,102,241,0.35)]" />
                 <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300 group-hover:border-primary/80 group-hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]" />
-                <div className="relative z-10 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
+
+                {/* ONLY CHANGE: smaller center dot */}
+                <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
               </div>
 
               <span className="text-base font-semibold tracking-[0.22em]">
@@ -99,7 +101,6 @@ export default function Landing() {
               >
                 Sign in
               </Link>
-
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20"
@@ -133,7 +134,6 @@ export default function Landing() {
                 >
                   Experts
                 </a>
-
                 <a
                   href="#companies"
                   onClick={() => setMobileMenuOpen(false)}
@@ -141,7 +141,6 @@ export default function Landing() {
                 >
                   Companies
                 </a>
-
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
@@ -149,7 +148,6 @@ export default function Landing() {
                 >
                   How it works
                 </a>
-
                 <a
                   href="#about"
                   onClick={() => setMobileMenuOpen(false)}
@@ -252,53 +250,41 @@ export default function Landing() {
               </div>
 
               {/* =================================================
-                  SIMPLIFIED FUTURISTIC HERO ORB
-                  No text / no labels
+                  FUTURISTIC HUMAN / AI CONNECTION
               ================================================== */}
               <div className="relative mx-auto hidden h-[470px] w-[470px] lg:block">
+                <div className="absolute inset-[15%] rounded-full bg-primary/[0.08] blur-[70px]" />
 
-                {/* Ambient glow */}
-                <div className="absolute inset-[20%] rounded-full bg-primary/[0.09] blur-[80px]" />
+                <div className="absolute inset-0 rounded-full border border-primary/10" />
+                <div className="absolute inset-[7%] rounded-full border border-primary/10" />
+                <div className="absolute inset-[15%] rounded-full border border-primary/15" />
+                <div className="absolute inset-[24%] rounded-full border border-primary/20" />
 
-                {/* Outer thin ring */}
-                <div className="absolute inset-[4%] rounded-full border border-primary/10" />
+                <div className="absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rotate-[25deg] rounded-full border border-dashed border-primary/20" />
 
-                {/* Main orbital ring */}
-                <div className="absolute inset-[12%] rounded-full border border-primary/20" />
-
-                {/* Rotated orbital ring */}
-                <div className="absolute left-1/2 top-1/2 h-[68%] w-[88%] -translate-x-1/2 -translate-y-1/2 rotate-[28deg] rounded-full border border-primary/20" />
-
-                {/* Second rotated orbital ring */}
-                <div className="absolute left-1/2 top-1/2 h-[88%] w-[68%] -translate-x-1/2 -translate-y-1/2 -rotate-[28deg] rounded-full border border-primary/10" />
-
-                {/* Central core */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="relative flex h-36 w-36 items-center justify-center rounded-full border border-primary/30 bg-primary/[0.055] shadow-[0_0_80px_rgba(99,102,241,0.18)] backdrop-blur-xl">
-
-                    {/* Inner core ring */}
-                    <div className="absolute inset-4 rounded-full border border-primary/20" />
-
-                    {/* Core glow */}
-                    <div className="absolute h-10 w-10 rounded-full bg-primary/20 blur-xl" />
-
-                    {/* Core */}
-                    <div className="relative h-5 w-5 rounded-full bg-primary shadow-[0_0_30px_rgba(99,102,241,0.95)]" />
+                <div className="absolute left-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
+                    <Users className="h-8 w-8 text-primary" />
                   </div>
                 </div>
 
-                {/* Orbital nodes */}
-                <div className="absolute left-[17%] top-[29%] h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_rgba(99,102,241,0.9)]" />
+                <div className="absolute right-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
+                    <Brain className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
 
-                <div className="absolute right-[20%] top-[22%] h-1.5 w-1.5 rounded-full bg-primary/70 shadow-[0_0_10px_rgba(99,102,241,0.7)]" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative flex h-32 w-32 items-center justify-center rounded-[2rem] border border-primary/40 bg-primary/[0.08] shadow-[0_0_60px_rgba(99,102,241,0.18)] backdrop-blur-xl">
+                    <div className="absolute inset-3 rounded-[1.5rem] border border-primary/15" />
+                    <div className="h-5 w-5 rounded-full bg-primary shadow-[0_0_25px_rgba(99,102,241,0.9)]" />
+                  </div>
+                </div>
 
-                <div className="absolute bottom-[23%] left-[22%] h-1.5 w-1.5 rounded-full bg-primary/70 shadow-[0_0_10px_rgba(99,102,241,0.7)]" />
-
-                <div className="absolute bottom-[18%] right-[25%] h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_rgba(99,102,241,0.9)]" />
-
-                {/* Tiny ambient points */}
-                <div className="absolute left-[34%] top-[12%] h-1 w-1 rounded-full bg-primary/50" />
-                <div className="absolute right-[34%] bottom-[12%] h-1 w-1 rounded-full bg-primary/50" />
+                <div className="absolute left-[26%] top-[27%] h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
+                <div className="absolute right-[25%] top-[30%] h-1.5 w-1.5 rounded-full bg-primary/70" />
+                <div className="absolute bottom-[25%] left-[31%] h-1.5 w-1.5 rounded-full bg-primary/70" />
+                <div className="absolute bottom-[28%] right-[30%] h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
               </div>
             </div>
           </div>
@@ -530,11 +516,9 @@ export default function Landing() {
 
               <div>
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Quality-first
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Expertise is verified and matched carefully to the
                   requirements of each project.
@@ -543,11 +527,9 @@ export default function Landing() {
 
               <div>
                 <Brain className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Human intelligence
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Real expertise remains at the center of the AI
                   development process.
@@ -556,11 +538,9 @@ export default function Landing() {
 
               <div>
                 <Globe2 className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Built globally
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Connect with opportunities and expertise beyond
                   geographical boundaries.
@@ -615,7 +595,6 @@ export default function Landing() {
         ====================================================== */}
         <footer className="border-t border-border/70">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
-
             <div className="flex items-center gap-3">
               <div className="relative flex h-7 w-7 items-center justify-center">
                 <div className="absolute left-0 h-5 w-5 rounded-full border border-primary/60" />
