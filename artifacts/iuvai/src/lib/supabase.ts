@@ -1267,3 +1267,26 @@ export async function getExpertAssignments(
 
   return (data || []) as ProjectExpert[];
 }
+
+export async function getResumeUrl(
+  resumePath: string
+): Promise<string> {
+  const { data, error } =
+    await supabase.storage
+      .from('resumes')
+      .createSignedUrl(
+        resumePath,
+        60 * 10
+      );
+
+  if (error || !data?.signedUrl) {
+    throw new Error(
+      `Failed to generate resume URL: ${
+        error?.message ||
+        'Unknown error'
+      }`
+    );
+  }
+
+  return data.signedUrl;
+}
