@@ -270,43 +270,30 @@ export async function upsertCompanyProfile(
 /**
  * Get all expert profiles with their basic account information.
  */
-export async function getExperts(): Promise<
-  ExpertWithProfile[]
-> {
+export async function getExperts(): Promise<ExpertWithProfile[]> {
   const { data, error } = await supabase
     .from('expert_profiles')
-    .select(`
-      *,
-      profiles (
-        id,
-        full_name,
-        account_type,
-        country,
-        created_at
-      )
-    `)
+    .select('*')
     .order('created_at', {
       ascending: false,
     });
 
-  if (error) {
-    console.error(
-      'GET EXPERTS ERROR:',
-      error
-    );
+  console.log('GET EXPERTS RAW:', {
+    data,
+    error,
+  });
 
+  if (error) {
     throw new Error(
       `Failed to load experts: ${error.message}`
     );
   }
 
-  return (data || []).map((expert: any) => ({
+  return (data || []).map((expert) => ({
     ...expert,
-    profile: expert.profiles || null,
-    profiles: undefined,
+    profile: null,
   }));
 }
-
 /**
  * Search experts by field, specialization,
  * skills, country, or name.
