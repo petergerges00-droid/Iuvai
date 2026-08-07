@@ -522,7 +522,10 @@ function AppRouter() {
           component={AdminExpertReview}
         />
       </Route>
-
+<Route
+  path="/reset-password"
+  component={ResetPassword}
+/>
       {/* ======================================================
           ADMIN — SINGLE PROJECT
           ====================================================== */}
