@@ -13,50 +13,56 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <AppShell>
       <main className="min-h-screen overflow-hidden bg-background text-foreground">
+
         {/* =====================================================
             GLOBAL GRID / FUTURISTIC BACKGROUND
         ====================================================== */}
-        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-          {/* Ambient glows */}
+        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -left-48 top-20 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-[140px]" />
           <div className="absolute -right-48 top-[45%] h-[600px] w-[600px] rounded-full bg-primary/[0.05] blur-[140px]" />
           <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[140px]" />
-          {/* GRID — kept visible across the entire landing page */}
+
+          {/* Subtle grid — kept visible across the entire page */}
           <div
-            className="absolute inset-0 opacity-[0.06]"
+            className="absolute inset-0 opacity-[0.028]"
             style={{
               backgroundImage:
                 'linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.9) 1px, transparent 1px)',
               backgroundSize: '56px 56px',
             }}
           />
-          {/* Subtle fade so the grid remains futuristic without overpowering content */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/5 to-background/30" />
         </div>
+
         {/* =====================================================
             TOP NAVIGATION BAR
         ====================================================== */}
         <header className="sticky top-0 z-50 border-b border-border/60 bg-background/75 backdrop-blur-2xl">
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
-            {/* LOCKED LOGO — DO NOT CHANGE */}
+
+            {/* Logo */}
             <Link
               href="/"
               className="group flex items-center gap-3"
             >
+              {/* Locked IUVAI logo: two circles + center dot */}
               <div className="relative flex h-9 w-9 items-center justify-center">
                 <div className="absolute left-0 h-7 w-7 rounded-full border border-primary/70 transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_18px_rgba(99,102,241,0.35)]" />
                 <div className="absolute right-0 h-7 w-7 rounded-full border border-primary/40 transition-all duration-300 group-hover:border-primary/80 group-hover:shadow-[0_0_18px_rgba(99,102,241,0.25)]" />
                 <div className="relative z-10 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
               </div>
+
               <span className="text-base font-semibold tracking-[0.22em]">
                 IUVAI
               </span>
             </Link>
+
             {/* Desktop Navigation */}
             <nav className="hidden items-center gap-8 md:flex">
               <a
@@ -65,18 +71,21 @@ export default function Landing() {
               >
                 Experts
               </a>
+
               <a
                 href="#companies"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Companies
               </a>
+
               <a
                 href="#how-it-works"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 How it works
               </a>
+
               <a
                 href="#about"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -84,6 +93,7 @@ export default function Landing() {
                 About
               </a>
             </nav>
+
             {/* Desktop Actions */}
             <div className="hidden items-center gap-3 md:flex">
               <Link
@@ -92,6 +102,7 @@ export default function Landing() {
               >
                 Sign in
               </Link>
+
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20"
@@ -99,6 +110,7 @@ export default function Landing() {
                 Join IUVAI
               </Link>
             </div>
+
             {/* Mobile menu */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -112,10 +124,12 @@ export default function Landing() {
               )}
             </button>
           </div>
+
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="border-t border-border/60 bg-background/95 px-5 py-5 backdrop-blur-2xl md:hidden">
               <nav className="flex flex-col gap-1">
+
                 <a
                   href="#experts"
                   onClick={() => setMobileMenuOpen(false)}
@@ -123,6 +137,7 @@ export default function Landing() {
                 >
                   Experts
                 </a>
+
                 <a
                   href="#companies"
                   onClick={() => setMobileMenuOpen(false)}
@@ -130,6 +145,7 @@ export default function Landing() {
                 >
                   Companies
                 </a>
+
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
@@ -137,6 +153,7 @@ export default function Landing() {
                 >
                   How it works
                 </a>
+
                 <a
                   href="#about"
                   onClick={() => setMobileMenuOpen(false)}
@@ -144,7 +161,9 @@ export default function Landing() {
                 >
                   About
                 </a>
+
                 <div className="my-3 h-px bg-border/60" />
+
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
@@ -152,6 +171,7 @@ export default function Landing() {
                 >
                   Sign in
                 </Link>
+
                 <Link
                   href="/signup"
                   onClick={() => setMobileMenuOpen(false)}
@@ -163,186 +183,237 @@ export default function Landing() {
             </div>
           )}
         </header>
+
         {/* =====================================================
             HERO
         ====================================================== */}
-        <section className="relative z-10 min-h-[calc(100vh-68px)] overflow-hidden">
+        <section className="relative min-h-[calc(100vh-68px)] overflow-hidden">
+
           <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center px-6 py-20 sm:px-8 lg:px-8 lg:py-24">
+
             <div className="grid w-full items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
+
               {/* Hero text */}
               <div className="relative z-10">
+
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   Human intelligence infrastructure
                 </div>
+
                 <h1 className="text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
+
                   <span className="block">
                     Bridging the gap
                   </span>
+
                   <span className="block">
                     between
                   </span>
+
                   <span className="block text-primary">
                     humanity
                   </span>
+
                   <span className="block">
                     and <span className="text-primary">AI</span>
                   </span>
+
                 </h1>
+
                 <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
                   IUVAI connects exceptional human expertise with the
                   companies building the next generation of artificial
                   intelligence.
                 </p>
+
                 {/* CTA */}
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+
                   <Link href="/signup">
                     <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
                       Join as an Expert
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </button>
                   </Link>
+
                   <Link href="/signup">
                     <button className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-7 py-4 font-medium backdrop-blur transition-colors hover:bg-muted sm:w-auto">
                       Build with IUVAI
                       <Building2 className="h-4 w-4" />
                     </button>
                   </Link>
+
                 </div>
+
                 {/* Trust indicators */}
                 <div className="mt-10 flex flex-wrap gap-x-7 gap-y-4 text-xs text-muted-foreground">
+
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     Expert-driven
                   </div>
+
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     Built for AI
                   </div>
+
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     Global network
                   </div>
+
                 </div>
               </div>
+
               {/* =================================================
-                  REDESIGNED HERO CONNECTION
-                  NO WORDS / NO LABELS
+                  SIMPLIFIED FUTURISTIC HUMAN / AI CONNECTION
               ================================================== */}
               <div className="relative mx-auto hidden h-[470px] w-[470px] lg:block">
-                {/* Ambient central glow */}
-                <div className="absolute left-1/2 top-1/2 h-[230px] w-[230px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.08] blur-[80px]" />
-                {/* Large outer orbital ring */}
-                <div className="absolute inset-[3%] rounded-full border border-primary/[0.10]" />
-                {/* Second orbital ring */}
-                <div className="absolute inset-[12%] rounded-full border border-primary/[0.14]" />
-                {/* Third orbital ring */}
-                <div className="absolute inset-[22%] rounded-full border border-primary/[0.18]" />
-                {/* Asymmetric orbital path */}
-                <div className="absolute left-1/2 top-1/2 h-[74%] w-[92%] -translate-x-1/2 -translate-y-1/2 rotate-[-24deg] rounded-[50%] border border-primary/[0.22]" />
-                {/* Crossing orbital path */}
-                <div className="absolute left-1/2 top-1/2 h-[92%] w-[58%] -translate-x-1/2 -translate-y-1/2 rotate-[32deg] rounded-[50%] border border-primary/[0.12]" />
-                {/* Small orbital particles */}
-                <div className="absolute left-[17%] top-[30%] h-2 w-2 rounded-full bg-primary shadow-[0_0_16px_rgba(99,102,241,0.9)]" />
-                <div className="absolute right-[19%] top-[25%] h-1.5 w-1.5 rounded-full bg-primary/80 shadow-[0_0_12px_rgba(99,102,241,0.7)]" />
-                <div className="absolute bottom-[24%] left-[23%] h-1.5 w-1.5 rounded-full bg-primary/70" />
-                <div className="absolute bottom-[19%] right-[28%] h-2 w-2 rounded-full bg-primary shadow-[0_0_16px_rgba(99,102,241,0.9)]" />
-                {/* HUMAN NODE */}
-                <div className="absolute left-[8%] top-1/2 -translate-y-1/2">
-                  <div className="relative flex h-[86px] w-[86px] items-center justify-center rounded-full border border-primary/35 bg-background/85 shadow-[0_0_45px_rgba(99,102,241,0.15)] backdrop-blur-xl">
+
+                {/* Soft central glow */}
+                <div className="absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.07] blur-[90px]" />
+
+                {/* Main orbital ring */}
+                <div className="absolute inset-[9%] rounded-full border border-primary/15" />
+
+                {/* Secondary orbital ring */}
+                <div className="absolute inset-[20%] rounded-full border border-primary/10" />
+
+                {/* Subtle tilted orbit */}
+                <div className="absolute left-1/2 top-1/2 h-[64%] w-[82%] -translate-x-1/2 -translate-y-1/2 rotate-[22deg] rounded-[50%] border border-dashed border-primary/20" />
+
+                {/* Humanity node */}
+                <div className="absolute left-[7%] top-1/2 -translate-y-1/2">
+
+                  <div className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.16)] backdrop-blur-xl">
+
                     <div className="absolute inset-2 rounded-full border border-primary/10" />
-                    <Users className="relative z-10 h-8 w-8 text-primary" />
-                    <div className="absolute -right-1 top-2 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_14px_rgba(99,102,241,0.9)]" />
+
+                    <Users className="relative z-10 h-7 w-7 text-primary" />
+
                   </div>
+
                 </div>
-                {/* AI NODE */}
-                <div className="absolute right-[8%] top-1/2 -translate-y-1/2">
-                  <div className="relative flex h-[86px] w-[86px] items-center justify-center rounded-full border border-primary/35 bg-background/85 shadow-[0_0_45px_rgba(99,102,241,0.15)] backdrop-blur-xl">
+
+                {/* AI node */}
+                <div className="absolute right-[7%] top-1/2 -translate-y-1/2">
+
+                  <div className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.16)] backdrop-blur-xl">
+
                     <div className="absolute inset-2 rounded-full border border-primary/10" />
-                    <Brain className="relative z-10 h-8 w-8 text-primary" />
-                    <div className="absolute -left-1 bottom-2 h-2.5 w-2.5 rounded-full bg-primary shadow-[0_0_14px_rgba(99,102,241,0.9)]" />
+
+                    <Brain className="relative z-10 h-7 w-7 text-primary" />
+
                   </div>
+
                 </div>
+
                 {/* Central connection */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                  {/* Outer central halo */}
-                  <div className="absolute -inset-8 rounded-full border border-primary/[0.12]" />
-                  <div className="absolute -inset-4 rounded-full border border-primary/[0.18]" />
-                  {/* Core */}
-                  <div className="relative flex h-[112px] w-[112px] items-center justify-center rounded-full border border-primary/40 bg-background/80 shadow-[0_0_70px_rgba(99,102,241,0.25)] backdrop-blur-xl">
-                    {/* Inner ring */}
-                    <div className="absolute inset-4 rounded-full border border-primary/20" />
-                    {/* Central intelligence point */}
-                    <div className="relative h-7 w-7 rounded-full bg-primary shadow-[0_0_35px_rgba(99,102,241,1)]">
-                      <div className="absolute inset-2 rounded-full bg-background/40" />
-                    </div>
+
+                  <div className="relative flex h-[108px] w-[108px] items-center justify-center rounded-full border border-primary/35 bg-primary/[0.06] shadow-[0_0_55px_rgba(99,102,241,0.2)] backdrop-blur-xl">
+
+                    <div className="absolute inset-3 rounded-full border border-primary/15" />
+
+                    <div className="absolute inset-6 rounded-full border border-primary/10" />
+
+                    <div className="h-4 w-4 rounded-full bg-primary shadow-[0_0_24px_rgba(99,102,241,0.95)]" />
+
                   </div>
+
                 </div>
-                {/* Energy connections */}
-                <div className="absolute left-[25%] top-1/2 h-px w-[25%] bg-gradient-to-r from-primary/10 via-primary/40 to-primary/10" />
-                <div className="absolute right-[25%] top-1/2 h-px w-[25%] bg-gradient-to-r from-primary/10 via-primary/40 to-primary/10" />
+
+                {/* Small orbital points */}
+                <div className="absolute left-[28%] top-[22%] h-1.5 w-1.5 rounded-full bg-primary/70 shadow-[0_0_10px_rgba(99,102,241,0.7)]" />
+
+                <div className="absolute right-[27%] top-[24%] h-1.5 w-1.5 rounded-full bg-primary/50" />
+
+                <div className="absolute bottom-[23%] left-[29%] h-1.5 w-1.5 rounded-full bg-primary/50" />
+
+                <div className="absolute bottom-[21%] right-[29%] h-1.5 w-1.5 rounded-full bg-primary/70 shadow-[0_0_10px_rgba(99,102,241,0.7)]" />
+
               </div>
+
             </div>
           </div>
         </section>
+
         {/* =====================================================
             INTRO
         ====================================================== */}
         <section
           id="about"
-          className="relative z-10 border-t border-border/70 py-24 lg:py-32"
+          className="relative border-t border-border/70 py-24 lg:py-32"
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="max-w-3xl">
+
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                 The infrastructure
               </p>
+
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
                 AI is evolving rapidly.
                 <br />
+
                 <span className="text-muted-foreground">
                   Human expertise remains essential.
                 </span>
               </h2>
+
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
                 The most capable AI systems require more than computation.
                 They require people who understand medicine, science,
                 engineering, law, finance, language and the countless
                 domains that make the real world complex.
               </p>
+
             </div>
           </div>
         </section>
+
         {/* =====================================================
             EXPERTS / COMPANIES
         ====================================================== */}
         <section
           id="experts"
-          className="relative z-10 border-t border-border/70"
+          className="border-t border-border/70"
         >
           <div className="grid lg:grid-cols-2">
+
             {/* EXPERTS */}
             <div className="relative overflow-hidden border-b border-border/70 p-8 sm:p-12 lg:border-b-0 lg:border-r lg:p-20">
+
               <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
+
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
+
                 <p className="mb-4 text-xs uppercase tracking-[0.25em] text-primary">
                   For experts
                 </p>
+
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   Your expertise helps shaping tomorrow.
                 </h3>
+
                 <p className="mt-4 text-xl font-medium text-foreground">
                   Get paid to train AI models.
                 </p>
+
                 <p className="mt-5 leading-relaxed text-muted-foreground">
                   Put your knowledge to work on the systems shaping the
                   future of AI. IUVAI gives domain experts access to
                   meaningful AI training, evaluation and research
                   opportunities.
                 </p>
+
                 <ul className="mt-8 space-y-4">
                   {[
                     'Work on projects matched to your expertise',
@@ -355,42 +426,54 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
                     </li>
                   ))}
                 </ul>
+
                 <Link
                   href="/signup"
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Become an expert
+
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
+
               </div>
             </div>
+
             {/* COMPANIES */}
             <div
               id="companies"
               className="relative overflow-hidden p-8 sm:p-12 lg:p-20"
             >
+
               <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
+
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
+
                 <p className="mb-4 text-xs uppercase tracking-[0.25em] text-primary">
                   For companies
                 </p>
+
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   Build AI with the intelligence it needs.
                 </h3>
+
                 <p className="mt-5 leading-relaxed text-muted-foreground">
                   Access a network of qualified experts who can help
                   train, evaluate and improve your AI systems with
                   real-world domain knowledge.
                 </p>
+
                 <ul className="mt-8 space-y-4">
                   {[
                     'Access qualified domain experts',
@@ -403,43 +486,56 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
                     </li>
                   ))}
                 </ul>
+
                 <Link
                   href="/signup"
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Work with IUVAI
+
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
+
               </div>
             </div>
+
           </div>
         </section>
+
         {/* =====================================================
             HOW IT WORKS
         ====================================================== */}
         <section
           id="how-it-works"
-          className="relative z-10 border-t border-border/70 py-24 lg:py-32"
+          className="border-t border-border/70 py-24 lg:py-32"
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="mb-16 max-w-2xl">
+
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                 How it works
               </p>
+
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
                 Connecting intelligence
+
                 <span className="text-muted-foreground">
                   {' '}with opportunity.
                 </span>
               </h2>
+
             </div>
+
             <div className="grid overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
+
               {[
                 {
                   number: '01',
@@ -464,116 +560,154 @@ export default function Landing() {
                   key={step.number}
                   className="bg-background p-8 sm:p-10 lg:p-12"
                 >
+
                   <div className="mb-8 font-mono text-sm text-primary">
                     {step.number}
                   </div>
+
                   <h3 className="text-2xl font-semibold">
                     {step.title}
                   </h3>
+
                   <p className="mt-4 leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
+
                 </div>
               ))}
+
             </div>
           </div>
         </section>
+
         {/* =====================================================
             TRUST
         ====================================================== */}
-        <section className="relative z-10 border-t border-border/70 py-24">
+        <section className="border-t border-border/70 py-24">
+
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="grid gap-10 md:grid-cols-3">
+
               <div>
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Quality-first
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Expertise is verified and matched carefully to the
                   requirements of each project.
                 </p>
               </div>
+
               <div>
                 <Brain className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Human intelligence
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Real expertise remains at the center of the AI
                   development process.
                 </p>
               </div>
+
               <div>
                 <Globe2 className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Built globally
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Connect with opportunities and expertise beyond
                   geographical boundaries.
                 </p>
               </div>
+
             </div>
           </div>
         </section>
+
         {/* =====================================================
             FINAL CTA
         ====================================================== */}
-        <section className="relative z-10 overflow-hidden border-t border-border/70">
+        <section className="relative overflow-hidden border-t border-border/70">
+
           <div className="pointer-events-none absolute inset-0 bg-primary/[0.035]" />
+
           <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
+
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
               <Sparkles className="h-3.5 w-3.5" />
               The future needs human intelligence
             </div>
+
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
               Help build what comes next.
             </h2>
+
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
               Whether you are an expert ready to contribute or a company
               building the next generation of AI, IUVAI is where human
               intelligence meets opportunity.
             </p>
+
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+
               <Link href="/signup">
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
                   Join IUVAI
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
+
               <Link href="/login">
                 <button className="inline-flex w-full items-center justify-center rounded-xl border border-border px-7 py-4 font-medium transition-colors hover:bg-muted sm:w-auto">
                   Sign in
                 </button>
               </Link>
+
             </div>
           </div>
         </section>
+
         {/* =====================================================
             FOOTER
         ====================================================== */}
-        <footer className="relative z-10 border-t border-border/70">
+        <footer className="border-t border-border/70">
+
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
-            {/* LOCKED LOGO */}
+
             <div className="flex items-center gap-3">
+
+              {/* Same locked logo */}
               <div className="relative flex h-7 w-7 items-center justify-center">
                 <div className="absolute left-0 h-5 w-5 rounded-full border border-primary/60" />
                 <div className="absolute right-0 h-5 w-5 rounded-full border border-primary/40" />
                 <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-primary" />
               </div>
+
               <span className="font-semibold tracking-[0.2em]">
                 IUVAI
               </span>
+
             </div>
+
             <p className="text-center text-sm text-muted-foreground">
               Bridging the gap between humanity and AI.
             </p>
+
             <div className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} IUVAI
             </div>
+
           </div>
         </footer>
+
       </main>
     </AppShell>
   );
