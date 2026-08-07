@@ -59,10 +59,10 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           icon: LayoutDashboard,
         },
         {
-          name: 'Find Experts',
-          path: '/company-dashboard/experts',
-          icon: Search,
-        },
+  name: 'Find Experts',
+  path: '/company/find-experts',
+  icon: Search,
+},
         {
           name: 'Active Projects',
           path: '/company-dashboard',
