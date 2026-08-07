@@ -19,8 +19,7 @@ import {
 } from '@/lib/supabase';
 export default function ProjectExperts() {
   /*
-   * IMPORTANT:
-   * This must match the route in App.tsx:
+   * Must match App.tsx:
    *
    * /admin/projects/:projectId/experts
    */
@@ -89,15 +88,13 @@ export default function ProjectExperts() {
   /* ============================================================
      ASSIGNED EXPERT IDS
      ============================================================ */
-  const assignedIds = useMemo(
-    () =>
-      new Set(
-        assignedExperts.map(
-          (expert) => expert.id
-        )
-      ),
-    [assignedExperts]
-  );
+  const assignedIds = useMemo(() => {
+    return new Set(
+      assignedExperts.map(
+        (expert) => expert.id
+      )
+    );
+  }, [assignedExperts]);
   /* ============================================================
      RANK EXPERTS
      
@@ -118,10 +115,11 @@ export default function ProjectExperts() {
         ?.toLowerCase()
         .trim();
     const requiredSkills =
-      project.required_skills?.map(
-        (skill) =>
+      project.required_skills
+        ?.map((skill) =>
           skill.toLowerCase().trim()
-      ) || [];
+        )
+        .filter(Boolean) || [];
     return experts
       .filter(
         (expert) =>
@@ -138,34 +136,51 @@ export default function ProjectExperts() {
             ?.toLowerCase()
             .trim();
         const expertSkills =
-          expert.skills?.map(
-            (skill) =>
+          expert.skills
+            ?.map((skill) =>
               skill.toLowerCase().trim()
-          ) || [];
+            )
+            .filter(Boolean) || [];
+        /*
+         * Primary field match
+         */
         if (
           projectField &&
           expertField &&
-          expertField.includes(projectField)
-        ) {
-          score += 3;
-        }
-        if (
-          projectSpecialization &&
-          expertSpecialization &&
-          expertSpecialization.includes(
-            projectSpecialization
+          (
+            expertField.includes(projectField) ||
+            projectField.includes(expertField)
           )
         ) {
           score += 3;
         }
-        for (const requiredSkill of requiredSkills) {
-          if (
-            expertSkills.some(
-              (skill) =>
-                skill.includes(requiredSkill) ||
-                requiredSkill.includes(skill)
+        /*
+         * Specialization match
+         */
+        if (
+          projectSpecialization &&
+          expertSpecialization &&
+          (
+            expertSpecialization.includes(
+              projectSpecialization
+            ) ||
+            projectSpecialization.includes(
+              expertSpecialization
             )
-          ) {
+          )
+        ) {
+          score += 3;
+        }
+        /*
+         * Required skills
+         */
+        for (const requiredSkill of requiredSkills) {
+          const matched = expertSkills.some(
+            (expertSkill) =>
+              expertSkill.includes(requiredSkill) ||
+              requiredSkill.includes(expertSkill)
+          );
+          if (matched) {
             score += 1;
           }
         }
@@ -174,10 +189,21 @@ export default function ProjectExperts() {
           score,
         };
       })
-      .sort(
-        (a, b) =>
-          b.score - a.score
-      );
+      .sort((a, b) => {
+        /*
+         * Highest match first.
+         *
+         * If scores are equal, prefer more
+         * experienced experts.
+         */
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        return (
+          (b.expert.years_experience ?? 0) -
+          (a.expert.years_experience ?? 0)
+        );
+      });
   }, [
     experts,
     project,
@@ -186,14 +212,20 @@ export default function ProjectExperts() {
   /* ============================================================
      SEARCH
      ============================================================ */
-  const filteredExperts =
-    rankedExperts.filter(
+  const filteredExperts = useMemo(() => {
+    const term = search
+      .toLowerCase()
+      .trim();
+    if (!term) {
+      return rankedExperts;
+    }
+    return rankedExperts.filter(
       ({ expert }) => {
-        const term =
-          search.toLowerCase().trim();
-        if (!term) return true;
         const name =
           expert.profile?.full_name
+            ?.toLowerCase() || '';
+        const country =
+          expert.profile?.country
             ?.toLowerCase() || '';
         const field =
           expert.primary_field
@@ -205,14 +237,20 @@ export default function ProjectExperts() {
           expert.skills
             ?.join(' ')
             .toLowerCase() || '';
+        const aiExperience =
+          expert.previous_ai_experience
+            ?.toLowerCase() || '';
         return (
           name.includes(term) ||
+          country.includes(term) ||
           field.includes(term) ||
           specialization.includes(term) ||
-          skills.includes(term)
+          skills.includes(term) ||
+          aiExperience.includes(term)
         );
       }
     );
+  }, [rankedExperts, search]);
   /* ============================================================
      ASSIGN EXPERT
      ============================================================ */
@@ -220,6 +258,12 @@ export default function ProjectExperts() {
     expert: ExpertWithProfile
   ) {
     if (!projectId) return;
+    /*
+     * Prevent duplicate assignment attempts.
+     */
+    if (assignedIds.has(expert.id)) {
+      return;
+    }
     try {
       setAssigningId(expert.id);
       setError(null);
@@ -227,6 +271,9 @@ export default function ProjectExperts() {
         projectId,
         expert.id
       );
+      /*
+       * Immediately update the UI.
+       */
       setAssignedExperts(
         (current) => [
           ...current,
@@ -307,11 +354,11 @@ export default function ProjectExperts() {
           <button
             type="button"
             onClick={() =>
-              setLocation('/admin')
+              setLocation('/admin/projects')
             }
             className="mt-4 text-sm text-primary hover:underline"
           >
-            Back to admin
+            Back to projects
           </button>
         </div>
       </AppLayout>
@@ -330,7 +377,7 @@ export default function ProjectExperts() {
           <button
             type="button"
             onClick={() =>
-              setLocation('/admin')
+              setLocation('/admin/projects')
             }
             className="mb-5 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
           >
@@ -461,10 +508,14 @@ export default function ProjectExperts() {
                           ? ` · ${expert.specialization}`
                           : ''}
                       </p>
-                      {expert.profile
-                        ?.country && (
+                      {expert.profile?.country && (
                         <p className="mt-1 text-xs text-muted-foreground">
                           {expert.profile.country}
+                        </p>
+                      )}
+                      {expert.years_experience != null && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {expert.years_experience} years experience
                         </p>
                       )}
                     </div>
@@ -506,7 +557,7 @@ export default function ProjectExperts() {
                   Matching experts
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Experts ranked by field, specialization and skills.
+                  Experts ranked by field, specialization, skills and experience.
                 </p>
               </div>
               <div className="relative w-full md:w-72">
@@ -527,7 +578,9 @@ export default function ProjectExperts() {
           {filteredExperts.length === 0 ? (
             <div className="p-10 text-center">
               <p className="text-sm text-muted-foreground">
-                No matching experts found.
+                {search
+                  ? 'No experts match your search.'
+                  : 'No matching experts found.'}
               </p>
             </div>
           ) : (
@@ -563,9 +616,13 @@ export default function ProjectExperts() {
                           ?.country ||
                           'Country not specified'}
                       </p>
+                      {expert.years_experience != null && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {expert.years_experience} years experience
+                        </p>
+                      )}
                       {expert.skills &&
-                        expert.skills.length >
-                          0 && (
+                        expert.skills.length > 0 && (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {expert.skills.map(
                               (skill) => (
