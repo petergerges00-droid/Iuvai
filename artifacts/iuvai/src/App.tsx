@@ -2,7 +2,12 @@ import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
+import {
+  Route,
+  Switch,
+  Router as WouterRouter,
+  useLocation,
+} from 'wouter';
 import { Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import NotFound from '@/pages/not-found';
@@ -16,6 +21,7 @@ import ExpertDashboard from '@/pages/expert-dashboard';
 import CompanyDashboard from '@/pages/company-dashboard';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
+import FindExperts from '@/pages/FindExperts';
 const queryClient = new QueryClient();
 /* ============================================================
    LOADER
@@ -34,7 +40,9 @@ function FullPageLoader() {
 interface PublicRouteProps {
   component: React.ComponentType;
 }
-function PublicRoute({ component: Component }: PublicRouteProps) {
+function PublicRoute({
+  component: Component,
+}: PublicRouteProps) {
   const { session, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   useEffect(() => {
@@ -48,7 +56,12 @@ function PublicRoute({ component: Component }: PublicRouteProps) {
       return;
     }
     setLocation('/company-dashboard');
-  }, [session, profile, isLoading, setLocation]);
+  }, [
+    session,
+    profile,
+    isLoading,
+    setLocation,
+  ]);
   if (isLoading) {
     return <FullPageLoader />;
   }
@@ -146,7 +159,12 @@ function RootRedirect() {
       return;
     }
     setLocation('/company-dashboard');
-  }, [session, profile, isLoading, setLocation]);
+  }, [
+    session,
+    profile,
+    isLoading,
+    setLocation,
+  ]);
   return <FullPageLoader />;
 }
 /* ============================================================
@@ -158,7 +176,10 @@ function AppRouter() {
       {/* ======================================================
           LANDING
           ====================================================== */}
-      <Route path="/" component={Landing} />
+      <Route
+        path="/"
+        component={Landing}
+      />
       {/* ======================================================
           PUBLIC / AUTH
           ====================================================== */}
@@ -168,9 +189,10 @@ function AppRouter() {
       <Route path="/signup">
         <PublicRoute component={Signup} />
       </Route>
-      <Route path="/verify-email">
-        <VerifyEmail />
-      </Route>
+      <Route
+        path="/verify-email"
+        component={VerifyEmail}
+      />
       <Route path="/forgot-password">
         <PublicRoute component={ForgotPassword} />
       </Route>
@@ -202,6 +224,15 @@ function AppRouter() {
         />
       </Route>
       {/* ======================================================
+          COMPANY — FIND EXPERTS
+          ====================================================== */}
+      <Route path="/company-dashboard/experts">
+        <ProtectedRoute
+          component={FindExperts}
+          requireAccountType="company"
+        />
+      </Route>
+      {/* ======================================================
           SETTINGS
           ====================================================== */}
       <Route path="/settings">
@@ -218,7 +249,10 @@ function AppRouter() {
    APP
    ============================================================ */
 function App() {
-  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const basePath = import.meta.env.BASE_URL.replace(
+    /\/$/,
+    ''
+  );
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
