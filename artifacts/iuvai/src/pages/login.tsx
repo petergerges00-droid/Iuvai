@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,14 +16,28 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import {
+  Loader2,
+  ArrowRight,
+  ShieldCheck,
+} from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 const formSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string()
+    .email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required'),
 });
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const {
+    session,
+    profile,
+    isLoading: authLoading,
+  } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -32,10 +46,41 @@ export default function Login() {
       password: '',
     },
   });
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  /*
+   * Once authentication and profile loading are complete,
+   * send the user directly to the correct workspace.
+   */
+  useEffect(() => {
+    if (authLoading || !session) {
+      return;
+    }
+    if (!profile?.account_type) {
+      setLocation('/onboarding');
+      return;
+    }
+    if (profile.account_type === 'expert') {
+      setLocation('/dashboard');
+      return;
+    }
+    if (profile.account_type === 'company') {
+      setLocation('/company-dashboard');
+      return;
+    }
+  }, [
+    session,
+    profile,
+    authLoading,
+    setLocation,
+  ]);
+  async function onSubmit(
+    values: z.infer<typeof formSchema>
+  ) {
     setIsLoading(true);
     try {
-      const { error } = await signIn(values.email, values.password);
+      const { error } = await signIn(
+        values.email,
+        values.password
+      );
       if (error) {
         toast({
           variant: 'destructive',
@@ -44,16 +89,34 @@ export default function Login() {
         });
         return;
       }
-      setLocation('/');
+      /*
+       * Do NOT redirect here.
+       *
+       * Supabase will update AuthProvider's session.
+       * The effect above will then wait for the profile
+       * and redirect to the correct destination.
+       */
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'An error occurred',
-        description: 'Please try again later.',
+        description:
+          'Please try again later.',
       });
     } finally {
       setIsLoading(false);
     }
+  }
+  /*
+   * While an authenticated user is being routed,
+   * don't show the login form again.
+   */
+  if (session) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
   return (
     <AuthLayout
@@ -80,6 +143,7 @@ export default function Login() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-5"
           >
+            {/* EMAIL */}
             <FormField
               control={form.control}
               name="email"
@@ -101,6 +165,7 @@ export default function Login() {
                 </FormItem>
               )}
             />
+            {/* PASSWORD */}
             <FormField
               control={form.control}
               name="password"
@@ -129,6 +194,7 @@ export default function Login() {
                 </FormItem>
               )}
             />
+            {/* SIGN IN */}
             <Button
               type="submit"
               className="group h-12 w-full text-sm font-semibold shadow-sm transition-all hover:shadow-md"
@@ -148,6 +214,7 @@ export default function Login() {
             </Button>
           </form>
         </Form>
+        {/* DIVIDER */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border/60" />
@@ -158,6 +225,7 @@ export default function Login() {
             </span>
           </div>
         </div>
+        {/* SIGN UP */}
         <div className="text-center">
           <Link
             href="/signup"
