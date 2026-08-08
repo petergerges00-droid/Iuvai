@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useRoute } from 'wouter';
+import { Link, useRoute } from 'wouter';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -26,6 +26,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
+/*
+============================================================
+PROJECT TYPE
+============================================================
+*/
+
 interface Project {
   id: string;
   company_id: string;
@@ -42,6 +48,12 @@ interface Project {
   created_at: string;
 }
 
+/*
+============================================================
+APPLICATION FORM TYPE
+============================================================
+*/
+
 interface ApplicationForm {
   coverLetter: string;
   experience: string;
@@ -56,12 +68,25 @@ const initialForm: ApplicationForm = {
   proposedRate: '',
 };
 
+/*
+============================================================
+PAGE
+============================================================
+*/
+
 export default function ApplyProject() {
   const { user, profile } = useAuth();
+
+  /*
+  Route standardized with ExpertProject:
+  
+  /expert/projects/:projectId
+  /expert/projects/:projectId/apply
+  */
+
   const [, params] = useRoute(
-    '/expert-projects/:projectId/apply'
+    '/expert/projects/:projectId/apply'
   );
-  const [, setLocation] = useLocation();
 
   const projectId = params?.projectId;
 
@@ -105,7 +130,9 @@ export default function ApplyProject() {
 
       try {
         /*
-        Load project
+        ========================================================
+        LOAD PROJECT
+        ========================================================
         */
 
         const {
@@ -143,7 +170,9 @@ export default function ApplyProject() {
         }
 
         /*
-        Project must be open
+        ========================================================
+        PROJECT MUST BE OPEN
+        ========================================================
         */
 
         if (projectData.status !== 'open') {
@@ -157,7 +186,9 @@ export default function ApplyProject() {
         }
 
         /*
-        Check whether expert already applied
+        ========================================================
+        CHECK EXISTING APPLICATION
+        ========================================================
         */
 
         const {
@@ -309,6 +340,7 @@ export default function ApplyProject() {
       setError(
         'You must be signed in to apply.'
       );
+
       return;
     }
 
@@ -316,6 +348,7 @@ export default function ApplyProject() {
       setError(
         'You have already applied to this project.'
       );
+
       return;
     }
 
@@ -365,12 +398,13 @@ export default function ApplyProject() {
         );
 
         /*
-        Handle duplicate application
+        ======================================================
+        HANDLE DUPLICATE APPLICATION
+        ======================================================
         */
 
         if (
-          insertError.code ===
-            '23505' ||
+          insertError.code === '23505' ||
           insertError.message
             ?.toLowerCase()
             .includes('duplicate')
@@ -397,16 +431,22 @@ export default function ApplyProject() {
         data
       );
 
+      /*
+      ========================================================
+      SUCCESS
+      ========================================================
+      */
+
       setSuccess(true);
 
       /*
-      Give the success state a moment
+      Give the success state a moment before returning
+      to the project.
       */
 
       setTimeout(() => {
-        setLocation(
-          `/expert-projects/${projectId}`
-        );
+        window.location.href =
+          `/expert/projects/${projectId}`;
       }, 1000);
     } catch (err) {
       console.error(
@@ -494,16 +534,18 @@ export default function ApplyProject() {
             <Button
               className="mt-6"
               variant="outline"
-              onClick={() =>
-                setLocation(
-                  projectId
-                    ? `/expert-projects/${projectId}`
-                    : '/expert-projects'
-                )
-              }
+              asChild
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to project
+              <Link
+                href={
+                  projectId
+                    ? `/expert/projects/${projectId}`
+                    : '/expert/projects'
+                }
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to project
+              </Link>
             </Button>
           </div>
         </div>
@@ -560,8 +602,8 @@ export default function ApplyProject() {
           <Link
             href={
               projectId
-                ? `/expert-projects/${projectId}`
-                : '/expert-projects'
+                ? `/expert/projects/${projectId}`
+                : '/expert/projects'
             }
             className="mb-6 inline-flex items-center text-xs uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
           >
@@ -591,8 +633,8 @@ export default function ApplyProject() {
               <Link
                 href={
                   projectId
-                    ? `/expert-projects/${projectId}`
-                    : '/expert-projects'
+                    ? `/expert/projects/${projectId}`
+                    : '/expert/projects'
                 }
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -625,6 +667,7 @@ export default function ApplyProject() {
   return (
     <AppLayout title="Apply to Project">
       <div className="mx-auto max-w-5xl">
+
         {/* ================================================= */}
         {/* HEADER */}
         {/* ================================================= */}
@@ -633,8 +676,8 @@ export default function ApplyProject() {
           <Link
             href={
               projectId
-                ? `/expert-projects/${projectId}`
-                : '/expert-projects'
+                ? `/expert/projects/${projectId}`
+                : '/expert/projects'
             }
             className="mb-6 inline-flex items-center text-xs uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-primary"
           >
@@ -645,6 +688,7 @@ export default function ApplyProject() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="mb-3 flex flex-wrap items-center gap-2">
+
                 <Badge
                   variant="outline"
                   className="border-primary/20 bg-primary/5 text-primary"
@@ -660,6 +704,7 @@ export default function ApplyProject() {
                   <span className="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   OPEN
                 </Badge>
+
               </div>
 
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
@@ -691,8 +736,10 @@ export default function ApplyProject() {
 
         {project && (
           <section className="mb-6 rounded-2xl border border-border/60 bg-card/40">
+
             <div className="border-b border-border/60 p-5 sm:p-6">
               <div className="flex items-center gap-3">
+
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <Briefcase className="h-4 w-4 text-primary" />
                 </div>
@@ -706,10 +753,12 @@ export default function ApplyProject() {
                     What the company needs
                   </h2>
                 </div>
+
               </div>
             </div>
 
             <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4 sm:p-6">
+
               <SummaryItem
                 icon={
                   <Briefcase className="h-4 w-4" />
@@ -763,9 +812,11 @@ export default function ApplyProject() {
                     : 'Not specified'
                 }
               />
+
             </div>
 
             <div className="border-t border-border/60 p-5 sm:p-6">
+
               <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
                 Required expertise
               </p>
@@ -790,10 +841,12 @@ export default function ApplyProject() {
                   )}
                 </div>
               )}
+
             </div>
 
             {project.description && (
               <div className="border-t border-border/60 p-5 sm:p-6">
+
                 <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
                   Description
                 </p>
@@ -801,8 +854,10 @@ export default function ApplyProject() {
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                   {project.description}
                 </p>
+
               </div>
             )}
+
           </section>
         )}
 
@@ -812,10 +867,13 @@ export default function ApplyProject() {
 
         {error && (
           <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
+
             <div className="flex items-start gap-3">
+
               <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-destructive" />
 
               <div>
+
                 <p className="text-xs font-medium text-destructive">
                   Unable to submit application
                 </p>
@@ -823,8 +881,11 @@ export default function ApplyProject() {
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   {error}
                 </p>
+
               </div>
+
             </div>
+
           </div>
         )}
 
@@ -836,11 +897,14 @@ export default function ApplyProject() {
           onSubmit={handleSubmit}
           className="space-y-6"
         >
+
           {/* COVER LETTER */}
 
           <section className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+
             <div className="border-b border-border/60 px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3">
+
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <FileText className="h-4 w-4 text-primary" />
                 </div>
@@ -854,10 +918,12 @@ export default function ApplyProject() {
                     Why are you a good fit?
                   </h2>
                 </div>
+
               </div>
             </div>
 
             <div className="p-5 sm:p-6">
+
               <label
                 htmlFor="coverLetter"
                 className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
@@ -880,6 +946,7 @@ export default function ApplyProject() {
               />
 
               <div className="mt-2 flex justify-between">
+
                 <p className="text-[11px] text-muted-foreground/50">
                   Keep it relevant to the project
                   requirements.
@@ -888,15 +955,20 @@ export default function ApplyProject() {
                 <span className="text-[10px] text-muted-foreground/40">
                   {form.coverLetter.length}/5000
                 </span>
+
               </div>
+
             </div>
+
           </section>
 
           {/* EXPERIENCE */}
 
           <section className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+
             <div className="border-b border-border/60 px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3">
+
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <Sparkles className="h-4 w-4 text-primary" />
                 </div>
@@ -910,10 +982,12 @@ export default function ApplyProject() {
                     Relevant experience
                   </h2>
                 </div>
+
               </div>
             </div>
 
             <div className="p-5 sm:p-6">
+
               <label
                 htmlFor="experience"
                 className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
@@ -940,14 +1014,18 @@ export default function ApplyProject() {
                 ability to perform this specific type of
                 work.
               </p>
+
             </div>
+
           </section>
 
           {/* AVAILABILITY */}
 
           <section className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+
             <div className="border-b border-border/60 px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3">
+
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <Clock3 className="h-4 w-4 text-primary" />
                 </div>
@@ -961,10 +1039,12 @@ export default function ApplyProject() {
                     Availability
                   </h2>
                 </div>
+
               </div>
             </div>
 
             <div className="p-5 sm:p-6">
+
               <label
                 htmlFor="availability"
                 className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
@@ -987,6 +1067,7 @@ export default function ApplyProject() {
               />
 
               <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+
                 <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
 
                 <span>
@@ -994,15 +1075,20 @@ export default function ApplyProject() {
                   and approximately how much time you can
                   dedicate.
                 </span>
+
               </div>
+
             </div>
+
           </section>
 
           {/* RATE */}
 
           <section className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+
             <div className="border-b border-border/60 px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3">
+
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
                   <DollarSign className="h-4 w-4 text-primary" />
                 </div>
@@ -1016,11 +1102,14 @@ export default function ApplyProject() {
                     Compensation
                   </h2>
                 </div>
+
               </div>
             </div>
 
             <div className="p-5 sm:p-6">
+
               <div className="max-w-md">
+
                 <label
                   htmlFor="proposedRate"
                   className="mb-2 block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
@@ -1029,6 +1118,7 @@ export default function ApplyProject() {
                 </label>
 
                 <div className="relative">
+
                   <DollarSign className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
 
                   <Input
@@ -1048,14 +1138,18 @@ export default function ApplyProject() {
                     placeholder="Optional"
                     className="h-12 border-border/60 bg-background/40 pl-10"
                   />
+
                 </div>
 
                 <p className="mt-2 text-[11px] leading-5 text-muted-foreground/50">
                   Optional for now. This can be negotiated
                   with the company before work begins.
                 </p>
+
               </div>
+
             </div>
+
           </section>
 
           {/* ================================================= */}
@@ -1063,13 +1157,17 @@ export default function ApplyProject() {
           {/* ================================================= */}
 
           <section className="overflow-hidden rounded-2xl border border-primary/20 bg-primary/[0.035]">
+
             <div className="p-5 sm:p-6">
+
               <div className="flex items-start gap-4">
+
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                 </div>
 
                 <div>
+
                   <h2 className="text-sm font-semibold">
                     Ready to apply?
                   </h2>
@@ -1078,10 +1176,13 @@ export default function ApplyProject() {
                     Your application will be sent to the
                     company for review.
                   </p>
+
                 </div>
+
               </div>
 
               <div className="mt-5 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+
                 <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
 
                 <span>
@@ -1089,8 +1190,11 @@ export default function ApplyProject() {
                   shared with the company responsible for
                   this project.
                 </span>
+
               </div>
+
             </div>
+
           </section>
 
           {/* ================================================= */}
@@ -1098,6 +1202,7 @@ export default function ApplyProject() {
           {/* ================================================= */}
 
           <div className="flex flex-col-reverse gap-3 border-t border-border/50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+
             <Button
               type="button"
               variant="ghost"
@@ -1107,8 +1212,8 @@ export default function ApplyProject() {
               <Link
                 href={
                   projectId
-                    ? `/expert-projects/${projectId}`
-                    : '/expert-projects'
+                    ? `/expert/projects/${projectId}`
+                    : '/expert/projects'
                 }
               >
                 Cancel
@@ -1133,7 +1238,9 @@ export default function ApplyProject() {
                 </>
               )}
             </Button>
+
           </div>
+
         </form>
 
         {/* ================================================= */}
@@ -1141,9 +1248,13 @@ export default function ApplyProject() {
         {/* ================================================= */}
 
         <div className="mt-8 flex items-center justify-center gap-2 border-t border-border/40 pt-5 text-[9px] uppercase tracking-[0.2em] text-muted-foreground/30">
+
           <Sparkles className="h-3 w-3" />
+
           IUVAI human intelligence infrastructure
+
         </div>
+
       </div>
     </AppLayout>
   );
@@ -1166,12 +1277,15 @@ function SummaryItem({
 }) {
   return (
     <div className="rounded-xl border border-border/50 bg-background/30 p-4">
+
       <div className="flex items-center gap-3">
+
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           {icon}
         </div>
 
         <div className="min-w-0">
+
           <p className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground/40">
             {label}
           </p>
@@ -1179,8 +1293,11 @@ function SummaryItem({
           <p className="mt-1 truncate text-xs font-medium">
             {value}
           </p>
+
         </div>
+
       </div>
+
     </div>
   );
 }
