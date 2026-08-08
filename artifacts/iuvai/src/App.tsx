@@ -44,6 +44,7 @@ import AdminExpertProfile from '@/pages/admin-expert-profile';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
+import CreateProject from '@/pages/create-project';
 
 const queryClient = new QueryClient();
 
@@ -607,7 +608,12 @@ function AppRouter() {
           requireAccountType="company"
         />
       </Route>
-
+<Route path="/company-dashboard/projects/new">
+  <ProtectedRoute
+    component={CreateProject}
+    requireAccountType="company"
+  />
+</Route>
       {/* ======================================================
           FIND EXPERTS
           ====================================================== */}
