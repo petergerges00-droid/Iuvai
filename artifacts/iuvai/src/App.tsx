@@ -50,6 +50,7 @@ import EditProject from '@/pages/edit-project';
 import ExpertProjects from '@/pages/expert-projects';
 import ExpertProject from '@/pages/expert-project';
 import ApplyProject from '@/pages/apply-project';
+import CompanyProjectApplications from '@/pages/company-project-applications';
 const queryClient = new QueryClient();
 
 /*
@@ -619,7 +620,10 @@ function AppRouter() {
           requireAccountType="expert"
         />
       </Route>
-
+<Route
+  path="/company-dashboard/projects/:projectId/applications"
+  component={CompanyProjectApplications}
+/>
       {/* ======================================================
           COMPANY DASHBOARD
           ====================================================== */}
