@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   ReactNode,
 } from 'react';
@@ -17,6 +18,10 @@ import {
   getProfile,
 } from '@/lib/supabase';
 
+/* ============================================================
+   AUTH CONTEXT
+   ============================================================ */
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -25,25 +30,34 @@ interface AuthContextType {
 
   /**
    * True when the current authentication flow
-   * was initiated through Supabase password recovery.
+   * is a Supabase password-recovery flow.
    *
-   * This prevents normal authenticated routing
-   * from sending the user to onboarding/dashboard
-   * before they reset their password.
+   * IMPORTANT:
+   * This remains true until SIGNED_OUT.
+   *
+   * We deliberately do NOT clear it on USER_UPDATED,
+   * because USER_UPDATED can occur immediately after
+   * the password is changed while the temporary recovery
+   * session is still active.
    */
   isPasswordRecovery: boolean;
 
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  profile: null,
-  isLoading: true,
-  isPasswordRecovery: false,
-  refreshProfile: async () => {},
-});
+const AuthContext =
+  createContext<AuthContextType>({
+    session: null,
+    user: null,
+    profile: null,
+    isLoading: true,
+    isPasswordRecovery: false,
+    refreshProfile: async () => {},
+  });
+
+/* ============================================================
+   AUTH PROVIDER
+   ============================================================ */
 
 export function AuthProvider({
   children,
@@ -62,8 +76,46 @@ export function AuthProvider({
   const [isLoading, setIsLoading] =
     useState(true);
 
-  const [isPasswordRecovery, setIsPasswordRecovery] =
-    useState(false);
+  const [
+    isPasswordRecovery,
+    setIsPasswordRecovery,
+  ] = useState(false);
+
+  /*
+  ============================================================
+  RECOVERY FLOW REF
+  ============================================================
+
+  A ref is used in addition to React state.
+
+  Why?
+
+  React state updates are asynchronous. During Supabase
+  authentication, several events can happen very quickly:
+
+    PASSWORD_RECOVERY
+    INITIAL_SESSION
+    USER_UPDATED
+    SIGNED_OUT
+
+  The ref gives us an immediate, synchronous indication that
+  the current authentication flow is a password recovery flow.
+
+  This prevents a later callback from accidentally treating
+  the recovery session as a normal login session.
+  */
+
+  const recoveryFlowRef =
+    useRef(false);
+
+  /*
+  ============================================================
+  MOUNT REF
+  ============================================================
+  */
+
+  const mountedRef =
+    useRef(true);
 
   /*
   ============================================================
@@ -73,18 +125,28 @@ export function AuthProvider({
 
   const fetchProfile = async (
     userId: string
-  ) => {
+  ): Promise<Profile | null> => {
     try {
-      const data = await getProfile(userId);
+      const data =
+        await getProfile(userId);
+
+      if (!mountedRef.current) {
+        return data;
+      }
+
       setProfile(data);
+
       return data;
     } catch (error) {
       console.error(
-        'ERROR FETCHING PROFILE:',
+        'IUVAI ERROR FETCHING PROFILE:',
         error
       );
 
-      setProfile(null);
+      if (mountedRef.current) {
+        setProfile(null);
+      }
+
       return null;
     }
   };
@@ -96,39 +158,46 @@ export function AuthProvider({
   */
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
     /*
-    ------------------------------------------------------------
+    ============================================================
     AUTH STATE LISTENER
-    ------------------------------------------------------------
+    ============================================================
+    
+    IMPORTANT:
 
-    Set up the listener BEFORE getSession().
+    This listener is registered BEFORE getSession().
 
-    This is important for password recovery because
-    Supabase can emit PASSWORD_RECOVERY while the
-    recovery URL is being processed.
+    Supabase can emit PASSWORD_RECOVERY while processing the
+    recovery URL. We need to be listening before that happens.
     */
 
     const {
-      data: { subscription },
+      data: {
+        subscription,
+      },
     } =
       supabase.auth.onAuthStateChange(
         async (
           event,
           currentSession
         ) => {
-          if (!mounted) return;
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
 
           console.log(
-            'SUPABASE AUTH EVENT:',
+            'IUVAI SUPABASE AUTH EVENT:',
             event
           );
 
           /*
-          ========================================================
+          ======================================================
           PASSWORD RECOVERY
-          ========================================================
+          ======================================================
           */
 
           if (
@@ -136,37 +205,57 @@ export function AuthProvider({
             'PASSWORD_RECOVERY'
           ) {
             console.log(
-              'PASSWORD RECOVERY SESSION DETECTED'
+              'IUVAI: PASSWORD_RECOVERY EVENT DETECTED'
             );
 
-            setIsPasswordRecovery(true);
+            /*
+             * Mark recovery synchronously first.
+             */
+            recoveryFlowRef.current =
+              true;
+
+            /*
+             * Then update React state.
+             */
+            setIsPasswordRecovery(
+              true
+            );
 
             setSession(
               currentSession
             );
 
             setUser(
-              currentSession?.user ?? null
+              currentSession?.user ??
+                null
             );
 
             /*
-             * We intentionally do NOT redirect.
+             * IMPORTANT:
              *
-             * The reset-password page needs the
-             * recovery session to call:
+             * We intentionally do NOT redirect here.
              *
-             * supabase.auth.updateUser(...)
+             * /reset-password must be allowed to render.
              */
 
             if (
               currentSession?.user
             ) {
+              /*
+               * We don't actually need the profile to perform
+               * password recovery, but loading it keeps the
+               * AuthContext consistent.
+               */
               await fetchProfile(
                 currentSession.user.id
               );
+            } else {
+              setProfile(null);
             }
 
-            if (mounted) {
+            if (
+              mountedRef.current
+            ) {
               setIsLoading(false);
             }
 
@@ -174,69 +263,142 @@ export function AuthProvider({
           }
 
           /*
-          ========================================================
+          ======================================================
           SIGNED OUT
-          ========================================================
+          ======================================================
+
+          This is the ONLY normal authentication event that
+          clears the recovery-flow flag.
+
+          ResetPassword intentionally calls:
+
+            supabase.auth.signOut()
+
+          after successfully changing the password.
           */
 
           if (
             event ===
             'SIGNED_OUT'
           ) {
+            console.log(
+              'IUVAI: SIGNED_OUT'
+            );
+
+            recoveryFlowRef.current =
+              false;
+
+            setIsPasswordRecovery(
+              false
+            );
+
             setSession(null);
             setUser(null);
             setProfile(null);
-            setIsPasswordRecovery(false);
-            setIsLoading(false);
+
+            if (
+              mountedRef.current
+            ) {
+              setIsLoading(false);
+            }
 
             return;
           }
 
           /*
-          ========================================================
-          NORMAL AUTHENTICATED SESSION
-          ========================================================
+          ======================================================
+          RECOVERY SESSION PROTECTION
+          ======================================================
+
+          If PASSWORD_RECOVERY has already been detected,
+          any subsequent authentication events must NOT turn
+          this into a normal authentication flow.
+
+          This is especially important for INITIAL_SESSION
+          and USER_UPDATED.
           */
+
+          if (
+            recoveryFlowRef.current
+          ) {
+            console.log(
+              'IUVAI: RECOVERY FLOW ACTIVE — PRESERVING RECOVERY STATE',
+              event
+            );
+
+            setIsPasswordRecovery(
+              true
+            );
+
+            setSession(
+              currentSession
+            );
+
+            setUser(
+              currentSession?.user ??
+                null
+            );
+
+            if (
+              currentSession?.user
+            ) {
+              await fetchProfile(
+                currentSession.user.id
+              );
+            } else {
+              setProfile(null);
+            }
+
+            if (
+              mountedRef.current
+            ) {
+              setIsLoading(false);
+            }
+
+            return;
+          }
+
+          /*
+          ======================================================
+          NORMAL AUTHENTICATION
+          ======================================================
+          */
+
+          console.log(
+            'IUVAI: NORMAL AUTH EVENT:',
+            event
+          );
 
           setSession(
             currentSession
           );
 
           setUser(
-            currentSession?.user ?? null
+            currentSession?.user ??
+              null
           );
+
+          /*
+           * USER_UPDATED is deliberately NOT used to clear
+           * password recovery state.
+           *
+           * In a normal authentication flow, there is no
+           * recovery flag anyway.
+           */
 
           if (
             currentSession?.user
           ) {
-            /*
-             * USER_UPDATED can occur after the
-             * password has been successfully changed.
-             *
-             * At that point the recovery flow is
-             * considered complete.
-             */
-
-            if (
-              event ===
-              'USER_UPDATED'
-            ) {
-              setIsPasswordRecovery(
-                false
-              );
-            }
-
             await fetchProfile(
               currentSession.user.id
             );
           } else {
             setProfile(null);
-            setIsPasswordRecovery(
-              false
-            );
           }
 
-          if (mounted) {
+          if (
+            mountedRef.current
+          ) {
             setIsLoading(false);
           }
         }
@@ -248,35 +410,105 @@ export function AuthProvider({
     ============================================================
     */
 
-    supabase.auth
-      .getSession()
-      .then(
-        async ({
-          data: {
-            session: initialSession,
-          },
-        }) => {
-          if (!mounted) return;
+    const initializeSession =
+      async () => {
+        try {
+          const {
+            data: {
+              session:
+                initialSession,
+            },
+            error,
+          } =
+            await supabase.auth.getSession();
+
+          if (
+            !mountedRef.current
+          ) {
+            return;
+          }
+
+          if (error) {
+            console.error(
+              'IUVAI GET SESSION ERROR:',
+              error
+            );
+
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setIsLoading(false);
+
+            return;
+          }
 
           console.log(
-            'INITIAL SUPABASE SESSION:',
+            'IUVAI INITIAL SUPABASE SESSION:',
             initialSession
           );
 
           /*
-           * Do not automatically mark this as
-           * password recovery.
-           *
-           * The PASSWORD_RECOVERY event is the
-           * authoritative signal for that flow.
-           */
+          ========================================================
+          IMPORTANT RECOVERY CHECK
+          ========================================================
+
+          If PASSWORD_RECOVERY has already fired while this
+          getSession() request was running, preserve recovery
+          state.
+
+          Do NOT overwrite it with a normal-session state.
+          */
+
+          if (
+            recoveryFlowRef.current
+          ) {
+            console.log(
+              'IUVAI INITIAL SESSION: RECOVERY FLOW ALREADY ACTIVE'
+            );
+
+            setSession(
+              initialSession
+            );
+
+            setUser(
+              initialSession?.user ??
+                null
+            );
+
+            if (
+              initialSession?.user
+            ) {
+              await fetchProfile(
+                initialSession.user.id
+              );
+            }
+
+            if (
+              mountedRef.current
+            ) {
+              setIsPasswordRecovery(
+                true
+              );
+
+              setIsLoading(false);
+            }
+
+            return;
+          }
+
+          /*
+          ========================================================
+          NORMAL INITIAL SESSION
+          ========================================================
+          */
 
           setSession(
             initialSession
           );
 
           setUser(
-            initialSession?.user ?? null
+            initialSession?.user ??
+              null
           );
 
           if (
@@ -285,23 +517,46 @@ export function AuthProvider({
             await fetchProfile(
               initialSession.user.id
             );
+          } else {
+            setProfile(null);
           }
 
-          if (mounted) {
+          /*
+           * Do not set recovery state here.
+           *
+           * A normal existing session is NOT a recovery
+           * session.
+           */
+          setIsPasswordRecovery(
+            false
+          );
+
+          if (
+            mountedRef.current
+          ) {
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error(
+            'IUVAI INITIAL AUTH ERROR:',
+            error
+          );
+
+          if (
+            mountedRef.current
+          ) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setIsPasswordRecovery(
+              false
+            );
             setIsLoading(false);
           }
         }
-      )
-      .catch((error) => {
-        console.error(
-          'GET SESSION ERROR:',
-          error
-        );
+      };
 
-        if (mounted) {
-          setIsLoading(false);
-        }
-      });
+    initializeSession();
 
     /*
     ============================================================
@@ -310,7 +565,8 @@ export function AuthProvider({
     */
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+
       subscription.unsubscribe();
     };
   }, []);
@@ -323,7 +579,9 @@ export function AuthProvider({
 
   const refreshProfile =
     async () => {
-      if (!user) return;
+      if (!user) {
+        return;
+      }
 
       await fetchProfile(
         user.id
@@ -351,6 +609,10 @@ export function AuthProvider({
     </AuthContext.Provider>
   );
 }
+
+/* ============================================================
+   HOOK
+   ============================================================ */
 
 export const useAuth =
   () => useContext(AuthContext);
