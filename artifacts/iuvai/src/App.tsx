@@ -46,6 +46,7 @@ import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
 import CreateProject from '@/pages/create-project';
 import CompanyProject from '@/pages/company-project';
+import EditProject from '@/pages/edit-project';
 
 const queryClient = new QueryClient();
 
@@ -443,7 +444,10 @@ function AppRouter() {
         path="/"
         component={Landing}
       />
-
+<Route
+  path="/company-dashboard/projects/:projectId/edit"
+  component={EditProject}
+/>
       {/* ======================================================
           LOGIN
           ====================================================== */}
