@@ -147,37 +147,51 @@ export async function signOut() {
   return supabase.auth.signOut();
 }
 
+// ─────────────────────────────────────────────────────────────
+// PASSWORD RECOVERY
+// ─────────────────────────────────────────────────────────────
+
 /**
- * IUVAI production URL.
+ * Production application URL.
  *
- * IMPORTANT:
- * Do not use window.location.origin here.
- * The application can be opened from a Replit deployment,
- * preview URL, or another environment, which could cause
- * Supabase to send the recovery link to the wrong host.
+ * Password recovery links must always return to the
+ * deployed IUVAI application rather than whichever
+ * preview/development URL happens to be open.
  */
 const PRODUCTION_URL =
   'https://6736f081.iuvai.pages.dev';
 
 /**
+ * Password-reset page.
+ *
+ * Keeping this as a separate constant makes it harder
+ * to accidentally create an inconsistent recovery URL.
+ */
+const PASSWORD_RESET_URL =
+  `${PRODUCTION_URL}/reset-password`;
+
+/**
  * Send a password-reset email.
  *
- * Supabase will redirect the user to:
- *
- * https://6736f081.iuvai.pages.dev/reset-password
- *
- * after they click the recovery link.
+ * Supabase will generate the recovery link and, after
+ * authentication of the recovery token, redirect the
+ * user to /reset-password.
  */
 export async function resetPassword(email: string) {
   return supabase.auth.resetPasswordForEmail(
-    email,
+    email.trim(),
     {
-      redirectTo:
-        `${PRODUCTION_URL}/reset-password`,
+      redirectTo: PASSWORD_RESET_URL,
     }
   );
 }
 
+/**
+ * Update the authenticated user's password.
+ *
+ * This must be called while Supabase has an active
+ * password-recovery session.
+ */
 export async function updatePassword(
   password: string
 ) {
