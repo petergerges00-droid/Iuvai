@@ -66,7 +66,6 @@ export interface ExpertProfile {
   created_at: string;
   resume_path: string | null;
   resume_file_name: string | null;
-
   verification_status: VerificationStatus;
 }
 
@@ -148,13 +147,40 @@ export async function signOut() {
   return supabase.auth.signOut();
 }
 
+/**
+ * IUVAI production URL.
+ *
+ * IMPORTANT:
+ * Do not use window.location.origin here.
+ * The application can be opened from a Replit deployment,
+ * preview URL, or another environment, which could cause
+ * Supabase to send the recovery link to the wrong host.
+ */
+const PRODUCTION_URL =
+  'https://6736f081.iuvai.pages.dev';
+
+/**
+ * Send a password-reset email.
+ *
+ * Supabase will redirect the user to:
+ *
+ * https://6736f081.iuvai.pages.dev/reset-password
+ *
+ * after they click the recovery link.
+ */
 export async function resetPassword(email: string) {
-  return supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
-  });
+  return supabase.auth.resetPasswordForEmail(
+    email,
+    {
+      redirectTo:
+        `${PRODUCTION_URL}/reset-password`,
+    }
+  );
 }
 
-export async function updatePassword(password: string) {
+export async function updatePassword(
+  password: string
+) {
   return supabase.auth.updateUser({
     password,
   });
@@ -174,7 +200,11 @@ export async function getProfile(
     .single();
 
   if (error) {
-    console.error('GET PROFILE ERROR:', error);
+    console.error(
+      'GET PROFILE ERROR:',
+      error
+    );
+
     return null;
   }
 
@@ -232,11 +262,14 @@ export async function upsertExpertProfile(
     })
     .select();
 
-  console.log('EXPERT PROFILE UPSERT:', {
-    data,
-    error,
-    profile,
-  });
+  console.log(
+    'EXPERT PROFILE UPSERT:',
+    {
+      data,
+      error,
+      profile,
+    }
+  );
 
   if (error) {
     throw new Error(
@@ -370,17 +403,23 @@ export async function getExperts(): Promise<
   }
 
   const profileMap = new Map(
-    (profiles || []).map((profile) => [
-      profile.id,
-      profile,
-    ])
+    (profiles || []).map(
+      (profile) => [
+        profile.id,
+        profile,
+      ]
+    )
   );
 
-  return expertProfiles.map((expert) => ({
-    ...expert,
-    profile:
-      profileMap.get(expert.id) || null,
-  })) as ExpertWithProfile[];
+  return expertProfiles.map(
+    (expert) => ({
+      ...expert,
+      profile:
+        profileMap.get(
+          expert.id
+        ) || null,
+    })
+  ) as ExpertWithProfile[];
 }
 
 export async function searchExperts(
@@ -392,17 +431,18 @@ export async function searchExperts(
     return getExperts();
   }
 
-  const { data, error } = await supabase
-    .from('expert_profiles')
-    .select('*')
-    .or(
-      `primary_field.ilike.%${term}%,` +
-        `specialization.ilike.%${term}%,` +
-        `previous_ai_experience.ilike.%${term}%`
-    )
-    .order('created_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('expert_profiles')
+      .select('*')
+      .or(
+        `primary_field.ilike.%${term}%,` +
+          `specialization.ilike.%${term}%,` +
+          `previous_ai_experience.ilike.%${term}%`
+      )
+      .order('created_at', {
+        ascending: false,
+      });
 
   if (error) {
     throw new Error(
@@ -439,32 +479,42 @@ export async function searchExperts(
   }
 
   const profileMap = new Map(
-    (profiles || []).map((profile) => [
-      profile.id,
-      profile,
-    ])
+    (profiles || []).map(
+      (profile) => [
+        profile.id,
+        profile,
+      ]
+    )
   );
 
-  return data.map((expert) => ({
-    ...expert,
-    profile:
-      profileMap.get(expert.id) || null,
-  })) as ExpertWithProfile[];
+  return data.map(
+    (expert) => ({
+      ...expert,
+      profile:
+        profileMap.get(
+          expert.id
+        ) || null,
+    })
+  ) as ExpertWithProfile[];
 }
 
 export async function getExpertsByField(
   primaryField: string
 ): Promise<ExpertWithProfile[]> {
-  const { data, error } = await supabase
-    .from('expert_profiles')
-    .select('*')
-    .ilike(
-      'primary_field',
-      `%${primaryField}%`
-    )
-    .order('years_experience', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('expert_profiles')
+      .select('*')
+      .ilike(
+        'primary_field',
+        `%${primaryField}%`
+      )
+      .order(
+        'years_experience',
+        {
+          ascending: false,
+        }
+      );
 
   if (error) {
     throw new Error(
@@ -501,17 +551,23 @@ export async function getExpertsByField(
   }
 
   const profileMap = new Map(
-    (profiles || []).map((profile) => [
-      profile.id,
-      profile,
-    ])
+    (profiles || []).map(
+      (profile) => [
+        profile.id,
+        profile,
+      ]
+    )
   );
 
-  return data.map((expert) => ({
-    ...expert,
-    profile:
-      profileMap.get(expert.id) || null,
-  })) as ExpertWithProfile[];
+  return data.map(
+    (expert) => ({
+      ...expert,
+      profile:
+        profileMap.get(
+          expert.id
+        ) || null,
+    })
+  ) as ExpertWithProfile[];
 }
 
 export async function getExpertWithProfile(
@@ -559,7 +615,8 @@ export async function getExpertWithProfile(
 
   return {
     ...(expert as ExpertProfile),
-    profile: profile || null,
+    profile:
+      profile || null,
   };
 }
 
@@ -573,11 +630,12 @@ export async function createProject(
     'id' | 'created_at' | 'updated_at'
   >
 ): Promise<Project> {
-  const { data, error } = await supabase
-    .from('projects')
-    .insert(project)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .insert(project)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -591,13 +649,14 @@ export async function createProject(
 export async function getCompanyProjects(
   companyId: string
 ): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('company_id', companyId)
-    .order('created_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', {
+        ascending: false,
+      });
 
   if (error) {
     throw new Error(
@@ -611,11 +670,12 @@ export async function getCompanyProjects(
 export async function getProject(
   projectId: string
 ): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
 
   if (error) {
     console.error(
@@ -633,12 +693,13 @@ export async function updateProject(
   projectId: string,
   updates: Partial<Project>
 ): Promise<Project> {
-  const { data, error } = await supabase
-    .from('projects')
-    .update(updates)
-    .eq('id', projectId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', projectId)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -652,10 +713,11 @@ export async function updateProject(
 export async function deleteProject(
   projectId: string
 ) {
-  const { error } = await supabase
-    .from('projects')
-    .delete()
-    .eq('id', projectId);
+  const { error } =
+    await supabase
+      .from('projects')
+      .delete()
+      .eq('id', projectId);
 
   if (error) {
     throw new Error(
@@ -669,12 +731,13 @@ export async function deleteProject(
 // ─────────────────────────────────────────────────────────────
 
 export async function getAllProjects(): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .order('created_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', {
+        ascending: false,
+      });
 
   if (error) {
     throw new Error(
@@ -688,11 +751,12 @@ export async function getAllProjects(): Promise<Project[]> {
 export async function getAdminProject(
   projectId: string
 ): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single();
 
   if (error) {
     return null;
@@ -705,15 +769,17 @@ export async function updateProjectStatus(
   projectId: string,
   status: ProjectStatus
 ): Promise<Project> {
-  const { data, error } = await supabase
-    .from('projects')
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', projectId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .update({
+        status,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq('id', projectId)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -734,11 +800,12 @@ export async function createProjectRequest(
     'id' | 'created_at' | 'updated_at'
   >
 ): Promise<ProjectRequest> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .insert(request)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .insert(request)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -752,13 +819,14 @@ export async function createProjectRequest(
 export async function getCompanyProjectRequests(
   companyId: string
 ): Promise<ProjectRequest[]> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .select('*')
-    .eq('company_id', companyId)
-    .order('created_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', {
+        ascending: false,
+      });
 
   if (error) {
     throw new Error(
@@ -772,13 +840,14 @@ export async function getCompanyProjectRequests(
 export async function getExpertProjectRequests(
   expertId: string
 ): Promise<ProjectRequest[]> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .select('*')
-    .eq('expert_id', expertId)
-    .order('created_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .select('*')
+      .eq('expert_id', expertId)
+      .order('created_at', {
+        ascending: false,
+      });
 
   if (error) {
     throw new Error(
@@ -792,11 +861,12 @@ export async function getExpertProjectRequests(
 export async function getProjectRequest(
   requestId: string
 ): Promise<ProjectRequest | null> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .select('*')
-    .eq('id', requestId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single();
 
   if (error) {
     return null;
@@ -809,12 +879,13 @@ export async function getExpertProjectRequestForProject(
   expertId: string,
   projectId: string
 ): Promise<ProjectRequest | null> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .select('*')
-    .eq('expert_id', expertId)
-    .eq('project_id', projectId)
-    .maybeSingle();
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .select('*')
+      .eq('expert_id', expertId)
+      .eq('project_id', projectId)
+      .maybeSingle();
 
   if (error) {
     throw new Error(
@@ -829,15 +900,17 @@ export async function updateProjectRequestStatus(
   requestId: string,
   status: ProjectRequestStatus
 ): Promise<ProjectRequest> {
-  const { data, error } = await supabase
-    .from('project_requests')
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', requestId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_requests')
+      .update({
+        status,
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq('id', requestId)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -857,12 +930,18 @@ export async function uploadResume(
   file: File
 ) {
   const extension =
-    file.name.split('.').pop()?.toLowerCase() ||
+    file.name
+      .split('.')
+      .pop()
+      ?.toLowerCase() ||
     'pdf';
 
-  const filePath = `${userId}/resume.${extension}`;
+  const filePath =
+    `${userId}/resume.${extension}`;
 
-  const { data: existingFiles } =
+  const {
+    data: existingFiles,
+  } =
     await supabase.storage
       .from('resumes')
       .list(userId);
@@ -877,10 +956,14 @@ export async function uploadResume(
           `${userId}/${file.name}`
       );
 
-    const { error: removeError } =
+    const {
+      error: removeError,
+    } =
       await supabase.storage
         .from('resumes')
-        .remove(filesToRemove);
+        .remove(
+          filesToRemove
+        );
 
     if (removeError) {
       console.warn(
@@ -890,7 +973,9 @@ export async function uploadResume(
     }
   }
 
-  const { error: uploadError } =
+  const {
+    error: uploadError,
+  } =
     await supabase.storage
       .from('resumes')
       .upload(
@@ -913,7 +998,8 @@ export async function uploadResume(
   await upsertExpertProfile({
     id: userId,
     resume_path: filePath,
-    resume_file_name: file.name,
+    resume_file_name:
+      file.name,
   });
 
   return filePath;
@@ -922,7 +1008,9 @@ export async function uploadResume(
 export async function deleteResume(
   userId: string
 ) {
-  const { data: files } =
+  const {
+    data: files,
+  } =
     await supabase.storage
       .from('resumes')
       .list(userId);
@@ -931,7 +1019,9 @@ export async function deleteResume(
     files &&
     files.length > 0
   ) {
-    const { error } =
+    const {
+      error,
+    } =
       await supabase.storage
         .from('resumes')
         .remove(
@@ -966,10 +1056,14 @@ export async function getProjectExperts(
   const {
     data: assignments,
     error: assignmentError,
-  } = await supabase
-    .from('project_experts')
-    .select('expert_id')
-    .eq('project_id', projectId);
+  } =
+    await supabase
+      .from('project_experts')
+      .select('expert_id')
+      .eq(
+        'project_id',
+        projectId
+      );
 
   if (assignmentError) {
     throw new Error(
@@ -984,18 +1078,23 @@ export async function getProjectExperts(
     return [];
   }
 
-  const expertIds = assignments.map(
-    (assignment) =>
-      assignment.expert_id
-  );
+  const expertIds =
+    assignments.map(
+      (assignment) =>
+        assignment.expert_id
+    );
 
   const {
     data: expertProfiles,
     error: expertError,
-  } = await supabase
-    .from('expert_profiles')
-    .select('*')
-    .in('id', expertIds);
+  } =
+    await supabase
+      .from('expert_profiles')
+      .select('*')
+      .in(
+        'id',
+        expertIds
+      );
 
   if (expertError) {
     throw new Error(
@@ -1013,16 +1112,20 @@ export async function getProjectExperts(
   const {
     data: profiles,
     error: profileError,
-  } = await supabase
-    .from('profiles')
-    .select(`
+  } =
+    await supabase
+      .from('profiles')
+      .select(`
       id,
       full_name,
       account_type,
       country,
       created_at
     `)
-    .in('id', expertIds);
+      .in(
+        'id',
+        expertIds
+      );
 
   if (profileError) {
     throw new Error(
@@ -1030,30 +1133,44 @@ export async function getProjectExperts(
     );
   }
 
-  const profileMap = new Map(
-    (profiles || []).map((profile) => [
-      profile.id,
-      profile,
-    ])
-  );
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        (profile) => [
+          profile.id,
+          profile,
+        ]
+      )
+    );
 
-  return expertProfiles.map((expert) => ({
-    ...expert,
-    profile:
-      profileMap.get(expert.id) || null,
-  })) as ExpertWithProfile[];
+  return expertProfiles.map(
+    (expert) => ({
+      ...expert,
+      profile:
+        profileMap.get(
+          expert.id
+        ) || null,
+    })
+  ) as ExpertWithProfile[];
 }
 
 export async function getProjectAssignments(
   projectId: string
 ): Promise<ProjectExpert[]> {
-  const { data, error } = await supabase
-    .from('project_experts')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('assigned_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('project_experts')
+      .select('*')
+      .eq(
+        'project_id',
+        projectId
+      )
+      .order(
+        'assigned_at',
+        {
+          ascending: false,
+        }
+      );
 
   if (error) {
     throw new Error(
@@ -1072,12 +1189,19 @@ export async function assignExpertToProject(
   const {
     data: existing,
     error: existingError,
-  } = await supabase
-    .from('project_experts')
-    .select('id')
-    .eq('project_id', projectId)
-    .eq('expert_id', expertId)
-    .maybeSingle();
+  } =
+    await supabase
+      .from('project_experts')
+      .select('id')
+      .eq(
+        'project_id',
+        projectId
+      )
+      .eq(
+        'expert_id',
+        expertId
+      )
+      .maybeSingle();
 
   if (existingError) {
     throw new Error(
@@ -1091,16 +1215,21 @@ export async function assignExpertToProject(
     );
   }
 
-  const { data, error } = await supabase
-    .from('project_experts')
-    .insert({
-      project_id: projectId,
-      expert_id: expertId,
-      status: 'assigned',
-      notes: notes || null,
-    })
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_experts')
+      .insert({
+        project_id:
+          projectId,
+        expert_id:
+          expertId,
+        status:
+          'assigned',
+        notes:
+          notes || null,
+      })
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -1115,11 +1244,18 @@ export async function removeExpertFromProject(
   projectId: string,
   expertId: string
 ) {
-  const { error } = await supabase
-    .from('project_experts')
-    .delete()
-    .eq('project_id', projectId)
-    .eq('expert_id', expertId);
+  const { error } =
+    await supabase
+      .from('project_experts')
+      .delete()
+      .eq(
+        'project_id',
+        projectId
+      )
+      .eq(
+        'expert_id',
+        expertId
+      );
 
   if (error) {
     throw new Error(
@@ -1132,14 +1268,18 @@ export async function updateProjectExpertStatus(
   assignmentId: string,
   status: ProjectExpertStatus
 ): Promise<ProjectExpert> {
-  const { data, error } = await supabase
-    .from('project_experts')
-    .update({
-      status,
-    })
-    .eq('id', assignmentId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_experts')
+      .update({
+        status,
+      })
+      .eq(
+        'id',
+        assignmentId
+      )
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -1154,14 +1294,18 @@ export async function updateProjectExpertNotes(
   assignmentId: string,
   notes: string | null
 ): Promise<ProjectExpert> {
-  const { data, error } = await supabase
-    .from('project_experts')
-    .update({
-      notes,
-    })
-    .eq('id', assignmentId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('project_experts')
+      .update({
+        notes,
+      })
+      .eq(
+        'id',
+        assignmentId
+      )
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -1178,10 +1322,14 @@ export async function getExpertProjects(
   const {
     data: assignments,
     error: assignmentError,
-  } = await supabase
-    .from('project_experts')
-    .select('project_id')
-    .eq('expert_id', expertId);
+  } =
+    await supabase
+      .from('project_experts')
+      .select('project_id')
+      .eq(
+        'expert_id',
+        expertId
+      );
 
   if (assignmentError) {
     throw new Error(
@@ -1196,15 +1344,20 @@ export async function getExpertProjects(
     return [];
   }
 
-  const projectIds = assignments.map(
-    (assignment) =>
-      assignment.project_id
-  );
+  const projectIds =
+    assignments.map(
+      (assignment) =>
+        assignment.project_id
+    );
 
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .in('id', projectIds);
+  const { data, error } =
+    await supabase
+      .from('projects')
+      .select('*')
+      .in(
+        'id',
+        projectIds
+      );
 
   if (error) {
     throw new Error(
@@ -1218,13 +1371,20 @@ export async function getExpertProjects(
 export async function getExpertAssignments(
   expertId: string
 ): Promise<ProjectExpert[]> {
-  const { data, error } = await supabase
-    .from('project_experts')
-    .select('*')
-    .eq('expert_id', expertId)
-    .order('assigned_at', {
-      ascending: false,
-    });
+  const { data, error } =
+    await supabase
+      .from('project_experts')
+      .select('*')
+      .eq(
+        'expert_id',
+        expertId
+      )
+      .order(
+        'assigned_at',
+        {
+          ascending: false,
+        }
+      );
 
   if (error) {
     throw new Error(
@@ -1246,7 +1406,10 @@ export async function getResumeUrl(
         60 * 10
       );
 
-  if (error || !data?.signedUrl) {
+  if (
+    error ||
+    !data?.signedUrl
+  ) {
     throw new Error(
       `Failed to generate resume URL: ${
         error?.message ||
