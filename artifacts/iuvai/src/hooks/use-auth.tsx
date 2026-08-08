@@ -24,12 +24,12 @@ interface AuthContextType {
   isLoading: boolean;
 
   /**
-   * True when the current session was created
-   * through Supabase password recovery.
+   * True when the current authentication flow
+   * was initiated through Supabase password recovery.
    *
-   * This prevents the normal authenticated-user
-   * routing from sending the user to onboarding
-   * or a dashboard before they reset their password.
+   * This prevents normal authenticated routing
+   * from sending the user to onboarding/dashboard
+   * before they reset their password.
    */
   isPasswordRecovery: boolean;
 
@@ -65,26 +65,186 @@ export function AuthProvider({
   const [isPasswordRecovery, setIsPasswordRecovery] =
     useState(false);
 
+  /*
+  ============================================================
+  FETCH PROFILE
+  ============================================================
+  */
+
   const fetchProfile = async (
     userId: string
   ) => {
     try {
       const data = await getProfile(userId);
       setProfile(data);
-    } catch (e) {
+      return data;
+    } catch (error) {
       console.error(
-        'Error fetching profile:',
-        e
+        'ERROR FETCHING PROFILE:',
+        error
       );
+
+      setProfile(null);
+      return null;
     }
   };
+
+  /*
+  ============================================================
+  AUTH INITIALIZATION
+  ============================================================
+  */
 
   useEffect(() => {
     let mounted = true;
 
     /*
+    ------------------------------------------------------------
+    AUTH STATE LISTENER
+    ------------------------------------------------------------
+
+    Set up the listener BEFORE getSession().
+
+    This is important for password recovery because
+    Supabase can emit PASSWORD_RECOVERY while the
+    recovery URL is being processed.
+    */
+
+    const {
+      data: { subscription },
+    } =
+      supabase.auth.onAuthStateChange(
+        async (
+          event,
+          currentSession
+        ) => {
+          if (!mounted) return;
+
+          console.log(
+            'SUPABASE AUTH EVENT:',
+            event
+          );
+
+          /*
+          ========================================================
+          PASSWORD RECOVERY
+          ========================================================
+          */
+
+          if (
+            event ===
+            'PASSWORD_RECOVERY'
+          ) {
+            console.log(
+              'PASSWORD RECOVERY SESSION DETECTED'
+            );
+
+            setIsPasswordRecovery(true);
+
+            setSession(
+              currentSession
+            );
+
+            setUser(
+              currentSession?.user ?? null
+            );
+
+            /*
+             * We intentionally do NOT redirect.
+             *
+             * The reset-password page needs the
+             * recovery session to call:
+             *
+             * supabase.auth.updateUser(...)
+             */
+
+            if (
+              currentSession?.user
+            ) {
+              await fetchProfile(
+                currentSession.user.id
+              );
+            }
+
+            if (mounted) {
+              setIsLoading(false);
+            }
+
+            return;
+          }
+
+          /*
+          ========================================================
+          SIGNED OUT
+          ========================================================
+          */
+
+          if (
+            event ===
+            'SIGNED_OUT'
+          ) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setIsPasswordRecovery(false);
+            setIsLoading(false);
+
+            return;
+          }
+
+          /*
+          ========================================================
+          NORMAL AUTHENTICATED SESSION
+          ========================================================
+          */
+
+          setSession(
+            currentSession
+          );
+
+          setUser(
+            currentSession?.user ?? null
+          );
+
+          if (
+            currentSession?.user
+          ) {
+            /*
+             * USER_UPDATED can occur after the
+             * password has been successfully changed.
+             *
+             * At that point the recovery flow is
+             * considered complete.
+             */
+
+            if (
+              event ===
+              'USER_UPDATED'
+            ) {
+              setIsPasswordRecovery(
+                false
+              );
+            }
+
+            await fetchProfile(
+              currentSession.user.id
+            );
+          } else {
+            setProfile(null);
+            setIsPasswordRecovery(
+              false
+            );
+          }
+
+          if (mounted) {
+            setIsLoading(false);
+          }
+        }
+      );
+
+    /*
     ============================================================
-    INITIAL SESSION
+    INITIAL SESSION CHECK
     ============================================================
     */
 
@@ -92,29 +252,38 @@ export function AuthProvider({
       .getSession()
       .then(
         async ({
-          data: { session },
+          data: {
+            session: initialSession,
+          },
         }) => {
           if (!mounted) return;
 
-          setSession(session);
-          setUser(
-            session?.user ?? null
+          console.log(
+            'INITIAL SUPABASE SESSION:',
+            initialSession
           );
 
           /*
-           * IMPORTANT:
+           * Do not automatically mark this as
+           * password recovery.
            *
-           * A password recovery session is normally
-           * announced through PASSWORD_RECOVERY in
-           * onAuthStateChange.
-           *
-           * Therefore we do NOT assume that every
-           * existing session is a recovery session here.
+           * The PASSWORD_RECOVERY event is the
+           * authoritative signal for that flow.
            */
 
-          if (session?.user) {
+          setSession(
+            initialSession
+          );
+
+          setUser(
+            initialSession?.user ?? null
+          );
+
+          if (
+            initialSession?.user
+          ) {
             await fetchProfile(
-              session.user.id
+              initialSession.user.id
             );
           }
 
@@ -136,100 +305,9 @@ export function AuthProvider({
 
     /*
     ============================================================
-    AUTH STATE LISTENER
+    CLEANUP
     ============================================================
     */
-
-    const {
-      data: { subscription },
-    } =
-      supabase.auth.onAuthStateChange(
-        async (
-          event,
-          session
-        ) => {
-          if (!mounted) return;
-
-          console.log(
-            'SUPABASE AUTH EVENT:',
-            event
-          );
-
-          setSession(session);
-          setUser(
-            session?.user ?? null
-          );
-
-          /*
-          ========================================================
-          PASSWORD RECOVERY
-          ========================================================
-          */
-
-          if (
-            event ===
-            'PASSWORD_RECOVERY'
-          ) {
-            console.log(
-              'PASSWORD RECOVERY SESSION DETECTED'
-            );
-
-            setIsPasswordRecovery(
-              true
-            );
-
-            /*
-             * Do NOT redirect.
-             *
-             * The reset-password page needs
-             * this temporary authenticated
-             * session to call updateUser().
-             */
-
-            if (session?.user) {
-              await fetchProfile(
-                session.user.id
-              );
-            }
-
-            setIsLoading(false);
-            return;
-          }
-
-          /*
-          ========================================================
-          NORMAL AUTH EVENTS
-          ========================================================
-          */
-
-          if (session?.user) {
-            /*
-             * If the user has completed the
-             * password reset, PASSWORD_RECOVERY
-             * is no longer active.
-             */
-            if (
-              event === 'SIGNED_IN' ||
-              event === 'USER_UPDATED'
-            ) {
-              setIsPasswordRecovery(
-                false
-              );
-            }
-
-            await fetchProfile(
-              session.user.id
-            );
-          } else {
-            setProfile(null);
-            setIsPasswordRecovery(
-              false
-            );
-          }
-
-          setIsLoading(false);
-        }
-      );
 
     return () => {
       mounted = false;
@@ -251,6 +329,12 @@ export function AuthProvider({
         user.id
       );
     };
+
+  /*
+  ============================================================
+  PROVIDER
+  ============================================================
+  */
 
   return (
     <AuthContext.Provider
