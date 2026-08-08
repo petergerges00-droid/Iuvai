@@ -47,6 +47,7 @@ import FindExperts from '@/pages/FindExperts';
 import CreateProject from '@/pages/create-project';
 import CompanyProject from '@/pages/company-project';
 import EditProject from '@/pages/edit-project';
+import ExpertProjects from '@/pages/expert-projects';
 
 const queryClient = new QueryClient();
 
@@ -576,7 +577,10 @@ function AppRouter() {
           component={AdminExpertProfile}
         />
       </Route>
-
+<Route
+  path="/expert/projects"
+  component={ExpertProjects}
+/>
       {/* ======================================================
           ADMIN EXPERT REVIEW
           ====================================================== */}
