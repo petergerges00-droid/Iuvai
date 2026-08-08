@@ -1,15 +1,27 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
+
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+
 import { Toaster } from '@/components/ui/toaster';
+
 import { TooltipProvider } from '@/components/ui/tooltip';
+
 import {
   Route,
   Switch,
   Router as WouterRouter,
   useLocation,
 } from 'wouter';
+
 import { Loader2 } from 'lucide-react';
 
-import { AuthProvider, useAuth } from '@/hooks/use-auth';
+import {
+  AuthProvider,
+  useAuth,
+} from '@/hooks/use-auth';
 
 import NotFound from '@/pages/not-found';
 import Login from '@/pages/login';
@@ -68,7 +80,9 @@ function FullPageLoader() {
    ADMIN CHECK
    ============================================================ */
 
-function isAdminUser(userId: string | undefined) {
+function isAdminUser(
+  userId: string | undefined
+) {
   return userId === ADMIN_USER_ID;
 }
 
@@ -88,26 +102,32 @@ function PublicRoute({
     user,
     profile,
     isLoading,
-    isPasswordRecovery,
   } = useAuth();
 
   const [, setLocation] = useLocation();
 
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (!session) {
+      return;
+    }
+
     /*
-    IMPORTANT:
-    Never redirect a password-recovery session.
+    ----------------------------------------------------------
+    IMPORTANT
 
-    The recovery session must be allowed to reach
-    /reset-password so the user can choose a new password.
+    Password recovery is NOT handled here.
+
+    /reset-password is deliberately NOT wrapped in
+    PublicRoute.
+
+    Therefore normal authenticated routing cannot
+    accidentally redirect the recovery session.
+    ----------------------------------------------------------
     */
-    if (isPasswordRecovery) {
-      return;
-    }
-
-    if (isLoading || !session) {
-      return;
-    }
 
     if (isAdminUser(user?.id)) {
       setLocation('/admin');
@@ -119,12 +139,16 @@ function PublicRoute({
       return;
     }
 
-    if (profile.account_type === 'expert') {
+    if (
+      profile.account_type === 'expert'
+    ) {
       setLocation('/dashboard');
       return;
     }
 
-    if (profile.account_type === 'company') {
+    if (
+      profile.account_type === 'company'
+    ) {
       setLocation('/company-dashboard');
       return;
     }
@@ -133,23 +157,11 @@ function PublicRoute({
     user,
     profile,
     isLoading,
-    isPasswordRecovery,
     setLocation,
   ]);
 
   if (isLoading) {
     return <FullPageLoader />;
-  }
-
-  /*
-  If Supabase has established a password-recovery session,
-  do not block the public component.
-
-  This is mostly defensive because /reset-password itself
-  is NOT wrapped in PublicRoute anymore.
-  */
-  if (isPasswordRecovery) {
-    return <Component />;
   }
 
   if (session) {
@@ -186,7 +198,7 @@ function OnboardingRoute({
     }
 
     /*
-    Never redirect during password recovery.
+    A recovery session should never enter onboarding.
     */
     if (isPasswordRecovery) {
       setLocation('/reset-password');
@@ -203,12 +215,16 @@ function OnboardingRoute({
       return;
     }
 
-    if (profile?.account_type === 'expert') {
+    if (
+      profile?.account_type === 'expert'
+    ) {
       setLocation('/dashboard');
       return;
     }
 
-    if (profile?.account_type === 'company') {
+    if (
+      profile?.account_type === 'company'
+    ) {
       setLocation('/company-dashboard');
       return;
     }
@@ -268,8 +284,8 @@ function ProtectedRoute({
     }
 
     /*
-    If a recovery session somehow reaches a protected route,
-    force it back to the password reset page.
+    Recovery sessions must never be allowed to render
+    protected dashboard pages.
     */
     if (isPasswordRecovery) {
       setLocation('/reset-password');
@@ -290,10 +306,18 @@ function ProtectedRoute({
       requireAccountType &&
       profile.account_type !== requireAccountType
     ) {
-      if (profile.account_type === 'expert') {
+      if (
+        profile.account_type === 'expert'
+      ) {
         setLocation('/dashboard');
-      } else if (profile.account_type === 'company') {
+        return;
+      }
+
+      if (
+        profile.account_type === 'company'
+      ) {
         setLocation('/company-dashboard');
+        return;
       }
     }
   }, [
@@ -313,9 +337,6 @@ function ProtectedRoute({
     return <FullPageLoader />;
   }
 
-  /*
-  Never allow a recovery session to render a dashboard.
-  */
   if (isPasswordRecovery) {
     return <FullPageLoader />;
   }
@@ -413,7 +434,7 @@ function AppRouter() {
     <Switch>
 
       {/* ======================================================
-          PUBLIC LANDING PAGE
+          LANDING
           ====================================================== */}
 
       <Route
@@ -422,42 +443,62 @@ function AppRouter() {
       />
 
       {/* ======================================================
-          PUBLIC / AUTH
+          LOGIN
           ====================================================== */}
 
       <Route path="/login">
-        <PublicRoute component={Login} />
+        <PublicRoute
+          component={Login}
+        />
       </Route>
 
+      {/* ======================================================
+          SIGNUP
+          ====================================================== */}
+
       <Route path="/signup">
-        <PublicRoute component={Signup} />
+        <PublicRoute
+          component={Signup}
+        />
       </Route>
+
+      {/* ======================================================
+          EMAIL VERIFICATION
+          ====================================================== */}
 
       <Route
         path="/verify-email"
         component={VerifyEmail}
       />
 
+      {/* ======================================================
+          FORGOT PASSWORD
+          ====================================================== */}
+
       <Route path="/forgot-password">
-        <PublicRoute component={ForgotPassword} />
+        <PublicRoute
+          component={ForgotPassword}
+        />
       </Route>
 
       {/* ======================================================
           PASSWORD RESET
 
-          IMPORTANT:
+          CRITICAL:
 
-          DO NOT wrap this route in PublicRoute.
+          DO NOT put this inside PublicRoute.
 
           Supabase creates a temporary authenticated
-          recovery session when the user clicks the
-          password-reset email.
+          recovery session when the reset email is clicked.
 
-          PublicRoute would see that session and could
-          redirect the user to the dashboard before
-          ResetPassword gets a chance to render.
+          ResetPassword needs that session so it can call:
 
-          ResetPassword itself handles updatePassword().
+          supabase.auth.updateUser({
+            password
+          })
+
+          No authentication redirect is allowed to
+          interfere with this route.
           ====================================================== */}
 
       <Route
@@ -470,59 +511,79 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/onboarding">
-        <OnboardingRoute component={Onboarding} />
+        <OnboardingRoute
+          component={Onboarding}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN DASHBOARD
+          ADMIN
           ====================================================== */}
 
       <Route path="/admin">
-        <AdminRoute component={AdminDashboard} />
+        <AdminRoute
+          component={AdminDashboard}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN — PROJECTS
+          ADMIN PROJECTS
           ====================================================== */}
 
       <Route path="/admin/projects">
-        <AdminRoute component={AdminProjects} />
+        <AdminRoute
+          component={AdminProjects}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN — PROJECT EXPERTS
+          ADMIN PROJECT EXPERTS
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId/experts">
-        <AdminRoute component={ProjectExperts} />
+        <AdminRoute
+          component={ProjectExperts}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN — EXPERTS
+          ADMIN EXPERTS
           ====================================================== */}
 
       <Route path="/admin/experts">
-        <AdminRoute component={AdminExperts} />
-      </Route>
-
-      <Route path="/admin/experts/:expertId">
-        <AdminRoute component={AdminExpertProfile} />
+        <AdminRoute
+          component={AdminExperts}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN — EXPERT REVIEW
+          ADMIN EXPERT PROFILE
+          ====================================================== */}
+
+      <Route path="/admin/experts/:expertId">
+        <AdminRoute
+          component={AdminExpertProfile}
+        />
+      </Route>
+
+      {/* ======================================================
+          ADMIN EXPERT REVIEW
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId/experts/:expertId">
-        <AdminRoute component={AdminExpertReview} />
+        <AdminRoute
+          component={AdminExpertReview}
+        />
       </Route>
 
       {/* ======================================================
-          ADMIN — SINGLE PROJECT
+          ADMIN SINGLE PROJECT
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId">
-        <AdminRoute component={AdminProjects} />
+        <AdminRoute
+          component={AdminProjects}
+        />
       </Route>
 
       {/* ======================================================
@@ -548,7 +609,7 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          COMPANY — FIND EXPERTS
+          FIND EXPERTS
           ====================================================== */}
 
       <Route path="/company/find-experts">
@@ -563,14 +624,18 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/settings">
-        <ProtectedRoute component={Settings} />
+        <ProtectedRoute
+          component={Settings}
+        />
       </Route>
 
       {/* ======================================================
-          FALLBACK
+          404
           ====================================================== */}
 
-      <Route component={NotFound} />
+      <Route
+        component={NotFound}
+      />
 
     </Switch>
   );
@@ -581,23 +646,30 @@ function AppRouter() {
    ============================================================ */
 
 function App() {
-  const basePath = import.meta.env.BASE_URL.replace(
-    /\/$/,
-    ''
-  );
+  const basePath =
+    import.meta.env.BASE_URL.replace(
+      /\/$/,
+      ''
+    );
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider
+      client={queryClient}
+    >
       <AuthProvider>
+
         <TooltipProvider>
 
-          <WouterRouter base={basePath}>
+          <WouterRouter
+            base={basePath}
+          >
             <AppRouter />
           </WouterRouter>
 
           <Toaster />
 
         </TooltipProvider>
+
       </AuthProvider>
     </QueryClientProvider>
   );
