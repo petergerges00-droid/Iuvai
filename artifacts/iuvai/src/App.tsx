@@ -49,7 +49,7 @@ import CompanyProject from '@/pages/company-project';
 import EditProject from '@/pages/edit-project';
 import ExpertProjects from '@/pages/expert-projects';
 import ExpertProject from '@/pages/expert-project';
-
+import ApplyProject from '@/pages/apply-project';
 const queryClient = new QueryClient();
 
 /*
@@ -605,7 +605,10 @@ function AppRouter() {
           component={AdminProjects}
         />
       </Route>
-
+<Route
+  path="/expert-projects/:projectId/apply"
+  component={ApplyProject}
+/>
       {/* ======================================================
           EXPERT DASHBOARD
           ====================================================== */}
