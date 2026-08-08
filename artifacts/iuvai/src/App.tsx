@@ -51,6 +51,7 @@ import ExpertProjects from '@/pages/expert-projects';
 import ExpertProject from '@/pages/expert-project';
 import ApplyProject from '@/pages/apply-project';
 import CompanyProjectApplications from '@/pages/company-project-applications';
+
 const queryClient = new QueryClient();
 
 /*
@@ -447,10 +448,20 @@ function AppRouter() {
         path="/"
         component={Landing}
       />
-<Route
-  path="/company-dashboard/projects/:projectId/edit"
-  component={EditProject}
-/>
+
+      {/* ======================================================
+          COMPANY PROJECT EDIT
+          ====================================================== */}
+
+      <Route
+        path="/company-dashboard/projects/:projectId/edit"
+      >
+        <ProtectedRoute
+          component={EditProject}
+          requireAccountType="company"
+        />
+      </Route>
+
       {/* ======================================================
           LOGIN
           ====================================================== */}
@@ -534,12 +545,7 @@ function AppRouter() {
           component={AdminDashboard}
         />
       </Route>
-<Route path="/company-dashboard/projects/:projectId">
-  <ProtectedRoute
-    component={CompanyProject}
-    requireAccountType="company"
-  />
-</Route>
+
       {/* ======================================================
           ADMIN PROJECTS
           ====================================================== */}
@@ -579,14 +585,7 @@ function AppRouter() {
           component={AdminExpertProfile}
         />
       </Route>
-<Route
-  path="/expert/projects"
-  component={ExpertProjects}
-/>
-      <Route
-  path="/expert/projects/:projectId"
-  component={ExpertProject}
-/>
+
       {/* ======================================================
           ADMIN EXPERT REVIEW
           ====================================================== */}
@@ -606,10 +605,47 @@ function AppRouter() {
           component={AdminProjects}
         />
       </Route>
-<Route
-  path="/expert-projects/:projectId/apply"
-  component={ApplyProject}
-/>
+
+      {/* ======================================================
+          EXPERT PROJECTS
+          ====================================================== */}
+
+      <Route path="/expert/projects">
+        <ProtectedRoute
+          component={ExpertProjects}
+          requireAccountType="expert"
+        />
+      </Route>
+
+      {/* ======================================================
+          EXPERT PROJECT APPLICATION
+          
+          IMPORTANT:
+          This must come BEFORE the project-detail route.
+          ====================================================== */}
+
+      <Route
+        path="/expert/projects/:projectId/apply"
+      >
+        <ProtectedRoute
+          component={ApplyProject}
+          requireAccountType="expert"
+        />
+      </Route>
+
+      {/* ======================================================
+          EXPERT SINGLE PROJECT
+          ====================================================== */}
+
+      <Route
+        path="/expert/projects/:projectId"
+      >
+        <ProtectedRoute
+          component={ExpertProject}
+          requireAccountType="expert"
+        />
+      </Route>
+
       {/* ======================================================
           EXPERT DASHBOARD
           ====================================================== */}
@@ -620,10 +656,33 @@ function AppRouter() {
           requireAccountType="expert"
         />
       </Route>
-<Route
-  path="/company-dashboard/projects/:projectId/applications"
-  component={CompanyProjectApplications}
-/>
+
+      {/* ======================================================
+          COMPANY PROJECT APPLICATIONS
+          ====================================================== */}
+
+      <Route
+        path="/company-dashboard/projects/:projectId/applications"
+      >
+        <ProtectedRoute
+          component={CompanyProjectApplications}
+          requireAccountType="company"
+        />
+      </Route>
+
+      {/* ======================================================
+          COMPANY PROJECT
+          ====================================================== */}
+
+      <Route
+        path="/company-dashboard/projects/:projectId"
+      >
+        <ProtectedRoute
+          component={CompanyProject}
+          requireAccountType="company"
+        />
+      </Route>
+
       {/* ======================================================
           COMPANY DASHBOARD
           ====================================================== */}
@@ -634,12 +693,18 @@ function AppRouter() {
           requireAccountType="company"
         />
       </Route>
-<Route path="/company-dashboard/projects/new">
-  <ProtectedRoute
-    component={CreateProject}
-    requireAccountType="company"
-  />
-</Route>
+
+      {/* ======================================================
+          CREATE COMPANY PROJECT
+          ====================================================== */}
+
+      <Route path="/company-dashboard/projects/new">
+        <ProtectedRoute
+          component={CreateProject}
+          requireAccountType="company"
+        />
+      </Route>
+
       {/* ======================================================
           FIND EXPERTS
           ====================================================== */}
