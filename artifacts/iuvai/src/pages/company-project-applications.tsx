@@ -8,7 +8,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
-  DollarSign,
   FileText,
   Loader2,
   ShieldCheck,
@@ -34,10 +33,7 @@ interface Application {
   id: string;
   project_id: string;
   expert_id: string;
-  cover_letter: string | null;
-  experience: string | null;
-  availability: string | null;
-  proposed_rate: number | string | null;
+  cover_message: string | null;
   status: string;
   created_at: string;
   updated_at?: string | null;
@@ -45,16 +41,29 @@ interface Application {
 
 interface ExpertProfile {
   id: string;
-  full_name: string | null;
-  email?: string | null;
-  headline?: string | null;
-  expertise?: string | null;
-  bio?: string | null;
+  primary_field: string | null;
+  specialization: string | null;
+  years_experience: number | null;
+  highest_qualification: string | null;
+  skills: string[] | null;
+  languages: string[] | null;
+  previous_ai_experience: string | null;
+  availability_hours: number | null;
+  Resume_path: string | null;
+  Resume_file_name: string | null;
+  verification_status: string | null;
 }
 
-interface ApplicationWithExpert
-  extends Application {
+interface Profile {
+  id: string;
+  full_name: string | null;
+  account_type: string | null;
+  country: string | null;
+}
+
+interface ApplicationWithExpert extends Application {
   expert?: ExpertProfile | null;
+  profile?: Profile | null;
 }
 
 interface Project {
@@ -224,7 +233,9 @@ export default function CompanyProjectApplications() {
           error: applicationError,
         } = await supabase
           .from('project_applications')
-          .select('*')
+          .select(
+            'id, project_id, expert_id, cover_message, status, created_at, updated_at'
+          )
           .eq('project_id', projectId)
           .order('created_at', {
             ascending: false,
@@ -246,13 +257,12 @@ export default function CompanyProjectApplications() {
           return;
         }
 
+        const rawApplications =
+          (applicationData || []) as Application[];
+
         /* ======================================================
            LOAD EXPERT PROFILES
            ====================================================== */
-
-        const rawApplications =
-          (applicationData ||
-            []) as Application[];
 
         const expertIds = Array.from(
           new Set(
@@ -268,19 +278,30 @@ export default function CompanyProjectApplications() {
         let expertProfiles: ExpertProfile[] =
           [];
 
-        if (expertIds.length > 0) {
-          /*
-          This assumes expert information is stored
-          in the profiles table.
-          */
+        let expertProfilesMap =
+          new Map<string, ExpertProfile>();
 
+        if (expertIds.length > 0) {
           const {
             data: expertData,
             error: expertError,
           } = await supabase
-            .from('profiles')
+            .from('expert_profiles')
             .select(
-              'id, full_name, email, headline, expertise, bio'
+              `
+                id,
+                primary_field,
+                specialization,
+                years_experience,
+                highest_qualification,
+                skills,
+                languages,
+                previous_ai_experience,
+                availability_hours,
+                Resume_path,
+                Resume_file_name,
+                verification_status
+              `
             )
             .in('id', expertIds);
 
@@ -291,13 +312,55 @@ export default function CompanyProjectApplications() {
             );
           } else {
             expertProfiles =
-              (expertData ||
-                []) as ExpertProfile[];
+              (expertData || []) as ExpertProfile[];
+
+            expertProfilesMap = new Map(
+              expertProfiles.map((expert) => [
+                expert.id,
+                expert,
+              ])
+            );
           }
         }
 
         /* ======================================================
-           COMBINE APPLICATIONS + EXPERT PROFILES
+           LOAD BASIC USER PROFILES
+           ====================================================== */
+
+        let profilesMap =
+          new Map<string, Profile>();
+
+        if (expertIds.length > 0) {
+          const {
+            data: profileData,
+            error: profileError,
+          } = await supabase
+            .from('profiles')
+            .select(
+              'id, full_name, account_type, country'
+            )
+            .in('id', expertIds);
+
+          if (profileError) {
+            console.warn(
+              'PROFILE LOAD WARNING:',
+              profileError
+            );
+          } else {
+            const profiles =
+              (profileData || []) as Profile[];
+
+            profilesMap = new Map(
+              profiles.map((item) => [
+                item.id,
+                item,
+              ])
+            );
+          }
+        }
+
+        /* ======================================================
+           COMBINE APPLICATIONS + EXPERT DATA
            ====================================================== */
 
         const combinedApplications =
@@ -306,10 +369,13 @@ export default function CompanyProjectApplications() {
               ...application,
 
               expert:
-                expertProfiles.find(
-                  (expert) =>
-                    expert.id ===
-                    application.expert_id
+                expertProfilesMap.get(
+                  application.expert_id
+                ) || null,
+
+              profile:
+                profilesMap.get(
+                  application.expert_id
                 ) || null,
             })
           );
@@ -387,6 +453,41 @@ export default function CompanyProjectApplications() {
         applicationLookupError ||
         !application
       ) {
+        console.error(
+          'APPLICATION LOOKUP ERROR:',
+          applicationLookupError
+        );
+
+        setError(
+          'You do not have permission to update this application.'
+        );
+
+        return;
+      }
+
+      /* ======================================================
+         VERIFY THE PROJECT BELONGS TO THIS COMPANY
+         ====================================================== */
+
+      const {
+        data: companyProject,
+        error: companyProjectError,
+      } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('id', projectId)
+        .eq('company_id', user.id)
+        .maybeSingle();
+
+      if (
+        companyProjectError ||
+        !companyProject
+      ) {
+        console.error(
+          'COMPANY PROJECT VERIFICATION ERROR:',
+          companyProjectError
+        );
+
         setError(
           'You do not have permission to update this application.'
         );
@@ -407,7 +508,10 @@ export default function CompanyProjectApplications() {
           status,
         })
         .eq('id', applicationId)
-        .select('*')
+        .eq('project_id', projectId)
+        .select(
+          'id, project_id, expert_id, cover_message, status, created_at, updated_at'
+        )
         .single();
 
       if (updateError) {
@@ -556,12 +660,6 @@ export default function CompanyProjectApplications() {
     applications.filter(
       (application) =>
         application.status === 'accepted'
-    ).length;
-
-  const rejectedCount =
-    applications.filter(
-      (application) =>
-        application.status === 'rejected'
     ).length;
 
   /* ============================================================
@@ -786,8 +884,11 @@ export default function CompanyProjectApplications() {
                 const expert =
                   application.expert;
 
+                const basicProfile =
+                  application.profile;
+
                 const expertName =
-                  expert?.full_name ||
+                  basicProfile?.full_name ||
                   'Expert';
 
                 const isUpdating =
@@ -837,19 +938,26 @@ export default function CompanyProjectApplications() {
 
                             </div>
 
-                            {expert?.headline && (
+                            {expert?.primary_field && (
                               <p className="mt-1 text-sm text-muted-foreground">
-                                {
-                                  expert.headline
-                                }
+                                {expert.primary_field}
                               </p>
                             )}
 
-                            {expert?.expertise && (
+                            {expert?.specialization && (
                               <p className="mt-2 text-xs text-primary">
-                                {
-                                  expert.expertise
-                                }
+                                {expert.specialization}
+                              </p>
+                            )}
+
+                            {expert?.years_experience !=
+                              null && (
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                {expert.years_experience}{' '}
+                                {expert.years_experience === 1
+                                  ? 'year'
+                                  : 'years'}{' '}
+                                of experience
                               </p>
                             )}
 
@@ -919,7 +1027,7 @@ export default function CompanyProjectApplications() {
 
                     <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-3">
 
-                      {/* COVER LETTER */}
+                      {/* APPLICATION MESSAGE */}
 
                       <div className="space-y-6 lg:col-span-2">
 
@@ -927,60 +1035,62 @@ export default function CompanyProjectApplications() {
                           icon={
                             <FileText className="h-4 w-4" />
                           }
-                          label="Cover letter"
+                          label="Application message"
                           value={
-                            application.cover_letter
+                            application.cover_message
                           }
                         />
 
-                        <ApplicationTextBlock
-                          icon={
-                            <Sparkles className="h-4 w-4" />
-                          }
-                          label="Relevant experience"
-                          value={
-                            application.experience
-                          }
-                        />
+                        {expert?.previous_ai_experience && (
+                          <ApplicationTextBlock
+                            icon={
+                              <Sparkles className="h-4 w-4" />
+                            }
+                            label="Previous AI experience"
+                            value={
+                              expert.previous_ai_experience
+                            }
+                          />
+                        )}
 
-                        <ApplicationTextBlock
-                          icon={
-                            <Clock3 className="h-4 w-4" />
-                          }
-                          label="Availability"
-                          value={
-                            application.availability
-                          }
-                        />
+                        {expert?.skills &&
+                          expert.skills.length > 0 && (
+                            <div>
+                              <div className="mb-2 flex items-center gap-2">
+
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                  <Sparkles className="h-4 w-4" />
+                                </div>
+
+                                <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                                  Skills
+                                </p>
+
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 rounded-xl border border-border/50 bg-background/20 p-4">
+
+                                {expert.skills.map(
+                                  (skill, index) => (
+                                    <Badge
+                                      key={`${skill}-${index}`}
+                                      variant="outline"
+                                      className="border-border/60 bg-muted/20"
+                                    >
+                                      {skill}
+                                    </Badge>
+                                  )
+                                )}
+
+                              </div>
+                            </div>
+                          )}
 
                       </div>
 
                       {/* SIDEBAR */}
 
                       <div className="space-y-4">
-
-                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-
-                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                            Proposed rate
-                          </p>
-
-                          <p className="mt-2 flex items-center gap-2 text-lg font-semibold">
-
-                            <DollarSign className="h-4 w-4 text-emerald-500" />
-
-                            {application.proposed_rate !=
-                              null &&
-                            application.proposed_rate !==
-                              ''
-                              ? String(
-                                  application.proposed_rate
-                                )
-                              : 'Not specified'}
-
-                          </p>
-
-                        </div>
 
                         <div className="rounded-xl border border-border/60 bg-background/30 p-4">
 
@@ -1000,21 +1110,89 @@ export default function CompanyProjectApplications() {
 
                         </div>
 
-                        {expert?.bio && (
+                        {expert?.availability_hours !=
+                          null && (
                           <div className="rounded-xl border border-border/60 bg-background/30 p-4">
 
                             <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                              Expert profile
+                              Availability
                             </p>
 
-                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            <p className="mt-2 flex items-center gap-2 text-sm font-medium">
+
+                              <Clock3 className="h-4 w-4 text-muted-foreground" />
+
+                              {expert.availability_hours}{' '}
+                              hours/week
+
+                            </p>
+
+                          </div>
+                        )}
+
+                        {expert?.highest_qualification && (
+                          <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                            <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                              Qualification
+                            </p>
+
+                            <p className="mt-2 text-sm font-medium">
                               {
-                                expert.bio
+                                expert.highest_qualification
                               }
                             </p>
 
                           </div>
                         )}
+
+                        {expert?.languages &&
+                          expert.languages.length > 0 && (
+                            <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                              <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                                Languages
+                              </p>
+
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+
+                                {expert.languages.map(
+                                  (
+                                    language,
+                                    index
+                                  ) => (
+                                    <Badge
+                                      key={`${language}-${index}`}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {language}
+                                    </Badge>
+                                  )
+                                )}
+
+                              </div>
+
+                            </div>
+                          )}
+
+                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                            Verification
+                          </p>
+
+                          <p className="mt-2 flex items-center gap-2 text-sm font-medium">
+
+                            <ShieldCheck className="h-4 w-4 text-primary" />
+
+                            {expert?.verification_status
+                              ? expert.verification_status
+                              : 'Pending'}
+
+                          </p>
+
+                        </div>
 
                         <div className="flex items-start gap-2 border-t border-border/60 pt-4 text-xs leading-5 text-muted-foreground">
 
