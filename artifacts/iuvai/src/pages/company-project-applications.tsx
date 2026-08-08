@@ -11,11 +11,12 @@ import {
   FileText,
   Loader2,
   ShieldCheck,
-  Sparkles,
   User,
   Users,
   XCircle,
   AlertCircle,
+  Award,
+  Languages,
 } from 'lucide-react';
 
 import AppLayout from '@/components/layout/app-layout';
@@ -39,6 +40,13 @@ interface Application {
   updated_at?: string | null;
 }
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+  account_type: string | null;
+  country: string | null;
+}
+
 interface ExpertProfile {
   id: string;
   primary_field: string | null;
@@ -49,21 +57,15 @@ interface ExpertProfile {
   languages: string[] | null;
   previous_ai_experience: string | null;
   availability_hours: number | null;
-  Resume_path: string | null;
-  Resume_file_name: string | null;
+  resume_path: string | null;
+  resume_file_name: string | null;
   verification_status: string | null;
-}
-
-interface Profile {
-  id: string;
-  full_name: string | null;
-  account_type: string | null;
-  country: string | null;
+  created_at: string | null;
 }
 
 interface ApplicationWithExpert extends Application {
-  expert?: ExpertProfile | null;
   profile?: Profile | null;
+  expertProfile?: ExpertProfile | null;
 }
 
 interface Project {
@@ -135,6 +137,18 @@ function formatDate(date: string | null) {
     month: 'short',
     day: 'numeric',
   });
+}
+
+/* ============================================================
+   ARRAY FORMATTER
+   ============================================================ */
+
+function formatArray(value: string[] | null | undefined) {
+  if (!value || value.length === 0) {
+    return 'Not specified';
+  }
+
+  return value.join(', ');
 }
 
 /* ============================================================
@@ -261,7 +275,7 @@ export default function CompanyProjectApplications() {
           (applicationData || []) as Application[];
 
         /* ======================================================
-           LOAD EXPERT PROFILES
+           GET EXPERT IDS
            ====================================================== */
 
         const expertIds = Array.from(
@@ -275,60 +289,12 @@ export default function CompanyProjectApplications() {
           )
         );
 
-        let expertProfiles: ExpertProfile[] =
-          [];
-
-        let expertProfilesMap =
-          new Map<string, ExpertProfile>();
-
-        if (expertIds.length > 0) {
-          const {
-            data: expertData,
-            error: expertError,
-          } = await supabase
-            .from('expert_profiles')
-            .select(
-              `
-                id,
-                primary_field,
-                specialization,
-                years_experience,
-                highest_qualification,
-                skills,
-                languages,
-                previous_ai_experience,
-                availability_hours,
-                Resume_path,
-                Resume_file_name,
-                verification_status
-              `
-            )
-            .in('id', expertIds);
-
-          if (expertError) {
-            console.warn(
-              'EXPERT PROFILE LOAD WARNING:',
-              expertError
-            );
-          } else {
-            expertProfiles =
-              (expertData || []) as ExpertProfile[];
-
-            expertProfilesMap = new Map(
-              expertProfiles.map((expert) => [
-                expert.id,
-                expert,
-              ])
-            );
-          }
-        }
+        let profiles: Profile[] = [];
+        let expertProfiles: ExpertProfile[] = [];
 
         /* ======================================================
-           LOAD BASIC USER PROFILES
+           LOAD BASIC PROFILES
            ====================================================== */
-
-        let profilesMap =
-          new Map<string, Profile>();
 
         if (expertIds.length > 0) {
           const {
@@ -347,20 +313,53 @@ export default function CompanyProjectApplications() {
               profileError
             );
           } else {
-            const profiles =
+            profiles =
               (profileData || []) as Profile[];
-
-            profilesMap = new Map(
-              profiles.map((item) => [
-                item.id,
-                item,
-              ])
-            );
           }
         }
 
         /* ======================================================
-           COMBINE APPLICATIONS + EXPERT DATA
+           LOAD EXPERT PROFILES
+           ====================================================== */
+
+        if (expertIds.length > 0) {
+          const {
+            data: expertData,
+            error: expertError,
+          } = await supabase
+            .from('expert_profiles')
+            .select(
+              `
+                id,
+                primary_field,
+                specialization,
+                years_experience,
+                highest_qualification,
+                skills,
+                languages,
+                previous_ai_experience,
+                availability_hours,
+                resume_path,
+                resume_file_name,
+                verification_status,
+                created_at
+              `
+            )
+            .in('id', expertIds);
+
+          if (expertError) {
+            console.warn(
+              'EXPERT PROFILE LOAD WARNING:',
+              expertError
+            );
+          } else {
+            expertProfiles =
+              (expertData || []) as ExpertProfile[];
+          }
+        }
+
+        /* ======================================================
+           COMBINE APPLICATION + PROFILE DATA
            ====================================================== */
 
         const combinedApplications =
@@ -368,14 +367,18 @@ export default function CompanyProjectApplications() {
             (application) => ({
               ...application,
 
-              expert:
-                expertProfilesMap.get(
-                  application.expert_id
+              profile:
+                profiles.find(
+                  (profile) =>
+                    profile.id ===
+                    application.expert_id
                 ) || null,
 
-              profile:
-                profilesMap.get(
-                  application.expert_id
+              expertProfile:
+                expertProfiles.find(
+                  (expert) =>
+                    expert.id ===
+                    application.expert_id
                 ) || null,
             })
           );
@@ -453,41 +456,6 @@ export default function CompanyProjectApplications() {
         applicationLookupError ||
         !application
       ) {
-        console.error(
-          'APPLICATION LOOKUP ERROR:',
-          applicationLookupError
-        );
-
-        setError(
-          'You do not have permission to update this application.'
-        );
-
-        return;
-      }
-
-      /* ======================================================
-         VERIFY THE PROJECT BELONGS TO THIS COMPANY
-         ====================================================== */
-
-      const {
-        data: companyProject,
-        error: companyProjectError,
-      } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('id', projectId)
-        .eq('company_id', user.id)
-        .maybeSingle();
-
-      if (
-        companyProjectError ||
-        !companyProject
-      ) {
-        console.error(
-          'COMPANY PROJECT VERIFICATION ERROR:',
-          companyProjectError
-        );
-
         setError(
           'You do not have permission to update this application.'
         );
@@ -508,7 +476,6 @@ export default function CompanyProjectApplications() {
           status,
         })
         .eq('id', applicationId)
-        .eq('project_id', projectId)
         .select(
           'id, project_id, expert_id, cover_message, status, created_at, updated_at'
         )
@@ -662,6 +629,12 @@ export default function CompanyProjectApplications() {
         application.status === 'accepted'
     ).length;
 
+  const rejectedCount =
+    applications.filter(
+      (application) =>
+        application.status === 'rejected'
+    ).length;
+
   /* ============================================================
      PAGE
      ============================================================ */
@@ -795,7 +768,7 @@ export default function CompanyProjectApplications() {
             STATS
             =================================================== */}
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
 
           <ApplicationStat
             icon={
@@ -824,6 +797,16 @@ export default function CompanyProjectApplications() {
             label="Accepted"
             value={String(
               acceptedCount
+            )}
+          />
+
+          <ApplicationStat
+            icon={
+              <XCircle className="h-4 w-4 text-destructive" />
+            }
+            label="Rejected"
+            value={String(
+              rejectedCount
             )}
           />
 
@@ -881,14 +864,14 @@ export default function CompanyProjectApplications() {
             {applications.map(
               (application) => {
 
-                const expert =
-                  application.expert;
-
-                const basicProfile =
+                const profile =
                   application.profile;
 
+                const expert =
+                  application.expertProfile;
+
                 const expertName =
-                  basicProfile?.full_name ||
+                  profile?.full_name ||
                   'Expert';
 
                 const isUpdating =
@@ -936,28 +919,32 @@ export default function CompanyProjectApplications() {
                                 )}
                               </Badge>
 
+                              {expert?.verification_status ===
+                                'verified' && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                                >
+                                  <CheckCircle2 className="mr-1.5 h-3 w-3" />
+                                  Verified
+                                </Badge>
+                              )}
+
                             </div>
 
                             {expert?.primary_field && (
                               <p className="mt-1 text-sm text-muted-foreground">
-                                {expert.primary_field}
+                                {
+                                  expert.primary_field
+                                }
                               </p>
                             )}
 
                             {expert?.specialization && (
-                              <p className="mt-2 text-xs text-primary">
-                                {expert.specialization}
-                              </p>
-                            )}
-
-                            {expert?.years_experience !=
-                              null && (
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                {expert.years_experience}{' '}
-                                {expert.years_experience === 1
-                                  ? 'year'
-                                  : 'years'}{' '}
-                                of experience
+                              <p className="mt-1 text-xs text-primary">
+                                {
+                                  expert.specialization
+                                }
                               </p>
                             )}
 
@@ -1027,7 +1014,7 @@ export default function CompanyProjectApplications() {
 
                     <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-3">
 
-                      {/* APPLICATION MESSAGE */}
+                      {/* MAIN CONTENT */}
 
                       <div className="space-y-6 lg:col-span-2">
 
@@ -1044,7 +1031,7 @@ export default function CompanyProjectApplications() {
                         {expert?.previous_ai_experience && (
                           <ApplicationTextBlock
                             icon={
-                              <Sparkles className="h-4 w-4" />
+                              <Award className="h-4 w-4" />
                             }
                             label="Previous AI experience"
                             value={
@@ -1056,10 +1043,11 @@ export default function CompanyProjectApplications() {
                         {expert?.skills &&
                           expert.skills.length > 0 && (
                             <div>
+
                               <div className="mb-2 flex items-center gap-2">
 
                                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                  <Sparkles className="h-4 w-4" />
+                                  <Award className="h-4 w-4" />
                                 </div>
 
                                 <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
@@ -1083,6 +1071,36 @@ export default function CompanyProjectApplications() {
                                 )}
 
                               </div>
+
+                            </div>
+                          )}
+
+                        {expert?.languages &&
+                          expert.languages.length > 0 && (
+                            <div>
+
+                              <div className="mb-2 flex items-center gap-2">
+
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                  <Languages className="h-4 w-4" />
+                                </div>
+
+                                <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                                  Languages
+                                </p>
+
+                              </div>
+
+                              <div className="rounded-xl border border-border/50 bg-background/20 p-4">
+
+                                <p className="text-sm leading-6 text-muted-foreground">
+                                  {formatArray(
+                                    expert.languages
+                                  )}
+                                </p>
+
+                              </div>
+
                             </div>
                           )}
 
@@ -1091,6 +1109,75 @@ export default function CompanyProjectApplications() {
                       {/* SIDEBAR */}
 
                       <div className="space-y-4">
+
+                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                            Experience
+                          </p>
+
+                          <p className="mt-2 text-sm font-medium">
+
+                            {expert?.years_experience !=
+                              null
+                              ? `${expert.years_experience} ${
+                                  expert.years_experience ===
+                                  1
+                                    ? 'year'
+                                    : 'years'
+                                }`
+                              : 'Not specified'}
+
+                          </p>
+
+                        </div>
+
+                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                            Qualification
+                          </p>
+
+                          <p className="mt-2 text-sm font-medium">
+
+                            {expert?.highest_qualification ||
+                              'Not specified'}
+
+                          </p>
+
+                        </div>
+
+                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                            Availability
+                          </p>
+
+                          <p className="mt-2 flex items-center gap-2 text-sm font-medium">
+
+                            <Clock3 className="h-4 w-4 text-muted-foreground" />
+
+                            {expert?.availability_hours !=
+                              null
+                              ? `${expert.availability_hours} hours/week`
+                              : 'Not specified'}
+
+                          </p>
+
+                        </div>
+
+                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
+
+                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                            Location
+                          </p>
+
+                          <p className="mt-2 text-sm font-medium">
+                            {profile?.country ||
+                              'Not specified'}
+                          </p>
+
+                        </div>
 
                         <div className="rounded-xl border border-border/60 bg-background/30 p-4">
 
@@ -1105,90 +1192,6 @@ export default function CompanyProjectApplications() {
                             {formatDate(
                               application.created_at
                             )}
-
-                          </p>
-
-                        </div>
-
-                        {expert?.availability_hours !=
-                          null && (
-                          <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-
-                            <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                              Availability
-                            </p>
-
-                            <p className="mt-2 flex items-center gap-2 text-sm font-medium">
-
-                              <Clock3 className="h-4 w-4 text-muted-foreground" />
-
-                              {expert.availability_hours}{' '}
-                              hours/week
-
-                            </p>
-
-                          </div>
-                        )}
-
-                        {expert?.highest_qualification && (
-                          <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-
-                            <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                              Qualification
-                            </p>
-
-                            <p className="mt-2 text-sm font-medium">
-                              {
-                                expert.highest_qualification
-                              }
-                            </p>
-
-                          </div>
-                        )}
-
-                        {expert?.languages &&
-                          expert.languages.length > 0 && (
-                            <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-
-                              <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                                Languages
-                              </p>
-
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-
-                                {expert.languages.map(
-                                  (
-                                    language,
-                                    index
-                                  ) => (
-                                    <Badge
-                                      key={`${language}-${index}`}
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {language}
-                                    </Badge>
-                                  )
-                                )}
-
-                              </div>
-
-                            </div>
-                          )}
-
-                        <div className="rounded-xl border border-border/60 bg-background/30 p-4">
-
-                          <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                            Verification
-                          </p>
-
-                          <p className="mt-2 flex items-center gap-2 text-sm font-medium">
-
-                            <ShieldCheck className="h-4 w-4 text-primary" />
-
-                            {expert?.verification_status
-                              ? expert.verification_status
-                              : 'Pending'}
 
                           </p>
 
@@ -1302,7 +1305,7 @@ function ApplicationTextBlock({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string | null;
+  value: string | null | undefined;
 }) {
   return (
     <div>
