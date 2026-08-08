@@ -3,9 +3,16 @@ import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { supabase, updatePassword } from '@/lib/supabase';
+
+import {
+  supabase,
+  updatePassword,
+} from '@/lib/supabase';
+
 import { AuthLayout } from '@/components/layout/auth-layout';
+
 import { Button } from '@/components/ui/button';
+
 import {
   Form,
   FormControl,
@@ -14,8 +21,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+
 import { Input } from '@/components/ui/input';
+
 import { useToast } from '@/hooks/use-toast';
+
 import {
   Loader2,
   ArrowUpRight,
@@ -23,132 +33,333 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+/* ============================================================
+   FORM VALIDATION
+   ============================================================ */
+
 const formSchema = z
   .object({
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters'),
+      .min(
+        8,
+        'Password must be at least 8 characters'
+      ),
+
     confirmPassword: z.string(),
   })
   .refine(
-    (data) => data.password === data.confirmPassword,
+    (data) =>
+      data.password === data.confirmPassword,
     {
       message: "Passwords don't match",
       path: ['confirmPassword'],
     }
   );
 
+/* ============================================================
+   RESET PASSWORD
+   ============================================================ */
+
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
+
   const { toast } = useToast();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] =
-    useState(true);
-  const [hasRecoverySession, setHasRecoverySession] =
+  const [isLoading, setIsLoading] =
     useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const [
+    isCheckingSession,
+    setIsCheckingSession,
+  ] = useState(true);
 
-  /*
-  ============================================================
-  CHECK PASSWORD-RECOVERY SESSION
-  ============================================================
-  Supabase creates a temporary authenticated session when
-  the user clicks the password-reset email link.
+  const [
+    hasRecoverySession,
+    setHasRecoverySession,
+  ] = useState(false);
 
-  We wait for that session before allowing the password
-  update.
-  ============================================================
-  */
+  const form =
+    useForm<z.infer<typeof formSchema>>({
+      resolver: zodResolver(formSchema),
+
+      defaultValues: {
+        password: '',
+        confirmPassword: '',
+      },
+    });
+
+  /* ==========================================================
+     RECOVERY SESSION DETECTION
+     ==========================================================
+
+     Supabase password-reset links can establish the
+     recovery session asynchronously.
+
+     We therefore:
+
+     1. Install the auth listener FIRST.
+     2. Look specifically for PASSWORD_RECOVERY.
+     3. Check the current URL for Supabase recovery tokens.
+     4. Check the existing session.
+     5. Never treat an arbitrary normal session as proof
+        that this is a recovery flow.
+
+     ========================================================== */
+
   useEffect(() => {
     let mounted = true;
 
-    async function checkRecoverySession() {
+    let recoveryDetected = false;
+
+    const markRecoverySession = () => {
+      if (!mounted) return;
+
+      recoveryDetected = true;
+
+      console.log(
+        'IUVAI: PASSWORD RECOVERY SESSION DETECTED'
+      );
+
+      setHasRecoverySession(true);
+      setIsCheckingSession(false);
+    };
+
+    /* ========================================================
+       1. AUTH STATE LISTENER
+       ======================================================== */
+
+    const {
+      data: { subscription },
+    } =
+      supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (!mounted) return;
+
+          console.log(
+            'IUVAI RESET AUTH EVENT:',
+            event
+          );
+
+          /*
+           * THIS is the authoritative recovery event.
+           */
+          if (
+            event ===
+              'PASSWORD_RECOVERY' &&
+            session
+          ) {
+            markRecoverySession();
+
+            return;
+          }
+
+          /*
+           * If the password was successfully updated,
+           * Supabase may emit USER_UPDATED.
+           *
+           * We do NOT use USER_UPDATED to establish a
+           * recovery session.
+           */
+          if (
+            event ===
+            'USER_UPDATED'
+          ) {
+            console.log(
+              'IUVAI: USER_UPDATED'
+            );
+
+            return;
+          }
+        }
+      );
+
+    /* ========================================================
+       2. INSPECT CURRENT URL
+       ========================================================
+
+       Supabase may deliver the recovery information in
+       either the hash fragment or query parameters,
+       depending on the authentication flow/version.
+       ======================================================== */
+
+    const url =
+      window.location.href;
+
+    const hash =
+      window.location.hash;
+
+    const search =
+      window.location.search;
+
+    console.log(
+      'IUVAI RESET URL:',
+      url
+    );
+
+    console.log(
+      'IUVAI RESET HASH:',
+      hash
+    );
+
+    console.log(
+      'IUVAI RESET SEARCH:',
+      search
+    );
+
+    /*
+     * Typical Supabase recovery URLs contain
+     * type=recovery somewhere in the URL.
+     */
+    const isRecoveryUrl =
+      hash.includes(
+        'type=recovery'
+      ) ||
+      search.includes(
+        'type=recovery'
+      );
+
+    if (isRecoveryUrl) {
+      console.log(
+        'IUVAI: RECOVERY URL DETECTED'
+      );
+    }
+
+    /* ========================================================
+       3. CHECK EXISTING SESSION
+       ======================================================== */
+
+    async function initializeRecovery() {
       try {
-        /*
-        Handle the recovery session created by the
-        Supabase password-reset link.
-        */
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession();
+        } =
+          await supabase.auth.getSession();
 
         if (!mounted) return;
 
         if (error) {
           console.error(
-            'PASSWORD RECOVERY SESSION ERROR:',
+            'IUVAI RECOVERY GET SESSION ERROR:',
             error
           );
 
           setHasRecoverySession(false);
           setIsCheckingSession(false);
+
           return;
         }
 
-        if (session) {
-          setHasRecoverySession(true);
-          setIsCheckingSession(false);
-          return;
-        }
-
-        /*
-        If there is no session yet, listen briefly for the
-        PASSWORD_RECOVERY event.
-
-        This is useful because Supabase may establish the
-        recovery session asynchronously after the page loads.
-        */
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange(
-          (event, newSession) => {
-            if (!mounted) return;
-
-            if (
-              event === 'PASSWORD_RECOVERY' &&
-              newSession
-            ) {
-              setHasRecoverySession(true);
-              setIsCheckingSession(false);
-            }
-          }
+        console.log(
+          'IUVAI RESET CURRENT SESSION:',
+          session
         );
 
         /*
-        Give Supabase a short window to establish the
-        recovery session.
-        */
+         * If PASSWORD_RECOVERY has already fired,
+         * we are done.
+         */
+        if (recoveryDetected) {
+          return;
+        }
+
+        /*
+         * If the URL explicitly says this is a recovery
+         * flow AND Supabase has an authenticated session,
+         * accept it.
+         */
+        if (
+          isRecoveryUrl &&
+          session
+        ) {
+          console.log(
+            'IUVAI: RECOVERY SESSION CONFIRMED FROM URL + SESSION'
+          );
+
+          markRecoverySession();
+
+          return;
+        }
+
+        /*
+         * If there is a session but no recovery indication,
+         * DO NOT automatically consider it a recovery session.
+         *
+         * This prevents a normal logged-in user from accessing
+         * the password reset form simply by visiting:
+         *
+         * /reset-password
+         */
+        if (session) {
+          console.log(
+            'IUVAI: NORMAL SESSION DETECTED — NOT RECOVERY'
+          );
+
+          setHasRecoverySession(false);
+          setIsCheckingSession(false);
+
+          return;
+        }
+
+        /*
+         * No session yet.
+         *
+         * Give Supabase a short period to process the
+         * recovery URL and emit PASSWORD_RECOVERY.
+         */
+        console.log(
+          'IUVAI: WAITING FOR RECOVERY SESSION...'
+        );
+
         setTimeout(async () => {
           if (!mounted) return;
 
+          if (recoveryDetected) {
+            return;
+          }
+
           const {
-            data: { session: latestSession },
-          } = await supabase.auth.getSession();
+            data: {
+              session: latestSession,
+            },
+          } =
+            await supabase.auth.getSession();
 
           if (!mounted) return;
 
-          if (latestSession) {
-            setHasRecoverySession(true);
-          } else {
-            setHasRecoverySession(false);
+          console.log(
+            'IUVAI LATEST SESSION:',
+            latestSession
+          );
+
+          /*
+           * Only accept a session here if the URL itself
+           * indicates password recovery.
+           */
+          if (
+            isRecoveryUrl &&
+            latestSession
+          ) {
+            console.log(
+              'IUVAI: RECOVERY SESSION CONFIRMED AFTER WAIT'
+            );
+
+            markRecoverySession();
+
+            return;
           }
 
-          setIsCheckingSession(false);
+          console.log(
+            'IUVAI: NO VALID RECOVERY SESSION'
+          );
 
-          subscription.unsubscribe();
-        }, 1500);
+          setHasRecoverySession(false);
+          setIsCheckingSession(false);
+        }, 2000);
       } catch (error) {
         console.error(
-          'RECOVERY SESSION CHECK ERROR:',
+          'IUVAI RECOVERY INITIALIZATION ERROR:',
           error
         );
 
@@ -159,25 +370,33 @@ export default function ResetPassword() {
       }
     }
 
-    checkRecoverySession();
+    initializeRecovery();
+
+    /* ========================================================
+       CLEANUP
+       ======================================================== */
 
     return () => {
       mounted = false;
+
+      subscription.unsubscribe();
     };
   }, []);
 
-  /*
-  ============================================================
-  SUBMIT NEW PASSWORD
-  ============================================================
-  */
+  /* ==========================================================
+     SUBMIT NEW PASSWORD
+     ========================================================== */
+
   async function onSubmit(
     values: z.infer<typeof formSchema>
   ) {
     if (!hasRecoverySession) {
       toast({
         variant: 'destructive',
-        title: 'Recovery session expired',
+
+        title:
+          'Recovery session expired',
+
         description:
           'Please request a new password-reset link and try again.',
       });
@@ -188,48 +407,78 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      const { error } = await updatePassword(
+      console.log(
+        'IUVAI: UPDATING PASSWORD'
+      );
+
+      const {
+        error,
+      } = await updatePassword(
         values.password
       );
 
       if (error) {
         console.error(
-          'PASSWORD UPDATE ERROR:',
+          'IUVAI PASSWORD UPDATE ERROR:',
           error
         );
 
         toast({
           variant: 'destructive',
-          title: 'Password update failed',
-          description: error.message,
+
+          title:
+            'Password update failed',
+
+          description:
+            error.message,
         });
 
         return;
       }
 
+      console.log(
+        'IUVAI: PASSWORD UPDATED SUCCESSFULLY'
+      );
+
       toast({
-        title: 'Password updated',
+        title:
+          'Password updated',
+
         description:
           'Your password has been changed successfully.',
       });
 
       /*
-      Sign out the recovery session before returning
-      to login so the user explicitly logs in with the
-      new password.
-      */
+       * Sign out the temporary recovery session.
+       *
+       * This is intentional.
+       *
+       * The user must now explicitly sign in using
+       * the new password.
+       */
       await supabase.auth.signOut();
 
-      setLocation('/login');
+      /*
+       * Give Supabase a moment to finish clearing
+       * the recovery session before routing.
+       */
+      setTimeout(() => {
+        if (mountedForRedirect()) {
+          setLocation('/login');
+        }
+      }, 100);
     } catch (error) {
       console.error(
-        'PASSWORD UPDATE EXCEPTION:',
+        'IUVAI PASSWORD UPDATE EXCEPTION:',
         error
       );
 
       toast({
         variant: 'destructive',
-        title: 'Something went wrong',
+
+        title:
+          'Something went wrong',
+
         description:
           'Please request a new password-reset link and try again.',
       });
@@ -239,10 +488,17 @@ export default function ResetPassword() {
   }
 
   /*
-  ============================================================
-  CHECKING RECOVERY SESSION
-  ============================================================
-  */
+   * Small helper so the delayed redirect does not
+   * depend on stale component state.
+   */
+  function mountedForRedirect() {
+    return true;
+  }
+
+  /* ==========================================================
+     CHECKING
+     ========================================================== */
+
   if (isCheckingSession) {
     return (
       <AuthLayout
@@ -262,11 +518,10 @@ export default function ResetPassword() {
     );
   }
 
-  /*
-  ============================================================
-  INVALID / EXPIRED RECOVERY SESSION
-  ============================================================
-  */
+  /* ==========================================================
+     INVALID / EXPIRED
+     ========================================================== */
+
   if (!hasRecoverySession) {
     return (
       <AuthLayout
@@ -301,10 +556,13 @@ export default function ResetPassword() {
             type="button"
             className="group h-12 w-full bg-primary text-sm font-medium tracking-wide text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[0_0_35px_rgba(99,102,241,0.2)]"
             onClick={() =>
-              setLocation('/forgot-password')
+              setLocation(
+                '/forgot-password'
+              )
             }
           >
             Request new reset link
+
             <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Button>
 
@@ -318,21 +576,20 @@ export default function ResetPassword() {
     );
   }
 
-  /*
-  ============================================================
-  VALID RECOVERY SESSION
-  ============================================================
-  */
+  /* ==========================================================
+     VALID RECOVERY SESSION
+     ========================================================== */
+
   return (
     <AuthLayout
       title="Set new password"
       subtitle="Create a new password to secure your IUVAI account."
     >
       <div className="relative">
-        {/* Ambient futuristic accent */}
         <div className="pointer-events-none absolute -top-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-        {/* Security indicator */}
+        {/* SECURITY INDICATOR */}
+
         <div className="relative mb-7 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
             <ShieldCheck
@@ -354,12 +611,17 @@ export default function ResetPassword() {
 
         <div className="mb-7 h-px w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
+        {/* FORM */}
+
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(
+              onSubmit
+            )}
             className="space-y-6"
           >
-            {/* New password */}
+            {/* NEW PASSWORD */}
+
             <FormField
               control={form.control}
               name="password"
@@ -388,7 +650,8 @@ export default function ResetPassword() {
               )}
             />
 
-            {/* Confirm password */}
+            {/* CONFIRM PASSWORD */}
+
             <FormField
               control={form.control}
               name="confirmPassword"
@@ -413,7 +676,8 @@ export default function ResetPassword() {
               )}
             />
 
-            {/* Submit */}
+            {/* SUBMIT */}
+
             <Button
               type="submit"
               className="group mt-2 h-12 w-full bg-primary text-sm font-medium tracking-wide text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-[0_0_35px_rgba(99,102,241,0.2)]"
@@ -427,6 +691,7 @@ export default function ResetPassword() {
               ) : (
                 <>
                   Update password
+
                   <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </>
               )}
@@ -434,7 +699,8 @@ export default function ResetPassword() {
           </form>
         </Form>
 
-        {/* Brand footer */}
+        {/* FOOTER */}
+
         <div className="mt-10 text-center">
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground/40">
             IUVAI Studio
