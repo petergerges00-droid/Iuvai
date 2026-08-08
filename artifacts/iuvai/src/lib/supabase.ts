@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
+// ─────────────────────────────────────────────────────────────
+// SUPABASE CLIENT
+// ─────────────────────────────────────────────────────────────
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -45,6 +49,10 @@ export type ProjectExpertStatus =
   | 'declined'
   | 'completed';
 
+// ─────────────────────────────────────────────────────────────
+// PROFILE TYPES
+// ─────────────────────────────────────────────────────────────
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -79,22 +87,40 @@ export interface CompanyProfile {
   created_at: string;
 }
 
-export interface ExpertWithProfile extends ExpertProfile {
+export interface ExpertWithProfile
+  extends ExpertProfile {
   profile?: Profile | null;
 }
 
+// ─────────────────────────────────────────────────────────────
+// PROJECT TYPES
+// ─────────────────────────────────────────────────────────────
+
 export interface Project {
   id: string;
-  company_id: string;
+  company_id: string | null;
+
   title: string;
   description: string | null;
+
   primary_field: string | null;
   specialization: string | null;
   required_skills: string[] | null;
+
   project_type: string | null;
   budget: string | null;
   duration: string | null;
+
   status: ProjectStatus;
+
+  // Additional project information
+  client_name: string | null;
+  source: string | null;
+  source_url: string | null;
+  compensation: string | null;
+  experts_needed: number | null;
+  deadline: string | null;
+
   created_at: string;
   updated_at: string;
 }
@@ -104,8 +130,11 @@ export interface ProjectRequest {
   project_id: string;
   expert_id: string;
   company_id: string;
+
   message: string | null;
+
   status: ProjectRequestStatus;
+
   created_at: string;
   updated_at: string;
 }
@@ -114,8 +143,11 @@ export interface ProjectExpert {
   id: string;
   project_id: string;
   expert_id: string;
+
   status: ProjectExpertStatus;
+
   assigned_at: string;
+
   notes: string | null;
 }
 
@@ -154,30 +186,24 @@ export async function signOut() {
 /**
  * Production application URL.
  *
- * Password recovery links must always return to the
- * deployed IUVAI application rather than whichever
- * preview/development URL happens to be open.
+ * Password recovery links always return to the
+ * deployed IUVAI application.
  */
 const PRODUCTION_URL =
   'https://6736f081.iuvai.pages.dev';
 
 /**
- * Password-reset page.
- *
- * Keeping this as a separate constant makes it harder
- * to accidentally create an inconsistent recovery URL.
+ * Password reset page.
  */
 const PASSWORD_RESET_URL =
   `${PRODUCTION_URL}/reset-password`;
 
 /**
  * Send a password-reset email.
- *
- * Supabase will generate the recovery link and, after
- * authentication of the recovery token, redirect the
- * user to /reset-password.
  */
-export async function resetPassword(email: string) {
+export async function resetPassword(
+  email: string
+) {
   return supabase.auth.resetPasswordForEmail(
     email.trim(),
     {
@@ -188,9 +214,6 @@ export async function resetPassword(email: string) {
 
 /**
  * Update the authenticated user's password.
- *
- * This must be called while Supabase has an active
- * password-recovery session.
  */
 export async function updatePassword(
   password: string
@@ -207,11 +230,12 @@ export async function updatePassword(
 export async function getProfile(
   userId: string
 ): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
   if (error) {
     console.error(
@@ -226,13 +250,16 @@ export async function getProfile(
 }
 
 export async function upsertProfile(
-  profile: Partial<Profile> & { id: string }
+  profile: Partial<Profile> & {
+    id: string;
+  }
 ) {
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(profile, {
-      onConflict: 'id',
-    });
+  const { error } =
+    await supabase
+      .from('profiles')
+      .upsert(profile, {
+        onConflict: 'id',
+      });
 
   if (error) {
     throw new Error(
@@ -248,11 +275,12 @@ export async function upsertProfile(
 export async function getExpertProfile(
   userId: string
 ): Promise<ExpertProfile | null> {
-  const { data, error } = await supabase
-    .from('expert_profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('expert_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
   if (error) {
     console.error(
@@ -267,14 +295,17 @@ export async function getExpertProfile(
 }
 
 export async function upsertExpertProfile(
-  profile: Partial<ExpertProfile> & { id: string }
+  profile: Partial<ExpertProfile> & {
+    id: string;
+  }
 ) {
-  const { data, error } = await supabase
-    .from('expert_profiles')
-    .upsert(profile, {
-      onConflict: 'id',
-    })
-    .select();
+  const { data, error } =
+    await supabase
+      .from('expert_profiles')
+      .upsert(profile, {
+        onConflict: 'id',
+      })
+      .select();
 
   console.log(
     'EXPERT PROFILE UPSERT:',
@@ -298,14 +329,15 @@ export async function updateExpertVerificationStatus(
   expertId: string,
   status: VerificationStatus
 ): Promise<ExpertProfile> {
-  const { data, error } = await supabase
-    .from('expert_profiles')
-    .update({
-      verification_status: status,
-    })
-    .eq('id', expertId)
-    .select()
-    .single();
+  const { data, error } =
+    await supabase
+      .from('expert_profiles')
+      .update({
+        verification_status: status,
+      })
+      .eq('id', expertId)
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -323,11 +355,12 @@ export async function updateExpertVerificationStatus(
 export async function getCompanyProfile(
   userId: string
 ): Promise<CompanyProfile | null> {
-  const { data, error } = await supabase
-    .from('company_profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data, error } =
+    await supabase
+      .from('company_profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
   if (error) {
     console.error(
@@ -342,13 +375,16 @@ export async function getCompanyProfile(
 }
 
 export async function upsertCompanyProfile(
-  profile: Partial<CompanyProfile> & { id: string }
+  profile: Partial<CompanyProfile> & {
+    id: string;
+  }
 ) {
-  const { error } = await supabase
-    .from('company_profiles')
-    .upsert(profile, {
-      onConflict: 'id',
-    });
+  const { error } =
+    await supabase
+      .from('company_profiles')
+      .upsert(profile, {
+        onConflict: 'id',
+      });
 
   if (error) {
     throw new Error(
@@ -392,23 +428,25 @@ export async function getExperts(): Promise<
     return [];
   }
 
-  const expertIds = expertProfiles.map(
-    (expert) => expert.id
-  );
+  const expertIds =
+    expertProfiles.map(
+      (expert) => expert.id
+    );
 
   const {
     data: profiles,
     error: profileError,
-  } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      account_type,
-      country,
-      created_at
-    `)
-    .in('id', expertIds);
+  } =
+    await supabase
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      `)
+      .in('id', expertIds);
 
   if (profileError) {
     throw new Error(
@@ -416,14 +454,15 @@ export async function getExperts(): Promise<
     );
   }
 
-  const profileMap = new Map(
-    (profiles || []).map(
-      (profile) => [
-        profile.id,
-        profile,
-      ]
-    )
-  );
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        (profile) => [
+          profile.id,
+          profile,
+        ]
+      )
+    );
 
   return expertProfiles.map(
     (expert) => ({
@@ -439,7 +478,8 @@ export async function getExperts(): Promise<
 export async function searchExperts(
   searchTerm: string
 ): Promise<ExpertWithProfile[]> {
-  const term = searchTerm.trim();
+  const term =
+    searchTerm.trim();
 
   if (!term) {
     return getExperts();
@@ -464,27 +504,32 @@ export async function searchExperts(
     );
   }
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
     return [];
   }
 
-  const expertIds = data.map(
-    (expert) => expert.id
-  );
+  const expertIds =
+    data.map(
+      (expert) => expert.id
+    );
 
   const {
     data: profiles,
     error: profileError,
-  } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      account_type,
-      country,
-      created_at
-    `)
-    .in('id', expertIds);
+  } =
+    await supabase
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      `)
+      .in('id', expertIds);
 
   if (profileError) {
     throw new Error(
@@ -492,14 +537,15 @@ export async function searchExperts(
     );
   }
 
-  const profileMap = new Map(
-    (profiles || []).map(
-      (profile) => [
-        profile.id,
-        profile,
-      ]
-    )
-  );
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        (profile) => [
+          profile.id,
+          profile,
+        ]
+      )
+    );
 
   return data.map(
     (expert) => ({
@@ -536,27 +582,32 @@ export async function getExpertsByField(
     );
   }
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
     return [];
   }
 
-  const expertIds = data.map(
-    (expert) => expert.id
-  );
+  const expertIds =
+    data.map(
+      (expert) => expert.id
+    );
 
   const {
     data: profiles,
     error: profileError,
-  } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      account_type,
-      country,
-      created_at
-    `)
-    .in('id', expertIds);
+  } =
+    await supabase
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      `)
+      .in('id', expertIds);
 
   if (profileError) {
     throw new Error(
@@ -564,14 +615,15 @@ export async function getExpertsByField(
     );
   }
 
-  const profileMap = new Map(
-    (profiles || []).map(
-      (profile) => [
-        profile.id,
-        profile,
-      ]
-    )
-  );
+  const profileMap =
+    new Map(
+      (profiles || []).map(
+        (profile) => [
+          profile.id,
+          profile,
+        ]
+      )
+    );
 
   return data.map(
     (expert) => ({
@@ -590,11 +642,12 @@ export async function getExpertWithProfile(
   const {
     data: expert,
     error: expertError,
-  } = await supabase
-    .from('expert_profiles')
-    .select('*')
-    .eq('id', expertId)
-    .single();
+  } =
+    await supabase
+      .from('expert_profiles')
+      .select('*')
+      .eq('id', expertId)
+      .single();
 
   if (expertError) {
     console.error(
@@ -608,17 +661,18 @@ export async function getExpertWithProfile(
   const {
     data: profile,
     error: profileError,
-  } = await supabase
-    .from('profiles')
-    .select(`
-      id,
-      full_name,
-      account_type,
-      country,
-      created_at
-    `)
-    .eq('id', expertId)
-    .maybeSingle();
+  } =
+    await supabase
+      .from('profiles')
+      .select(`
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      `)
+      .eq('id', expertId)
+      .maybeSingle();
 
   if (profileError) {
     return {
@@ -641,7 +695,9 @@ export async function getExpertWithProfile(
 export async function createProject(
   project: Omit<
     Project,
-    'id' | 'created_at' | 'updated_at'
+    'id' |
+    'created_at' |
+    'updated_at'
   >
 ): Promise<Project> {
   const { data, error } =
@@ -667,7 +723,10 @@ export async function getCompanyProjects(
     await supabase
       .from('projects')
       .select('*')
-      .eq('company_id', companyId)
+      .eq(
+        'company_id',
+        companyId
+      )
       .order('created_at', {
         ascending: false,
       });
@@ -744,7 +803,9 @@ export async function deleteProject(
 // ADMIN PROJECT MANAGEMENT
 // ─────────────────────────────────────────────────────────────
 
-export async function getAllProjects(): Promise<Project[]> {
+export async function getAllProjects(): Promise<
+  Project[]
+> {
   const { data, error } =
     await supabase
       .from('projects')
@@ -811,7 +872,9 @@ export async function updateProjectStatus(
 export async function createProjectRequest(
   request: Omit<
     ProjectRequest,
-    'id' | 'created_at' | 'updated_at'
+    'id' |
+    'created_at' |
+    'updated_at'
   >
 ): Promise<ProjectRequest> {
   const { data, error } =
@@ -837,7 +900,10 @@ export async function getCompanyProjectRequests(
     await supabase
       .from('project_requests')
       .select('*')
-      .eq('company_id', companyId)
+      .eq(
+        'company_id',
+        companyId
+      )
       .order('created_at', {
         ascending: false,
       });
@@ -858,7 +924,10 @@ export async function getExpertProjectRequests(
     await supabase
       .from('project_requests')
       .select('*')
-      .eq('expert_id', expertId)
+      .eq(
+        'expert_id',
+        expertId
+      )
       .order('created_at', {
         ascending: false,
       });
@@ -897,8 +966,14 @@ export async function getExpertProjectRequestForProject(
     await supabase
       .from('project_requests')
       .select('*')
-      .eq('expert_id', expertId)
-      .eq('project_id', projectId)
+      .eq(
+        'expert_id',
+        expertId
+      )
+      .eq(
+        'project_id',
+        projectId
+      )
       .maybeSingle();
 
   if (error) {
@@ -1130,12 +1205,12 @@ export async function getProjectExperts(
     await supabase
       .from('profiles')
       .select(`
-      id,
-      full_name,
-      account_type,
-      country,
-      created_at
-    `)
+        id,
+        full_name,
+        account_type,
+        country,
+        created_at
+      `)
       .in(
         'id',
         expertIds
@@ -1408,6 +1483,10 @@ export async function getExpertAssignments(
 
   return (data || []) as ProjectExpert[];
 }
+
+// ─────────────────────────────────────────────────────────────
+// RESUME URL
+// ─────────────────────────────────────────────────────────────
 
 export async function getResumeUrl(
   resumePath: string
