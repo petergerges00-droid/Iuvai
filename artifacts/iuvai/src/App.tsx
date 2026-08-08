@@ -45,6 +45,7 @@ import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
 import CreateProject from '@/pages/create-project';
+import CompanyProject from '@/pages/company-project';
 
 const queryClient = new QueryClient();
 
@@ -526,7 +527,12 @@ function AppRouter() {
           component={AdminDashboard}
         />
       </Route>
-
+<Route path="/company-dashboard/projects/:projectId">
+  <ProtectedRoute
+    component={CompanyProject}
+    requireAccountType="company"
+  />
+</Route>
       {/* ======================================================
           ADMIN PROJECTS
           ====================================================== */}
