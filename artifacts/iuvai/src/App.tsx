@@ -36,7 +36,6 @@ import AdminExpertProfile from '@/pages/admin-expert-profile';
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
-import ExpertProfile from '@/pages/expert-profile';
 
 const queryClient = new QueryClient();
 
@@ -44,7 +43,6 @@ const queryClient = new QueryClient();
 ============================================================
 ADMIN ACCOUNT
 ============================================================
-
 IUVAI operator/admin account.
 
 IMPORTANT:
@@ -73,29 +71,13 @@ function FullPageLoader() {
    ADMIN CHECK
    ============================================================ */
 
-function isAdminUser(
-  userId: string | undefined
-) {
+function isAdminUser(userId: string | undefined) {
   return userId === ADMIN_USER_ID;
 }
 
 /* ============================================================
    PUBLIC ROUTE
-   ============================================================
-
-   Used for:
-   /login
-   /signup
-   /forgot-password
-
-   Authenticated users are redirected to their workspace.
-
-   IMPORTANT:
-   DO NOT use this for /reset-password.
-
-   Supabase creates a temporary authenticated recovery
-   session when the user clicks the password reset link.
-============================================================ */
+   ============================================================ */
 
 interface PublicRouteProps {
   component: React.ComponentType;
@@ -104,13 +86,7 @@ interface PublicRouteProps {
 function PublicRoute({
   component: Component,
 }: PublicRouteProps) {
-  const {
-    session,
-    user,
-    profile,
-    isLoading,
-  } = useAuth();
-
+  const { session, user, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -155,48 +131,29 @@ function PublicRoute({
 }
 
 /* ============================================================
-   RESET PASSWORD ROUTE
+   RECOVERY / RESET PASSWORD ROUTE
    ============================================================
 
-   This route is intentionally NOT a PublicRoute.
+   IMPORTANT:
 
-   Supabase establishes a temporary authenticated session
-   after the user clicks the recovery email.
+   This route MUST NOT use PublicRoute.
 
-   Therefore:
+   Supabase recovery links create a temporary authenticated
+   recovery session. PublicRoute sees that session and tries
+   to determine the user's account type, which can send the
+   user to onboarding instead of allowing the password reset.
 
-   session === true
-
-   is EXPECTED here.
-
-   We must allow ResetPassword to render instead of sending
-   the user to onboarding/dashboard.
+   ResetPassword handles the recovery session directly.
 ============================================================ */
 
-interface ResetPasswordRouteProps {
-  component: React.ComponentType;
-}
-
-function ResetPasswordRoute({
-  component: Component,
-}: ResetPasswordRouteProps) {
-  const {
-    isLoading,
-  } = useAuth();
-
-  /*
-   * We intentionally do NOT redirect based on session,
-   * profile, or account_type here.
-   *
-   * The ResetPassword page itself handles the recovery
-   * session and password update.
-   */
+function ResetPasswordRoute() {
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return <FullPageLoader />;
   }
 
-  return <Component />;
+  return <ResetPassword />;
 }
 
 /* ============================================================
@@ -210,13 +167,7 @@ interface OnboardingRouteProps {
 function OnboardingRoute({
   component: Component,
 }: OnboardingRouteProps) {
-  const {
-    session,
-    user,
-    profile,
-    isLoading,
-  } = useAuth();
-
+  const { session, user, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -277,12 +228,7 @@ function ProtectedRoute({
   component: Component,
   requireAccountType,
 }: ProtectedRouteProps) {
-  const {
-    session,
-    profile,
-    isLoading,
-  } = useAuth();
-
+  const { session, profile, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -304,9 +250,7 @@ function ProtectedRoute({
     ) {
       if (profile.account_type === 'expert') {
         setLocation('/dashboard');
-      } else if (
-        profile.account_type === 'company'
-      ) {
+      } else if (profile.account_type === 'company') {
         setLocation('/company-dashboard');
       }
     }
@@ -355,12 +299,7 @@ interface AdminRouteProps {
 function AdminRoute({
   component: Component,
 }: AdminRouteProps) {
-  const {
-    session,
-    user,
-    isLoading,
-  } = useAuth();
-
+  const { session, user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -436,20 +375,17 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          PASSWORD RESET
+          PASSWORD RECOVERY
 
           IMPORTANT:
+          DO NOT wrap this in PublicRoute.
 
-          This MUST NOT use PublicRoute.
-
-          Supabase creates a recovery session when the
-          user clicks the reset email.
+          Supabase recovery links establish a temporary
+          authenticated recovery session.
           ====================================================== */}
 
       <Route path="/reset-password">
-        <ResetPasswordRoute
-          component={ResetPassword}
-        />
+        <ResetPasswordRoute />
       </Route>
 
       {/* ======================================================
@@ -457,9 +393,7 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/onboarding">
-        <OnboardingRoute
-          component={Onboarding}
-        />
+        <OnboardingRoute component={Onboarding} />
       </Route>
 
       {/* ======================================================
@@ -467,9 +401,7 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/admin">
-        <AdminRoute
-          component={AdminDashboard}
-        />
+        <AdminRoute component={AdminDashboard} />
       </Route>
 
       {/* ======================================================
@@ -477,9 +409,7 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/admin/projects">
-        <AdminRoute
-          component={AdminProjects}
-        />
+        <AdminRoute component={AdminProjects} />
       </Route>
 
       {/* ======================================================
@@ -487,9 +417,7 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId/experts">
-        <AdminRoute
-          component={ProjectExperts}
-        />
+        <AdminRoute component={ProjectExperts} />
       </Route>
 
       {/* ======================================================
@@ -497,51 +425,29 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/admin/experts">
-        <AdminRoute
-          component={AdminExperts}
-        />
+        <AdminRoute component={AdminExperts} />
       </Route>
 
-      {/* ======================================================
-          ADMIN — EXPERT PROFILE
-          ====================================================== */}
-
       <Route path="/admin/experts/:expertId">
-        <AdminRoute
-          component={AdminExpertProfile}
-        />
+        <AdminRoute component={AdminExpertProfile} />
       </Route>
 
       {/* ======================================================
           ADMIN — EXPERT REVIEW
-
-          /admin/projects/PROJECT_ID/experts/EXPERT_ID
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId/experts/:expertId">
-        <AdminRoute
-          component={AdminExpertReview}
-        />
+        <AdminRoute component={AdminExpertReview} />
       </Route>
-<Route
-  path="/reset-password"
-  component={ResetPassword}
-/>
+
       {/* ======================================================
           ADMIN — SINGLE PROJECT
           ====================================================== */}
 
       <Route path="/admin/projects/:projectId">
-        <AdminRoute
-          component={AdminProjects}
-        />
+        <AdminRoute component={AdminProjects} />
       </Route>
-<Route path="/expert-profile">
-  <ProtectedRoute
-    component={ExpertProfile}
-    requireAccountType="expert"
-  />
-</Route>
+
       {/* ======================================================
           EXPERT DASHBOARD
           ====================================================== */}
@@ -580,9 +486,7 @@ function AppRouter() {
           ====================================================== */}
 
       <Route path="/settings">
-        <ProtectedRoute
-          component={Settings}
-        />
+        <ProtectedRoute component={Settings} />
       </Route>
 
       {/* ======================================================
@@ -600,30 +504,23 @@ function AppRouter() {
    ============================================================ */
 
 function App() {
-  const basePath =
-    import.meta.env.BASE_URL.replace(
-      /\/$/,
-      ''
-    );
+  const basePath = import.meta.env.BASE_URL.replace(
+    /\/$/,
+    ''
+  );
 
   return (
-    <QueryClientProvider
-      client={queryClient}
-    >
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
-
         <TooltipProvider>
 
-          <WouterRouter
-            base={basePath}
-          >
+          <WouterRouter base={basePath}>
             <AppRouter />
           </WouterRouter>
 
           <Toaster />
 
         </TooltipProvider>
-
       </AuthProvider>
     </QueryClientProvider>
   );
