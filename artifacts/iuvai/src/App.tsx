@@ -53,6 +53,7 @@ import AdminExpertReview from '@/pages/admin-expert-review';
 import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
+import AdminEvaluationEditor from '@/pages/AdminEvaluationEditor';
 
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
@@ -423,10 +424,7 @@ function ExpertEvaluationRoute() {
   const [, params] =
     useRoute('/evaluations/:evaluationId');
 
-  const {
-    user,
-    profile,
-  } = useAuth();
+  const { user } = useAuth();
 
   if (!params?.evaluationId) {
     return <FullPageLoader />;
@@ -438,8 +436,7 @@ function ExpertEvaluationRoute() {
    * If your evaluations tables use the Supabase auth user ID
    * as expert_id, user.id is correct.
    */
-  const expertId =
-    user?.id;
+  const expertId = user?.id;
 
   if (!expertId) {
     return <FullPageLoader />;
@@ -449,13 +446,72 @@ function ExpertEvaluationRoute() {
     <ProtectedRoute
       component={() => (
         <EvaluationPage
-          evaluationId={
-            params.evaluationId
-          }
+          evaluationId={params.evaluationId}
           expertId={expertId}
         />
       )}
       requireAccountType="expert"
+    />
+  );
+}
+
+/* ============================================================
+   ADMIN EVALUATIONS LIST ROUTE
+   ============================================================ */
+
+function AdminEvaluationsRoute() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <AdminRoute
+      component={() => (
+        <AdminEvaluations
+          onCreate={() => {
+            /*
+             * Evaluation creation is not implemented yet.
+             *
+             * We will add /admin/evaluations/new once the
+             * createEvaluation() Supabase function exists.
+             */
+            setLocation('/admin/evaluations/new');
+          }}
+          onEdit={(evaluationId) => {
+            setLocation(
+              `/admin/evaluations/${evaluationId}`
+            );
+          }}
+        />
+      )}
+    />
+  );
+}
+
+/* ============================================================
+   ADMIN EVALUATION EDITOR ROUTE
+   ============================================================ */
+
+function AdminEvaluationEditorRoute() {
+  const [, params] =
+    useRoute(
+      '/admin/evaluations/:evaluationId'
+    );
+
+  const [, setLocation] = useLocation();
+
+  if (!params?.evaluationId) {
+    return <FullPageLoader />;
+  }
+
+  return (
+    <AdminRoute
+      component={() => (
+        <AdminEvaluationEditor
+          evaluationId={params.evaluationId}
+          onBack={() =>
+            setLocation('/admin/evaluations')
+          }
+        />
+      )}
     />
   );
 }
@@ -559,13 +615,21 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          ADMIN EVALUATIONS
+          ADMIN EVALUATIONS LIST
           ====================================================== */}
 
       <Route path="/admin/evaluations">
-        <AdminRoute
-          component={AdminEvaluations}
-        />
+        <AdminEvaluationsRoute />
+      </Route>
+
+      {/* ======================================================
+          ADMIN EVALUATION EDITOR
+          ====================================================== */}
+
+      <Route
+        path="/admin/evaluations/:evaluationId"
+      >
+        <AdminEvaluationEditorRoute />
       </Route>
 
       {/* ======================================================
@@ -641,10 +705,6 @@ function AppRouter() {
 
       {/* ======================================================
           SINGLE EXPERT EVALUATION
-
-          IMPORTANT:
-          This comes after /evaluations and uses the wrapper
-          because EvaluationPage requires route/auth props.
           ====================================================== */}
 
       <Route
