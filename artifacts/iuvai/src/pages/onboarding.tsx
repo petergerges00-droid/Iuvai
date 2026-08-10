@@ -5,13 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/use-auth';
+
 import {
   upsertProfile,
   upsertExpertProfile,
   upsertCompanyProfile,
   AccountType,
 } from '@/lib/supabase';
+
 import { Button } from '@/components/ui/button';
+
 import {
   Form,
   FormControl,
@@ -20,8 +23,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+
 import { Input } from '@/components/ui/input';
+
 import { Textarea } from '@/components/ui/textarea';
+
 import {
   Select,
   SelectContent,
@@ -29,7 +35,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 import { useToast } from '@/hooks/use-toast';
+
 import {
   Loader2,
   ArrowRight,
@@ -41,14 +49,18 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────
+// ============================================================
 // VALIDATION
-// ─────────────────────────────────────────────────────────────
+// ============================================================
 
 const expertSchema = z.object({
-  full_name: z.string().min(2, 'Name is required'),
+  full_name: z
+    .string()
+    .min(2, 'Name is required'),
 
-  country: z.string().min(2, 'Country is required'),
+  country: z
+    .string()
+    .min(2, 'Country is required'),
 
   primary_field: z
     .string()
@@ -65,7 +77,7 @@ const expertSchema = z.object({
 
   highest_qualification: z
     .string()
-    .min(1, 'Required'),
+    .min(1, 'Please select your highest qualification'),
 
   skills: z
     .string()
@@ -75,7 +87,10 @@ const expertSchema = z.object({
     .string()
     .min(1, 'Enter at least one language'),
 
-  previous_ai_experience: z.string(),
+  previous_ai_experience: z
+    .string()
+    .optional()
+    .default(''),
 
   availability_hours: z.coerce
     .number()
@@ -106,23 +121,22 @@ const companySchema = z.object({
 
   company_size: z
     .string()
-    .min(1, 'Required'),
+    .min(1, 'Please select company size'),
 });
 
-// ─────────────────────────────────────────────────────────────
+// ============================================================
 // COMPONENT
-// ─────────────────────────────────────────────────────────────
+// ============================================================
 
 export default function Onboarding() {
-  const {
-    user,
-    profile,
-    refreshProfile,
-  } = useAuth();
+  const { user, profile, refreshProfile } =
+    useAuth();
 
-  const [, setLocation] = useLocation();
+  const [, setLocation] =
+    useLocation();
 
-  const { toast } = useToast();
+  const { toast } =
+    useToast();
 
   const [step, setStep] =
     useState<1 | 2>(1);
@@ -133,28 +147,27 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  // ───────────────────────────────────────────────────────────
-  // REDIRECT IF PROFILE ALREADY EXISTS
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
+  // REDIRECT IF ONBOARDING IS ALREADY COMPLETE
+  // ==========================================================
 
   useEffect(() => {
     if (profile?.account_type === 'expert') {
       setLocation('/dashboard');
-    } else if (
-      profile?.account_type === 'company'
-    ) {
+    }
+
+    if (profile?.account_type === 'company') {
       setLocation('/company-dashboard');
     }
   }, [profile, setLocation]);
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // EXPERT FORM
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   const expertForm =
     useForm<z.infer<typeof expertSchema>>({
-      resolver:
-        zodResolver(expertSchema),
+      resolver: zodResolver(expertSchema),
 
       defaultValues: {
         full_name: '',
@@ -170,14 +183,13 @@ export default function Onboarding() {
       },
     });
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // COMPANY FORM
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   const companyForm =
     useForm<z.infer<typeof companySchema>>({
-      resolver:
-        zodResolver(companySchema),
+      resolver: zodResolver(companySchema),
 
       defaultValues: {
         full_name: '',
@@ -189,17 +201,17 @@ export default function Onboarding() {
       },
     });
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // AUTH GUARD
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   if (!user) {
     return null;
   }
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // ACCOUNT TYPE
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   const handleTypeSelect = (
     type: AccountType
@@ -208,9 +220,9 @@ export default function Onboarding() {
     setStep(2);
   };
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // EXPERT SUBMISSION
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   const onExpertSubmit = async (
     values: z.infer<typeof expertSchema>
@@ -218,15 +230,27 @@ export default function Onboarding() {
     setIsSubmitting(true);
 
     try {
-      // Save general profile
+      // ------------------------------------------------------
+      // MAIN PROFILE
+      // ------------------------------------------------------
+
       await upsertProfile({
         id: user.id,
-        full_name: values.full_name,
-        account_type: 'expert',
-        country: values.country,
+
+        full_name:
+          values.full_name,
+
+        account_type:
+          'expert',
+
+        country:
+          values.country,
       });
 
-      // Save expert-specific profile
+      // ------------------------------------------------------
+      // EXPERT PROFILE
+      // ------------------------------------------------------
+
       await upsertExpertProfile({
         id: user.id,
 
@@ -242,31 +266,46 @@ export default function Onboarding() {
         highest_qualification:
           values.highest_qualification,
 
-        skills: values.skills
-          .split(',')
-          .map((skill) =>
-            skill.trim()
-          )
-          .filter(Boolean),
+        skills:
+          values.skills
+            .split(',')
+            .map((skill) =>
+              skill.trim()
+            )
+            .filter(Boolean),
 
-        languages: values.languages
-          .split(',')
-          .map((language) =>
-            language.trim()
-          )
-          .filter(Boolean),
+        languages:
+          values.languages
+            .split(',')
+            .map((language) =>
+              language.trim()
+            )
+            .filter(Boolean),
 
         previous_ai_experience:
-          values.previous_ai_experience,
+          values.previous_ai_experience || '',
 
         availability_hours:
           values.availability_hours,
       });
 
+      // ------------------------------------------------------
+      // REFRESH AUTH PROFILE
+      // ------------------------------------------------------
+
       await refreshProfile();
+
+      // ------------------------------------------------------
+      // REDIRECT
+      // ------------------------------------------------------
 
       setLocation('/dashboard');
     } catch (error: any) {
+      console.error(
+        'EXPERT ONBOARDING ERROR:',
+        error
+      );
+
       toast({
         variant: 'destructive',
 
@@ -282,9 +321,9 @@ export default function Onboarding() {
     }
   };
 
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
   // COMPANY SUBMISSION
-  // ───────────────────────────────────────────────────────────
+  // ==========================================================
 
   const onCompanySubmit = async (
     values: z.infer<typeof companySchema>
@@ -292,14 +331,24 @@ export default function Onboarding() {
     setIsSubmitting(true);
 
     try {
-      // Save general profile
+      // ------------------------------------------------------
+      // MAIN PROFILE
+      // ------------------------------------------------------
+
       await upsertProfile({
         id: user.id,
-        full_name: values.full_name,
-        account_type: 'company',
+
+        full_name:
+          values.full_name,
+
+        account_type:
+          'company',
       });
 
-      // Save company-specific profile
+      // ------------------------------------------------------
+      // COMPANY PROFILE
+      // ------------------------------------------------------
+
       await upsertCompanyProfile({
         id: user.id,
 
@@ -319,12 +368,25 @@ export default function Onboarding() {
           values.company_size,
       });
 
+      // ------------------------------------------------------
+      // REFRESH AUTH PROFILE
+      // ------------------------------------------------------
+
       await refreshProfile();
+
+      // ------------------------------------------------------
+      // REDIRECT
+      // ------------------------------------------------------
 
       setLocation(
         '/company-dashboard'
       );
     } catch (error: any) {
+      console.error(
+        'COMPANY ONBOARDING ERROR:',
+        error
+      );
+
       toast({
         variant: 'destructive',
 
@@ -340,9 +402,9 @@ export default function Onboarding() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // UI
-  // ─────────────────────────────────────────────────────────────
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -353,7 +415,7 @@ export default function Onboarding() {
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
 
-        <div className="absolute -left-48 -top-48 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
+        <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
 
         <div className="absolute -bottom-48 -right-48 h-[600px] w-[600px] rounded-full bg-primary/[0.06] blur-3xl" />
 
@@ -424,12 +486,16 @@ export default function Onboarding() {
 
       <main className="relative z-10 mx-auto w-full max-w-5xl px-6 py-12 sm:py-16">
 
-        {/* HEADER */}
+        {/* ===================================================
+            HEADER
+        ==================================================== */}
 
         <div className="mx-auto mb-12 max-w-2xl text-center">
 
           <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
+
             <Sparkles className="h-5 w-5 text-primary" />
+
           </div>
 
           <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-primary">
@@ -437,17 +503,19 @@ export default function Onboarding() {
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+
             {step === 1
               ? 'Enter the network.'
               : 'Build your profile.'}
+
           </h1>
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
 
             {step === 1
-              ? 'Tell us how you plan to participate in the human intelligence infrastructure powering tomorrow’s AI.'
+              ? 'Tell us how you plan to participate in the human intelligence infrastructure powering next-generation AI.'
               : accountType === 'expert'
-                ? 'Tell us about your expertise so we can connect you with the right opportunities.'
+                ? 'Tell us about your expertise so we can connect you with relevant AI projects.'
                 : 'Tell us about your organization so we can connect you with the right experts.'}
 
           </p>
@@ -488,17 +556,18 @@ export default function Onboarding() {
 
         </div>
 
-        {/* =====================================================
-            STEPS
-        ====================================================== */}
+        {/* ===================================================
+            ANIMATED CONTENT
+        ==================================================== */}
 
         <AnimatePresence mode="wait">
 
           {/* =================================================
-              STEP 1 — ACCOUNT TYPE
+              STEP 1
           ================================================== */}
 
           {step === 1 && (
+
             <motion.div
               key="account-type"
 
@@ -524,9 +593,9 @@ export default function Onboarding() {
               className="mx-auto grid max-w-3xl gap-5 md:grid-cols-2"
             >
 
-              {/* ===============================
+              {/* =================================================
                   EXPERT
-              ================================ */}
+              ================================================== */}
 
               <button
                 type="button"
@@ -535,7 +604,6 @@ export default function Onboarding() {
                     'expert'
                   )
                 }
-
                 className="group cursor-pointer text-left"
               >
 
@@ -566,7 +634,9 @@ export default function Onboarding() {
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Contribute your professional knowledge to evaluate, train, and improve AI systems.
+
+                      Contribute your professional knowledge to evaluate, train, test, and improve AI systems.
+
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
@@ -606,9 +676,9 @@ export default function Onboarding() {
 
               </button>
 
-              {/* ===============================
+              {/* =================================================
                   COMPANY
-              ================================ */}
+              ================================================== */}
 
               <button
                 type="button"
@@ -617,7 +687,6 @@ export default function Onboarding() {
                     'company'
                   )
                 }
-
                 className="group cursor-pointer text-left"
               >
 
@@ -648,7 +717,9 @@ export default function Onboarding() {
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Connect with verified human experts to build, evaluate, and improve your AI systems.
+
+                      Connect with verified human experts to build, evaluate, and improve AI systems.
+
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
@@ -689,14 +760,16 @@ export default function Onboarding() {
               </button>
 
             </motion.div>
+
           )}
 
-          {/* =================================================
-              STEP 2 — EXPERT
-          ================================================== */}
+          {/* ===================================================
+              EXPERT FORM
+          ==================================================== */}
 
           {step === 2 &&
             accountType === 'expert' && (
+
               <motion.div
                 key="expert-form"
 
@@ -760,13 +833,12 @@ export default function Onboarding() {
                         onSubmit={expertForm.handleSubmit(
                           onExpertSubmit
                         )}
-
                         className="space-y-8"
                       >
 
-                        {/* =========================
+                        {/* =================================================
                             PERSONAL
-                        ========================== */}
+                        ================================================== */}
 
                         <section>
 
@@ -789,7 +861,6 @@ export default function Onboarding() {
                                 expertForm.control
                               }
                               name="full_name"
-
                               render={({
                                 field,
                               }) => (
@@ -821,7 +892,6 @@ export default function Onboarding() {
                                 expertForm.control
                               }
                               name="country"
-
                               render={({
                                 field,
                               }) => (
@@ -835,6 +905,7 @@ export default function Onboarding() {
                                   <FormControl>
 
                                     <Input
+                                      placeholder="Egypt"
                                       {...field}
                                       className="h-11"
                                     />
@@ -854,9 +925,9 @@ export default function Onboarding() {
 
                         <div className="h-px bg-border/60" />
 
-                        {/* =========================
-                            EXPERTISE
-                        ========================== */}
+                        {/* =================================================
+                            PROFESSIONAL EXPERTISE
+                        ================================================== */}
 
                         <section>
 
@@ -867,19 +938,22 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Tell us where your professional knowledge is strongest.
+
+                              Tell us where your professional knowledge is strongest. IUVAI supports experts across disciplines.
+
                             </p>
 
                           </div>
 
                           <div className="grid gap-5 sm:grid-cols-2">
 
+                            {/* PRIMARY FIELD */}
+
                             <FormField
                               control={
                                 expertForm.control
                               }
                               name="primary_field"
-
                               render={({
                                 field,
                               }) => (
@@ -893,7 +967,7 @@ export default function Onboarding() {
                                   <FormControl>
 
                                     <Input
-                                      placeholder="Medicine, Law, Finance, Engineering, Science, Design..."
+                                      placeholder="Medicine, Law, Finance, Engineering, Linguistics..."
                                       {...field}
                                       className="h-11"
                                     />
@@ -901,7 +975,7 @@ export default function Onboarding() {
                                   </FormControl>
 
                                   <p className="text-[11px] text-muted-foreground">
-                                    Your broad professional or academic domain.
+                                    Your main professional or academic domain.
                                   </p>
 
                                   <FormMessage />
@@ -911,12 +985,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* SPECIALIZATION */}
+
                             <FormField
                               control={
                                 expertForm.control
                               }
                               name="specialization"
-
                               render={({
                                 field,
                               }) => (
@@ -930,7 +1005,7 @@ export default function Onboarding() {
                                   <FormControl>
 
                                     <Input
-                                      placeholder="Neurosurgery, Cybersecurity, Tax Law, Robotics..."
+                                      placeholder="Neurosurgery, Cybersecurity, Economics, Robotics..."
                                       {...field}
                                       className="h-11"
                                     />
@@ -948,12 +1023,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* QUALIFICATION */}
+
                             <FormField
                               control={
                                 expertForm.control
                               }
                               name="highest_qualification"
-
                               render={({
                                 field,
                               }) => (
@@ -986,15 +1062,19 @@ export default function Onboarding() {
                                     <SelectContent>
 
                                       <SelectItem value="phd">
-                                        PhD
+                                        PhD / Doctorate
                                       </SelectItem>
 
                                       <SelectItem value="md">
-                                        MD
+                                        Medical Degree / MD
                                       </SelectItem>
 
                                       <SelectItem value="jd">
-                                        JD
+                                        JD / Law Degree
+                                      </SelectItem>
+
+                                      <SelectItem value="mba">
+                                        MBA
                                       </SelectItem>
 
                                       <SelectItem value="masters">
@@ -1006,7 +1086,7 @@ export default function Onboarding() {
                                       </SelectItem>
 
                                       <SelectItem value="professional">
-                                        Professional Qualification
+                                        Professional Certification
                                       </SelectItem>
 
                                       <SelectItem value="other">
@@ -1024,12 +1104,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* EXPERIENCE */}
+
                             <FormField
                               control={
                                 expertForm.control
                               }
                               name="years_experience"
-
                               render={({
                                 field,
                               }) => (
@@ -1045,11 +1126,16 @@ export default function Onboarding() {
                                     <Input
                                       type="number"
                                       min="0"
+                                      max="100"
                                       {...field}
                                       className="h-11"
                                     />
 
                                   </FormControl>
+
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Professional experience in your primary field.
+                                  </p>
 
                                   <FormMessage />
 
@@ -1064,9 +1150,9 @@ export default function Onboarding() {
 
                         <div className="h-px bg-border/60" />
 
-                        {/* =========================
+                        {/* =================================================
                             CAPABILITIES
-                        ========================== */}
+                        ================================================== */}
 
                         <section className="space-y-5">
 
@@ -1077,17 +1163,20 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              These help IUVAI match your expertise with relevant AI projects.
+
+                              These attributes help IUVAI match you with relevant projects.
+
                             </p>
 
                           </div>
+
+                          {/* SKILLS */}
 
                           <FormField
                             control={
                               expertForm.control
                             }
                             name="skills"
-
                             render={({
                               field,
                             }) => (
@@ -1119,12 +1208,13 @@ export default function Onboarding() {
                             )}
                           />
 
+                          {/* LANGUAGES */}
+
                           <FormField
                             control={
                               expertForm.control
                             }
                             name="languages"
-
                             render={({
                               field,
                             }) => (
@@ -1156,12 +1246,13 @@ export default function Onboarding() {
                             )}
                           />
 
+                          {/* AI EXPERIENCE */}
+
                           <FormField
                             control={
                               expertForm.control
                             }
                             name="previous_ai_experience"
-
                             render={({
                               field,
                             }) => (
@@ -1181,7 +1272,7 @@ export default function Onboarding() {
                                 <FormControl>
 
                                   <Textarea
-                                    placeholder="Describe any previous experience with AI evaluation, data annotation, RLHF, model testing, AI research, or related work."
+                                    placeholder="Describe any previous experience with AI evaluation, data annotation, RLHF, model testing, AI research, prompt evaluation, or related work."
                                     {...field}
                                     className="min-h-[110px] resize-none"
                                   />
@@ -1195,12 +1286,13 @@ export default function Onboarding() {
                             )}
                           />
 
+                          {/* AVAILABILITY */}
+
                           <FormField
                             control={
                               expertForm.control
                             }
                             name="availability_hours"
-
                             render={({
                               field,
                             }) => (
@@ -1224,7 +1316,7 @@ export default function Onboarding() {
                                 </FormControl>
 
                                 <p className="text-[11px] text-muted-foreground">
-                                  Approximate hours available per week.
+                                  Approximate hours available per week for AI-related projects.
                                 </p>
 
                                 <FormMessage />
@@ -1236,7 +1328,9 @@ export default function Onboarding() {
 
                         </section>
 
-                        {/* ACTIONS */}
+                        {/* =================================================
+                            ACTIONS
+                        ================================================== */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1269,6 +1363,7 @@ export default function Onboarding() {
                             {isSubmitting ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
                                 Creating profile...
                               </>
                             ) : (
@@ -1292,14 +1387,16 @@ export default function Onboarding() {
                 </div>
 
               </motion.div>
+
             )}
 
-          {/* =================================================
-              STEP 2 — COMPANY
-          ================================================== */}
+          {/* ===================================================
+              COMPANY FORM
+          ==================================================== */}
 
           {step === 2 &&
             accountType === 'company' && (
+
               <motion.div
                 key="company-form"
 
@@ -1363,13 +1460,12 @@ export default function Onboarding() {
                         onSubmit={companyForm.handleSubmit(
                           onCompanySubmit
                         )}
-
                         className="space-y-8"
                       >
 
-                        {/* =========================
+                        {/* =================================================
                             ACCOUNT OWNER
-                        ========================== */}
+                        ================================================== */}
 
                         <section>
 
@@ -1390,7 +1486,6 @@ export default function Onboarding() {
                               companyForm.control
                             }
                             name="full_name"
-
                             render={({
                               field,
                             }) => (
@@ -1421,32 +1516,35 @@ export default function Onboarding() {
 
                         <div className="h-px bg-border/60" />
 
-                        {/* =========================
+                        {/* =================================================
                             COMPANY DETAILS
-                        ========================== */}
+                        ================================================== */}
 
                         <section>
 
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              Organization details
+                              Company details
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
+
                               Tell us about the organization you represent.
+
                             </p>
 
                           </div>
 
                           <div className="grid gap-5 sm:grid-cols-2">
 
+                            {/* COMPANY NAME */}
+
                             <FormField
                               control={
                                 companyForm.control
                               }
                               name="company_name"
-
                               render={({
                                 field,
                               }) => (
@@ -1473,12 +1571,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* WEBSITE */}
+
                             <FormField
                               control={
                                 companyForm.control
                               }
                               name="website"
-
                               render={({
                                 field,
                               }) => (
@@ -1506,12 +1605,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* INDUSTRY */}
+
                             <FormField
                               control={
                                 companyForm.control
                               }
                               name="industry"
-
                               render={({
                                 field,
                               }) => (
@@ -1525,12 +1625,16 @@ export default function Onboarding() {
                                   <FormControl>
 
                                     <Input
-                                      placeholder="AI, Robotics, Fintech, Healthcare, Enterprise Software..."
+                                      placeholder="AI, Robotics, Fintech, Healthcare, Legal, Enterprise Software..."
                                       {...field}
                                       className="h-11"
                                     />
 
                                   </FormControl>
+
+                                  <p className="text-[11px] text-muted-foreground">
+                                    Any industry or sector.
+                                  </p>
 
                                   <FormMessage />
 
@@ -1539,12 +1643,13 @@ export default function Onboarding() {
                               )}
                             />
 
+                            {/* COMPANY SIZE */}
+
                             <FormField
                               control={
                                 companyForm.control
                               }
                               name="company_size"
-
                               render={({
                                 field,
                               }) => (
@@ -1617,9 +1722,9 @@ export default function Onboarding() {
 
                         <div className="h-px bg-border/60" />
 
-                        {/* =========================
+                        {/* =================================================
                             DESCRIPTION
-                        ========================== */}
+                        ================================================== */}
 
                         <section>
 
@@ -1630,7 +1735,9 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              A short description helps us understand your needs.
+
+                              A short description helps us understand your organization and expert requirements.
+
                             </p>
 
                           </div>
@@ -1640,7 +1747,6 @@ export default function Onboarding() {
                               companyForm.control
                             }
                             name="company_description"
-
                             render={({
                               field,
                             }) => (
@@ -1654,7 +1760,7 @@ export default function Onboarding() {
                                 <FormControl>
 
                                   <Textarea
-                                    placeholder="What does your organization build, and how do you use or plan to use AI?"
+                                    placeholder="What does your organization build, research, or provide? How does AI fit into your work?"
                                     {...field}
                                     className="min-h-[130px] resize-none"
                                   />
@@ -1670,7 +1776,9 @@ export default function Onboarding() {
 
                         </section>
 
-                        {/* ACTIONS */}
+                        {/* =================================================
+                            ACTIONS
+                        ================================================== */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1703,6 +1811,7 @@ export default function Onboarding() {
                             {isSubmitting ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
                                 Creating profile...
                               </>
                             ) : (
@@ -1726,6 +1835,7 @@ export default function Onboarding() {
                 </div>
 
               </motion.div>
+
             )}
 
         </AnimatePresence>
