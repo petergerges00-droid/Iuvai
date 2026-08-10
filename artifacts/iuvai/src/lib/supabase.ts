@@ -2204,3 +2204,24 @@ export async function submitEvaluation(
 
   return data as EvaluationSubmission;
 }
+
+
+export async function getAllEvaluations(): Promise<Evaluation[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluations')
+    .select('*')
+    .order('created_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluations: ${error.message}`
+    );
+  }
+
+  return (data || []) as Evaluation[];
+}
