@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   Users,
   Briefcase,
+  ClipboardCheck,
   Plus,
   X,
   ArrowRight,
@@ -244,21 +245,33 @@ export default function AdminDashboard() {
             </h2>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              Manage the expert network and projects.
+              Manage the expert network, projects, and evaluations.
             </p>
 
           </div>
 
-          <button
-            type="button"
-            onClick={() =>
-              setShowProjectForm(true)
-            }
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Add project
-          </button>
+          <div className="flex flex-wrap gap-2">
+
+            <Link
+              href="/admin/evaluations"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 bg-background px-4 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Evaluations
+            </Link>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowProjectForm(true)
+              }
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Add project
+            </button>
+
+          </div>
 
         </div>
 
@@ -337,6 +350,50 @@ export default function AdminDashboard() {
           </div>
 
         </div>
+
+        {/* =====================================================
+            EVALUATIONS
+        ====================================================== */}
+
+        <Link
+          href="/admin/evaluations"
+          className="block rounded-2xl border border-border/60 bg-card/70 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
+        >
+
+          <div className="flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
+
+            <div className="flex items-start gap-4">
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
+                <ClipboardCheck className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+
+                <h3 className="font-medium">
+                  Expert evaluations
+                </h3>
+
+                <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                  Create and manage domain-expert assessments used to verify expert knowledge before they participate in IUVAI projects.
+                </p>
+
+                <div className="mt-3 flex items-center gap-1 text-xs text-primary">
+                  Manage evaluations
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="shrink-0 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-primary">
+              Evaluation system
+            </div>
+
+          </div>
+
+        </Link>
 
         {/* =====================================================
             CREATE PROJECT FORM
