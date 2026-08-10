@@ -2225,3 +2225,279 @@ export async function getAllEvaluations(): Promise<Evaluation[]> {
 
   return (data || []) as Evaluation[];
 }
+
+// ─────────────────────────────────────────────────────────────
+// IUVAI V1 — EVALUATION REVIEWS
+// ─────────────────────────────────────────────────────────────
+
+export type EvaluationReviewStatus =
+  | 'pending'
+  | 'in_review'
+  | 'approved'
+  | 'rejected';
+
+export interface EvaluationReview {
+  id: string;
+
+  submission_id: string;
+  reviewer_id: string;
+
+  status: EvaluationReviewStatus;
+
+  overall_score: number | null;
+
+  reviewer_notes: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationQuestionReview {
+  id: string;
+
+  review_id: string;
+  question_id: string;
+
+  score: number | null;
+
+  feedback: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// CREATE OR GET REVIEW
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluationReview(
+  submissionId: string
+): Promise<EvaluationReview | null> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_reviews')
+    .select('*')
+    .eq('submission_id', submissionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluation review: ${error.message}`
+    );
+  }
+
+  return data as EvaluationReview | null;
+}
+
+
+export async function createEvaluationReview(
+  submissionId: string,
+  reviewerId: string
+): Promise<EvaluationReview> {
+  const existing =
+    await getEvaluationReview(
+      submissionId
+    );
+
+  if (existing) {
+    return existing;
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_reviews')
+    .insert({
+      submission_id:
+        submissionId,
+
+      reviewer_id:
+        reviewerId,
+
+      status:
+        'in_review',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to create evaluation review: ${error.message}`
+    );
+  }
+
+  return data as EvaluationReview;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET QUESTION REVIEWS
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluationQuestionReviews(
+  reviewId: string
+): Promise<EvaluationQuestionReview[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      'evaluation_question_reviews'
+    )
+    .select('*')
+    .eq(
+      'review_id',
+      reviewId
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to load question reviews: ${error.message}`
+    );
+  }
+
+  return (
+    data || []
+  ) as EvaluationQuestionReview[];
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// SAVE QUESTION REVIEW
+// ─────────────────────────────────────────────────────────────
+
+export async function saveEvaluationQuestionReview(
+  reviewId: string,
+  questionId: string,
+  score: number | null,
+  feedback: string | null
+): Promise<EvaluationQuestionReview> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      'evaluation_question_reviews'
+    )
+    .upsert(
+      {
+        review_id:
+          reviewId,
+
+        question_id:
+          questionId,
+
+        score,
+
+        feedback,
+
+        updated_at:
+          new Date().toISOString(),
+      },
+      {
+        onConflict:
+          'review_id,question_id',
+      }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to save question review: ${error.message}`
+    );
+  }
+
+  return data as EvaluationQuestionReview;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// UPDATE OVERALL REVIEW
+// ─────────────────────────────────────────────────────────────
+
+export async function updateEvaluationReview(
+  reviewId: string,
+  updates: Partial<
+    Pick<
+      EvaluationReview,
+      | 'status'
+      | 'overall_score'
+      | 'reviewer_notes'
+    >
+  >
+): Promise<EvaluationReview> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      'evaluation_reviews'
+    )
+    .update({
+      ...updates,
+
+      updated_at:
+        new Date().toISOString(),
+    })
+    .eq(
+      'id',
+      reviewId
+    )
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update evaluation review: ${error.message}`
+    );
+  }
+
+  return data as EvaluationReview;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET SUBMITTED EVALUATIONS FOR ADMIN
+// ─────────────────────────────────────────────────────────────
+
+export async function getSubmittedEvaluations() {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      'evaluation_submissions'
+    )
+    .select(`
+      *,
+      evaluations (
+        id,
+        title,
+        primary_field,
+        specialization
+      )
+    `)
+    .eq(
+      'status',
+      'submitted'
+    )
+    .order(
+      'submitted_at',
+      {
+        ascending: false,
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to load submitted evaluations: ${error.message}`
+    );
+  }
+
+  return data || [];
+}
