@@ -1,15 +1,30 @@
-import { useState, useEffect } from 'react';
+import {
+  useState,
+  useEffect,
+} from 'react';
+
 import { useLocation } from 'wouter';
+
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+
+import {
+  zodResolver,
+} from '@hookform/resolvers/zod';
+
 import * as z from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
+
+import {
+  motion,
+  AnimatePresence,
+} from 'framer-motion';
+
 import { useAuth } from '@/hooks/use-auth';
 
 import {
   upsertProfile,
   upsertExpertProfile,
   upsertCompanyProfile,
+  getProfile,
   AccountType,
 } from '@/lib/supabase';
 
@@ -49,6 +64,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+
 // ============================================================
 // VALIDATION
 // ============================================================
@@ -77,15 +93,24 @@ const expertSchema = z.object({
 
   highest_qualification: z
     .string()
-    .min(1, 'Please select your highest qualification'),
+    .min(
+      1,
+      'Please select your highest qualification'
+    ),
 
   skills: z
     .string()
-    .min(1, 'Enter at least one skill'),
+    .min(
+      1,
+      'Enter at least one skill'
+    ),
 
   languages: z
     .string()
-    .min(1, 'Enter at least one language'),
+    .min(
+      1,
+      'Enter at least one language'
+    ),
 
   previous_ai_experience: z
     .string()
@@ -98,6 +123,7 @@ const expertSchema = z.object({
     .max(168),
 });
 
+
 const companySchema = z.object({
   full_name: z
     .string()
@@ -105,32 +131,51 @@ const companySchema = z.object({
 
   company_name: z
     .string()
-    .min(2, 'Company name is required'),
+    .min(
+      2,
+      'Company name is required'
+    ),
 
   website: z
     .string()
-    .url('Must be a valid URL'),
+    .url(
+      'Must be a valid URL'
+    ),
 
   industry: z
     .string()
-    .min(2, 'Industry is required'),
+    .min(
+      2,
+      'Industry is required'
+    ),
 
   company_description: z
     .string()
-    .min(10, 'Provide a short description'),
+    .min(
+      10,
+      'Provide a short description'
+    ),
 
   company_size: z
     .string()
-    .min(1, 'Please select company size'),
+    .min(
+      1,
+      'Please select company size'
+    ),
 });
+
 
 // ============================================================
 // COMPONENT
 // ============================================================
 
 export default function Onboarding() {
-  const { user, profile, refreshProfile } =
-    useAuth();
+
+  const {
+    user,
+    profile,
+    refreshProfile,
+  } = useAuth();
 
   const [, setLocation] =
     useLocation();
@@ -147,59 +192,132 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
+
   // ==========================================================
   // REDIRECT IF ONBOARDING IS ALREADY COMPLETE
   // ==========================================================
 
   useEffect(() => {
-    if (profile?.account_type === 'expert') {
-      setLocation('/dashboard');
+
+    /*
+     * IMPORTANT:
+     *
+     * Do not redirect while the onboarding form is being
+     * submitted.
+     *
+     * The profile state can temporarily represent the old
+     * database state while the upsert/refresh operation is
+     * still completing.
+     */
+
+    if (isSubmitting) {
+      return;
     }
 
-    if (profile?.account_type === 'company') {
-      setLocation('/company-dashboard');
+    if (
+      profile?.account_type ===
+      'expert'
+    ) {
+      setLocation('/dashboard');
+
+      return;
     }
-  }, [profile, setLocation]);
+
+    if (
+      profile?.account_type ===
+      'company'
+    ) {
+      setLocation(
+        '/company-dashboard'
+      );
+
+      return;
+    }
+
+  }, [
+    profile,
+    isSubmitting,
+    setLocation,
+  ]);
+
 
   // ==========================================================
   // EXPERT FORM
   // ==========================================================
 
   const expertForm =
-    useForm<z.infer<typeof expertSchema>>({
-      resolver: zodResolver(expertSchema),
+    useForm<
+      z.infer<
+        typeof expertSchema
+      >
+    >({
+
+      resolver:
+        zodResolver(
+          expertSchema
+        ),
 
       defaultValues: {
+
         full_name: '',
+
         country: '',
+
         primary_field: '',
+
         specialization: '',
+
         years_experience: 0,
+
         highest_qualification: '',
+
         skills: '',
+
         languages: '',
+
         previous_ai_experience: '',
+
         availability_hours: 10,
+
       },
+
     });
+
 
   // ==========================================================
   // COMPANY FORM
   // ==========================================================
 
   const companyForm =
-    useForm<z.infer<typeof companySchema>>({
-      resolver: zodResolver(companySchema),
+    useForm<
+      z.infer<
+        typeof companySchema
+      >
+    >({
+
+      resolver:
+        zodResolver(
+          companySchema
+        ),
 
       defaultValues: {
+
         full_name: '',
+
         company_name: '',
+
         website: '',
+
         industry: '',
+
         company_description: '',
+
         company_size: '',
+
       },
+
     });
+
 
   // ==========================================================
   // AUTH GUARD
@@ -209,6 +327,7 @@ export default function Onboarding() {
     return null;
   }
 
+
   // ==========================================================
   // ACCOUNT TYPE
   // ==========================================================
@@ -216,198 +335,327 @@ export default function Onboarding() {
   const handleTypeSelect = (
     type: AccountType
   ) => {
+
     setAccountType(type);
+
     setStep(2);
+
   };
+
+
+  // ==========================================================
+  // VERIFY PROFILE AFTER SUBMISSION
+  // ==========================================================
+
+  const verifyCompletedProfile =
+    async (
+      expectedAccountType:
+        AccountType
+    ) => {
+
+      /*
+       * Fetch directly from Supabase.
+       *
+       * This is intentionally separate from the React
+       * profile state.
+       *
+       * The purpose is to verify that the database actually
+       * contains the newly-created account type before
+       * navigating away from onboarding.
+       */
+
+      const savedProfile =
+        await getProfile(
+          user.id
+        );
+
+      console.log(
+        'IUVAI ONBOARDING VERIFIED PROFILE:',
+        savedProfile
+      );
+
+      if (
+        !savedProfile
+      ) {
+        throw new Error(
+          'Your profile could not be verified after saving.'
+        );
+      }
+
+      if (
+        savedProfile.account_type !==
+        expectedAccountType
+      ) {
+        throw new Error(
+          'Your account type was not saved correctly. Please try again.'
+        );
+      }
+
+      /*
+       * Synchronize AuthProvider state as well.
+       */
+
+      await refreshProfile();
+
+      return savedProfile;
+    };
+
 
   // ==========================================================
   // EXPERT SUBMISSION
   // ==========================================================
 
-  const onExpertSubmit = async (
-    values: z.infer<typeof expertSchema>
-  ) => {
-    setIsSubmitting(true);
+  const onExpertSubmit =
+    async (
+      values: z.infer<
+        typeof expertSchema
+      >
+    ) => {
 
-    try {
-      // ------------------------------------------------------
-      // MAIN PROFILE
-      // ------------------------------------------------------
+      setIsSubmitting(true);
 
-      await upsertProfile({
-        id: user.id,
+      try {
 
-        full_name:
-          values.full_name,
+        // ------------------------------------------------------
+        // MAIN PROFILE
+        // ------------------------------------------------------
 
-        account_type:
-          'expert',
+        await upsertProfile({
 
-        country:
-          values.country,
-      });
+          id: user.id,
 
-      // ------------------------------------------------------
-      // EXPERT PROFILE
-      // ------------------------------------------------------
+          full_name:
+            values.full_name,
 
-      await upsertExpertProfile({
-        id: user.id,
+          account_type:
+            'expert',
 
-        primary_field:
-          values.primary_field,
+          country:
+            values.country,
 
-        specialization:
-          values.specialization,
+        });
 
-        years_experience:
-          values.years_experience,
 
-        highest_qualification:
-          values.highest_qualification,
+        // ------------------------------------------------------
+        // EXPERT PROFILE
+        // ------------------------------------------------------
 
-        skills:
-          values.skills
-            .split(',')
-            .map((skill) =>
-              skill.trim()
-            )
-            .filter(Boolean),
+        await upsertExpertProfile({
 
-        languages:
-          values.languages
-            .split(',')
-            .map((language) =>
-              language.trim()
-            )
-            .filter(Boolean),
+          id: user.id,
 
-        previous_ai_experience:
-          values.previous_ai_experience || '',
+          primary_field:
+            values.primary_field,
 
-        availability_hours:
-          values.availability_hours,
-      });
+          specialization:
+            values.specialization,
 
-      // ------------------------------------------------------
-      // REFRESH AUTH PROFILE
-      // ------------------------------------------------------
+          years_experience:
+            values.years_experience,
 
-      await refreshProfile();
+          highest_qualification:
+            values.highest_qualification,
 
-      // ------------------------------------------------------
-      // REDIRECT
-      // ------------------------------------------------------
+          skills:
+            values.skills
+              .split(',')
+              .map(
+                (skill) =>
+                  skill.trim()
+              )
+              .filter(Boolean),
 
-      setLocation('/dashboard');
-    } catch (error: any) {
-      console.error(
-        'EXPERT ONBOARDING ERROR:',
-        error
-      );
+          languages:
+            values.languages
+              .split(',')
+              .map(
+                (language) =>
+                  language.trim()
+              )
+              .filter(Boolean),
 
-      toast({
-        variant: 'destructive',
+          previous_ai_experience:
+            values.previous_ai_experience ||
+            '',
 
-        title:
-          'Unable to complete profile',
+          availability_hours:
+            values.availability_hours,
 
-        description:
-          error?.message ||
-          'Something went wrong. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        });
+
+
+        // ------------------------------------------------------
+        // VERIFY DATABASE STATE
+        // ------------------------------------------------------
+
+        await verifyCompletedProfile(
+          'expert'
+        );
+
+
+        // ------------------------------------------------------
+        // REDIRECT
+        // ------------------------------------------------------
+
+        console.log(
+          'IUVAI: EXPERT ONBOARDING COMPLETE'
+        );
+
+        setLocation(
+          '/dashboard'
+        );
+
+      } catch (
+        error: any
+      ) {
+
+        console.error(
+          'IUVAI EXPERT ONBOARDING ERROR:',
+          error
+        );
+
+        toast({
+
+          variant:
+            'destructive',
+
+          title:
+            'Unable to complete profile',
+
+          description:
+            error?.message ||
+            'Something went wrong. Please try again.',
+
+        });
+
+      } finally {
+
+        setIsSubmitting(false);
+
+      }
+
+    };
+
 
   // ==========================================================
   // COMPANY SUBMISSION
   // ==========================================================
 
-  const onCompanySubmit = async (
-    values: z.infer<typeof companySchema>
-  ) => {
-    setIsSubmitting(true);
+  const onCompanySubmit =
+    async (
+      values: z.infer<
+        typeof companySchema
+      >
+    ) => {
 
-    try {
-      // ------------------------------------------------------
-      // MAIN PROFILE
-      // ------------------------------------------------------
+      setIsSubmitting(true);
 
-      await upsertProfile({
-        id: user.id,
+      try {
 
-        full_name:
-          values.full_name,
+        // ------------------------------------------------------
+        // MAIN PROFILE
+        // ------------------------------------------------------
 
-        account_type:
-          'company',
-      });
+        await upsertProfile({
 
-      // ------------------------------------------------------
-      // COMPANY PROFILE
-      // ------------------------------------------------------
+          id: user.id,
 
-      await upsertCompanyProfile({
-        id: user.id,
+          full_name:
+            values.full_name,
 
-        company_name:
-          values.company_name,
+          account_type:
+            'company',
 
-        website:
-          values.website,
+        });
 
-        industry:
-          values.industry,
 
-        company_description:
-          values.company_description,
+        // ------------------------------------------------------
+        // COMPANY PROFILE
+        // ------------------------------------------------------
 
-        company_size:
-          values.company_size,
-      });
+        await upsertCompanyProfile({
 
-      // ------------------------------------------------------
-      // REFRESH AUTH PROFILE
-      // ------------------------------------------------------
+          id: user.id,
 
-      await refreshProfile();
+          company_name:
+            values.company_name,
 
-      // ------------------------------------------------------
-      // REDIRECT
-      // ------------------------------------------------------
+          website:
+            values.website,
 
-      setLocation(
-        '/company-dashboard'
-      );
-    } catch (error: any) {
-      console.error(
-        'COMPANY ONBOARDING ERROR:',
-        error
-      );
+          industry:
+            values.industry,
 
-      toast({
-        variant: 'destructive',
+          company_description:
+            values.company_description,
 
-        title:
-          'Unable to complete profile',
+          company_size:
+            values.company_size,
 
-        description:
-          error?.message ||
-          'Something went wrong. Please try again.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+        });
+
+
+        // ------------------------------------------------------
+        // VERIFY DATABASE STATE
+        // ------------------------------------------------------
+
+        await verifyCompletedProfile(
+          'company'
+        );
+
+
+        // ------------------------------------------------------
+        // REDIRECT
+        // ------------------------------------------------------
+
+        console.log(
+          'IUVAI: COMPANY ONBOARDING COMPLETE'
+        );
+
+        setLocation(
+          '/company-dashboard'
+        );
+
+      } catch (
+        error: any
+      ) {
+
+        console.error(
+          'IUVAI COMPANY ONBOARDING ERROR:',
+          error
+        );
+
+        toast({
+
+          variant:
+            'destructive',
+
+          title:
+            'Unable to complete profile',
+
+          description:
+            error?.message ||
+            'Something went wrong. Please try again.',
+
+        });
+
+      } finally {
+
+        setIsSubmitting(false);
+
+      }
+
+    };
+
 
   // ==========================================================
   // RENDER
   // ==========================================================
 
   return (
+
     <div className="relative min-h-screen overflow-hidden bg-background">
+
 
       {/* =====================================================
           FUTURISTIC BACKGROUND
@@ -431,6 +679,7 @@ export default function Onboarding() {
         />
 
       </div>
+
 
       {/* =====================================================
           TOP BAR
@@ -466,6 +715,7 @@ export default function Onboarding() {
 
           </button>
 
+
           <div className="hidden items-center gap-2 sm:flex">
 
             <ShieldCheck className="h-3.5 w-3.5 text-primary" />
@@ -480,11 +730,13 @@ export default function Onboarding() {
 
       </header>
 
+
       {/* =====================================================
           MAIN
       ====================================================== */}
 
       <main className="relative z-10 mx-auto w-full max-w-5xl px-6 py-12 sm:py-16">
+
 
         {/* ===================================================
             HEADER
@@ -520,6 +772,7 @@ export default function Onboarding() {
 
           </p>
 
+
           {/* PROGRESS */}
 
           <div className="mx-auto mt-8 flex max-w-xs items-center gap-3">
@@ -542,6 +795,7 @@ export default function Onboarding() {
 
           </div>
 
+
           <div className="mt-3 flex justify-between text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
 
             <span>
@@ -556,11 +810,13 @@ export default function Onboarding() {
 
         </div>
 
+
         {/* ===================================================
             ANIMATED CONTENT
         ==================================================== */}
 
         <AnimatePresence mode="wait">
+
 
           {/* =================================================
               STEP 1
@@ -592,6 +848,7 @@ export default function Onboarding() {
 
               className="mx-auto grid max-w-3xl gap-5 md:grid-cols-2"
             >
+
 
               {/* =================================================
                   EXPERT
@@ -634,9 +891,7 @@ export default function Onboarding() {
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-
                       Contribute your professional knowledge to evaluate, train, test, and improve AI systems.
-
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
@@ -645,20 +900,22 @@ export default function Onboarding() {
                         'Apply your domain expertise',
                         'Access relevant AI projects',
                         'Build your expert profile',
-                      ].map((item) => (
+                      ].map(
+                        (item) => (
 
-                        <div
-                          key={item}
-                          className="flex items-center gap-2 text-xs text-muted-foreground"
-                        >
+                          <div
+                            key={item}
+                            className="flex items-center gap-2 text-xs text-muted-foreground"
+                          >
 
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
 
-                          {item}
+                            {item}
 
-                        </div>
+                          </div>
 
-                      ))}
+                        )
+                      )}
 
                     </div>
 
@@ -675,6 +932,7 @@ export default function Onboarding() {
                 </div>
 
               </button>
+
 
               {/* =================================================
                   COMPANY
@@ -717,9 +975,7 @@ export default function Onboarding() {
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-
                       Connect with verified human experts to build, evaluate, and improve AI systems.
-
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
@@ -728,20 +984,22 @@ export default function Onboarding() {
                         'Find specialized experts',
                         'Build expert-powered projects',
                         'Scale AI development',
-                      ].map((item) => (
+                      ].map(
+                        (item) => (
 
-                        <div
-                          key={item}
-                          className="flex items-center gap-2 text-xs text-muted-foreground"
-                        >
+                          <div
+                            key={item}
+                            className="flex items-center gap-2 text-xs text-muted-foreground"
+                          >
 
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
 
-                          {item}
+                            {item}
 
-                        </div>
+                          </div>
 
-                      ))}
+                        )
+                      )}
 
                     </div>
 
@@ -762,6 +1020,7 @@ export default function Onboarding() {
             </motion.div>
 
           )}
+
 
           {/* ===================================================
               EXPERT FORM
@@ -797,6 +1056,7 @@ export default function Onboarding() {
 
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-2xl shadow-primary/[0.03] backdrop-blur-xl">
 
+
                   {/* FORM HEADER */}
 
                   <div className="border-b border-border/60 bg-muted/20 px-6 py-5 sm:px-8">
@@ -825,20 +1085,22 @@ export default function Onboarding() {
 
                   </div>
 
+
                   <div className="p-6 sm:p-8">
 
                     <Form {...expertForm}>
 
                       <form
-                        onSubmit={expertForm.handleSubmit(
-                          onExpertSubmit
-                        )}
+                        onSubmit={
+                          expertForm.handleSubmit(
+                            onExpertSubmit
+                          )
+                        }
                         className="space-y-8"
                       >
 
-                        {/* =================================================
-                            PERSONAL
-                        ================================================== */}
+
+                        {/* PERSONAL */}
 
                         <section>
 
@@ -887,6 +1149,7 @@ export default function Onboarding() {
                               )}
                             />
 
+
                             <FormField
                               control={
                                 expertForm.control
@@ -923,11 +1186,11 @@ export default function Onboarding() {
 
                         </section>
 
+
                         <div className="h-px bg-border/60" />
 
-                        {/* =================================================
-                            PROFESSIONAL EXPERTISE
-                        ================================================== */}
+
+                        {/* PROFESSIONAL EXPERTISE */}
 
                         <section>
 
@@ -938,16 +1201,13 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-
                               Tell us where your professional knowledge is strongest. IUVAI supports experts across disciplines.
-
                             </p>
 
                           </div>
 
                           <div className="grid gap-5 sm:grid-cols-2">
 
-                            {/* PRIMARY FIELD */}
 
                             <FormField
                               control={
@@ -985,7 +1245,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* SPECIALIZATION */}
 
                             <FormField
                               control={
@@ -1023,7 +1282,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* QUALIFICATION */}
 
                             <FormField
                               control={
@@ -1104,7 +1362,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* EXPERIENCE */}
 
                             <FormField
                               control={
@@ -1148,11 +1405,11 @@ export default function Onboarding() {
 
                         </section>
 
+
                         <div className="h-px bg-border/60" />
 
-                        {/* =================================================
-                            CAPABILITIES
-                        ================================================== */}
+
+                        {/* CAPABILITIES */}
 
                         <section className="space-y-5">
 
@@ -1163,14 +1420,11 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-
                               These attributes help IUVAI match you with relevant projects.
-
                             </p>
 
                           </div>
 
-                          {/* SKILLS */}
 
                           <FormField
                             control={
@@ -1208,7 +1462,6 @@ export default function Onboarding() {
                             )}
                           />
 
-                          {/* LANGUAGES */}
 
                           <FormField
                             control={
@@ -1246,7 +1499,6 @@ export default function Onboarding() {
                             )}
                           />
 
-                          {/* AI EXPERIENCE */}
 
                           <FormField
                             control={
@@ -1286,7 +1538,6 @@ export default function Onboarding() {
                             )}
                           />
 
-                          {/* AVAILABILITY */}
 
                           <FormField
                             control={
@@ -1328,9 +1579,8 @@ export default function Onboarding() {
 
                         </section>
 
-                        {/* =================================================
-                            ACTIONS
-                        ================================================== */}
+
+                        {/* ACTIONS */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1351,6 +1601,7 @@ export default function Onboarding() {
 
                           </Button>
 
+
                           <Button
                             type="submit"
                             size="lg"
@@ -1361,17 +1612,21 @@ export default function Onboarding() {
                           >
 
                             {isSubmitting ? (
+
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
                                 Creating profile...
                               </>
+
                             ) : (
+
                               <>
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </>
+
                             )}
 
                           </Button>
@@ -1389,6 +1644,7 @@ export default function Onboarding() {
               </motion.div>
 
             )}
+
 
           {/* ===================================================
               COMPANY FORM
@@ -1424,6 +1680,7 @@ export default function Onboarding() {
 
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-2xl shadow-primary/[0.03] backdrop-blur-xl">
 
+
                   {/* FORM HEADER */}
 
                   <div className="border-b border-border/60 bg-muted/20 px-6 py-5 sm:px-8">
@@ -1452,20 +1709,22 @@ export default function Onboarding() {
 
                   </div>
 
+
                   <div className="p-6 sm:p-8">
 
                     <Form {...companyForm}>
 
                       <form
-                        onSubmit={companyForm.handleSubmit(
-                          onCompanySubmit
-                        )}
+                        onSubmit={
+                          companyForm.handleSubmit(
+                            onCompanySubmit
+                          )
+                        }
                         className="space-y-8"
                       >
 
-                        {/* =================================================
-                            ACCOUNT OWNER
-                        ================================================== */}
+
+                        {/* ACCOUNT OWNER */}
 
                         <section>
 
@@ -1480,6 +1739,7 @@ export default function Onboarding() {
                             </p>
 
                           </div>
+
 
                           <FormField
                             control={
@@ -1514,11 +1774,11 @@ export default function Onboarding() {
 
                         </section>
 
+
                         <div className="h-px bg-border/60" />
 
-                        {/* =================================================
-                            COMPANY DETAILS
-                        ================================================== */}
+
+                        {/* COMPANY DETAILS */}
 
                         <section>
 
@@ -1529,16 +1789,14 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-
                               Tell us about the organization you represent.
-
                             </p>
 
                           </div>
 
+
                           <div className="grid gap-5 sm:grid-cols-2">
 
-                            {/* COMPANY NAME */}
 
                             <FormField
                               control={
@@ -1571,7 +1829,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* WEBSITE */}
 
                             <FormField
                               control={
@@ -1605,7 +1862,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* INDUSTRY */}
 
                             <FormField
                               control={
@@ -1643,7 +1899,6 @@ export default function Onboarding() {
                               )}
                             />
 
-                            {/* COMPANY SIZE */}
 
                             <FormField
                               control={
@@ -1720,11 +1975,11 @@ export default function Onboarding() {
 
                         </section>
 
+
                         <div className="h-px bg-border/60" />
 
-                        {/* =================================================
-                            DESCRIPTION
-                        ================================================== */}
+
+                        {/* DESCRIPTION */}
 
                         <section>
 
@@ -1735,12 +1990,11 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-
                               A short description helps us understand your organization and expert requirements.
-
                             </p>
 
                           </div>
+
 
                           <FormField
                             control={
@@ -1776,9 +2030,8 @@ export default function Onboarding() {
 
                         </section>
 
-                        {/* =================================================
-                            ACTIONS
-                        ================================================== */}
+
+                        {/* ACTIONS */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1799,6 +2052,7 @@ export default function Onboarding() {
 
                           </Button>
 
+
                           <Button
                             type="submit"
                             size="lg"
@@ -1809,17 +2063,21 @@ export default function Onboarding() {
                           >
 
                             {isSubmitting ? (
+
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
                                 Creating profile...
                               </>
+
                             ) : (
+
                               <>
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </>
+
                             )}
 
                           </Button>
@@ -1839,6 +2097,7 @@ export default function Onboarding() {
             )}
 
         </AnimatePresence>
+
 
         {/* =====================================================
             FOOTER
