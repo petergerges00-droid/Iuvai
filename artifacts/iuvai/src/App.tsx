@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-query';
 
 import { Toaster } from '@/components/ui/toaster';
-
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import {
@@ -40,6 +39,9 @@ import ProjectExperts from '@/pages/ProjectExperts';
 import AdminExpertReview from '@/pages/admin-expert-review';
 import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
+
+import AdminEvaluations from '@/pages/admin/AdminEvaluations';
+import EvaluationBuilder from '@/pages/admin/EvaluationBuilder';
 
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
@@ -207,6 +209,7 @@ function OnboardingRoute({
     /*
     A recovery session should never enter onboarding.
     */
+
     if (isPasswordRecovery) {
       setLocation('/reset-password');
       return;
@@ -294,6 +297,7 @@ function ProtectedRoute({
     Recovery sessions must never be allowed to render
     protected dashboard pages.
     */
+
     if (isPasswordRecovery) {
       setLocation('/reset-password');
       return;
@@ -433,6 +437,65 @@ function AdminRoute({
 }
 
 /* ============================================================
+   ADMIN EVALUATION PAGES
+   ============================================================ */
+
+function AdminEvaluationsPage() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <AdminEvaluations
+      onCreate={() => {
+        setLocation(
+          '/admin/evaluations/new'
+        );
+      }}
+      onEdit={(evaluationId) => {
+        setLocation(
+          `/admin/evaluations/${evaluationId}`
+        );
+      }}
+    />
+  );
+}
+
+function AdminEvaluationBuilderPage() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <EvaluationBuilder
+      onSaved={(evaluationId) => {
+        setLocation(
+          `/admin/evaluations/${evaluationId}`
+        );
+      }}
+    />
+  );
+}
+
+function AdminEditEvaluationPage() {
+  const [location, setLocation] = useLocation();
+
+  const evaluationId =
+    location.split('/').pop();
+
+  if (!evaluationId) {
+    return null;
+  }
+
+  return (
+    <EvaluationBuilder
+      evaluationId={evaluationId}
+      onSaved={(id) => {
+        setLocation(
+          `/admin/evaluations/${id}`
+        );
+      }}
+    />
+  );
+}
+
+/* ============================================================
    ROUTER
    ============================================================ */
 
@@ -503,22 +566,6 @@ function AppRouter() {
 
       {/* ======================================================
           PASSWORD RESET
-
-          CRITICAL:
-
-          DO NOT put this inside PublicRoute.
-
-          Supabase creates a temporary authenticated
-          recovery session when the reset email is clicked.
-
-          ResetPassword needs that session so it can call:
-
-          supabase.auth.updateUser({
-            password
-          })
-
-          No authentication redirect is allowed to
-          interfere with this route.
           ====================================================== */}
 
       <Route
@@ -543,6 +590,36 @@ function AppRouter() {
       <Route path="/admin">
         <AdminRoute
           component={AdminDashboard}
+        />
+      </Route>
+
+      {/* ======================================================
+          ADMIN EVALUATIONS
+          ====================================================== */}
+
+      <Route path="/admin/evaluations">
+        <AdminRoute
+          component={AdminEvaluationsPage}
+        />
+      </Route>
+
+      {/* ======================================================
+          CREATE EVALUATION
+          ====================================================== */}
+
+      <Route path="/admin/evaluations/new">
+        <AdminRoute
+          component={AdminEvaluationBuilderPage}
+        />
+      </Route>
+
+      {/* ======================================================
+          EDIT EVALUATION
+          ====================================================== */}
+
+      <Route path="/admin/evaluations/:evaluationId">
+        <AdminRoute
+          component={AdminEditEvaluationPage}
         />
       </Route>
 
@@ -619,7 +696,7 @@ function AppRouter() {
 
       {/* ======================================================
           EXPERT PROJECT APPLICATION
-          
+
           IMPORTANT:
           This must come BEFORE the project-detail route.
           ====================================================== */}
