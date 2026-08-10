@@ -54,6 +54,8 @@ import ExpertProjects from '@/pages/expert-projects';
 import ExpertProject from '@/pages/expert-project';
 import ApplyProject from '@/pages/apply-project';
 import CompanyProjectApplications from '@/pages/company-project-applications';
+import ExpertEvaluations from '@/pages/expert-evaluations';
+import EvaluationPage from '@/pages/EvaluationPage';
 
 const queryClient = new QueryClient();
 
@@ -637,7 +639,19 @@ function AppRouter() {
           IMPORTANT:
           This must come BEFORE the project-detail route.
           ====================================================== */}
+<Route path="/evaluations">
+  <ProtectedRoute
+    component={ExpertEvaluations}
+    requireAccountType="expert"
+  />
+</Route>
 
+<Route path="/evaluations/:evaluationId">
+  <ProtectedRoute
+    component={EvaluationPage}
+    requireAccountType="expert"
+  />
+</Route>
       <Route
         path="/expert/projects/:projectId/apply"
       >
