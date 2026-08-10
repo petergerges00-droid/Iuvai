@@ -34,6 +34,7 @@ import Onboarding from '@/pages/onboarding';
 import ExpertDashboard from '@/pages/expert-dashboard';
 import ExpertProjects from '@/pages/expert-projects';
 import ExpertProject from '@/pages/expert-project';
+import ExpertProjectWorkspace from '@/pages/expert-project-workspace';
 import ExpertEvaluations from '@/pages/expert-evaluations';
 import EvaluationPage from '@/pages/EvaluationPage';
 
@@ -587,21 +588,7 @@ function AppRouter() {
 
       {/* ======================================================
           PASSWORD RESET
-          ======================================================
-
-          IMPORTANT:
-          This route intentionally bypasses PublicRoute,
-          OnboardingRoute, and ProtectedRoute.
-
-          Supabase password recovery creates an authenticated
-          recovery session. Treating that session like a normal
-          authenticated session can incorrectly redirect the
-          user to onboarding/dashboard before the password is
-          changed.
-
-          AuthProvider owns isPasswordRecovery and
-          ResetPassword is responsible for the recovery flow.
-      ====================================================== */}
+          ====================================================== */}
 
       <Route
         path="/reset-password"
@@ -747,6 +734,36 @@ function AppRouter() {
       >
         <ProtectedRoute
           component={ApplyProject}
+          requireAccountType="expert"
+        />
+      </Route>
+
+      {/* ======================================================
+          EXPERT PROJECT WORKSPACE
+          ======================================================
+
+          This is the actual work environment for an expert
+          who has been assigned to a project.
+
+          URL:
+
+          /expert/projects/:projectId/workspace
+
+          The workspace will later:
+          - Load assigned tasks
+          - Allow the expert to start a task
+          - Display the client's task/input
+          - Allow the expert to enter an answer
+          - Save/submit the answer
+          - Track task progress
+          - Eventually support reviewer feedback
+      ====================================================== */}
+
+      <Route
+        path="/expert/projects/:projectId/workspace"
+      >
+        <ProtectedRoute
+          component={ExpertProjectWorkspace}
           requireAccountType="expert"
         />
       </Route>
