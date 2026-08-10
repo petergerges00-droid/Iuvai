@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   getAllEvaluations,
   type Evaluation,
-} from '../../lib/supabase';
+} from '../lib/supabase';
 
 interface Props {
   onCreate?: () => void;
