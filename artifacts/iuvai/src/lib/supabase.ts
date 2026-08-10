@@ -1843,3 +1843,364 @@ export async function getResumeUrl(
 
   return data.signedUrl;
 }
+
+// ─────────────────────────────────────────────────────────────
+// IUVAI V1 — EVALUATIONS
+// ─────────────────────────────────────────────────────────────
+
+export type EvaluationStatus =
+  | 'draft'
+  | 'open'
+  | 'closed';
+
+export type EvaluationSubmissionStatus =
+  | 'in_progress'
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'rejected';
+
+export interface Evaluation {
+  id: string;
+  title: string;
+  description: string | null;
+
+  primary_field: string | null;
+  specialization: string | null;
+
+  instructions: string | null;
+
+  status: EvaluationStatus;
+
+  time_limit_minutes: number | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationQuestion {
+  id: string;
+  evaluation_id: string;
+
+  question_order: number;
+
+  prompt: string;
+  context: string | null;
+
+  response_type: 'text' | 'long_text';
+
+  created_at: string;
+}
+
+export interface EvaluationSubmission {
+  id: string;
+
+  evaluation_id: string;
+  expert_id: string;
+
+  status: EvaluationSubmissionStatus;
+
+  started_at: string;
+  submitted_at: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvaluationAnswer {
+  id: string;
+
+  submission_id: string;
+  question_id: string;
+
+  answer_text: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET OPEN EVALUATIONS
+// ─────────────────────────────────────────────────────────────
+
+export async function getOpenEvaluations(): Promise<Evaluation[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluations')
+    .select('*')
+    .eq('status', 'open')
+    .order('created_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluations: ${error.message}`
+    );
+  }
+
+  return (data || []) as Evaluation[];
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET EVALUATION
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluation(
+  evaluationId: string
+): Promise<Evaluation | null> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluations')
+    .select('*')
+    .eq('id', evaluationId)
+    .single();
+
+  if (error) {
+    console.error(
+      'GET EVALUATION ERROR:',
+      error
+    );
+
+    return null;
+  }
+
+  return data as Evaluation;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET EVALUATION QUESTIONS
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluationQuestions(
+  evaluationId: string
+): Promise<EvaluationQuestion[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_questions')
+    .select('*')
+    .eq(
+      'evaluation_id',
+      evaluationId
+    )
+    .order('question_order', {
+      ascending: true,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluation questions: ${error.message}`
+    );
+  }
+
+  return (data || []) as EvaluationQuestion[];
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET EXISTING SUBMISSION
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluationSubmission(
+  evaluationId: string,
+  expertId: string
+): Promise<EvaluationSubmission | null> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_submissions')
+    .select('*')
+    .eq(
+      'evaluation_id',
+      evaluationId
+    )
+    .eq(
+      'expert_id',
+      expertId
+    )
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluation submission: ${error.message}`
+    );
+  }
+
+  return data as EvaluationSubmission | null;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// START EVALUATION
+// ─────────────────────────────────────────────────────────────
+
+export async function startEvaluation(
+  evaluationId: string,
+  expertId: string
+): Promise<EvaluationSubmission> {
+
+  const existing =
+    await getEvaluationSubmission(
+      evaluationId,
+      expertId
+    );
+
+  if (existing) {
+    return existing;
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_submissions')
+    .insert({
+      evaluation_id:
+        evaluationId,
+
+      expert_id:
+        expertId,
+
+      status:
+        'in_progress',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to start evaluation: ${error.message}`
+    );
+  }
+
+  return data as EvaluationSubmission;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// GET ANSWERS
+// ─────────────────────────────────────────────────────────────
+
+export async function getEvaluationAnswers(
+  submissionId: string
+): Promise<EvaluationAnswer[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_answers')
+    .select('*')
+    .eq(
+      'submission_id',
+      submissionId
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to load evaluation answers: ${error.message}`
+    );
+  }
+
+  return (data || []) as EvaluationAnswer[];
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// SAVE ANSWER
+// ─────────────────────────────────────────────────────────────
+
+export async function saveEvaluationAnswer(
+  submissionId: string,
+  questionId: string,
+  answerText: string
+): Promise<EvaluationAnswer> {
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_answers')
+    .upsert(
+      {
+        submission_id:
+          submissionId,
+
+        question_id:
+          questionId,
+
+        answer_text:
+          answerText,
+
+        updated_at:
+          new Date().toISOString(),
+      },
+      {
+        onConflict:
+          'submission_id,question_id',
+      }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to save answer: ${error.message}`
+    );
+  }
+
+  return data as EvaluationAnswer;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// SUBMIT EVALUATION
+// ─────────────────────────────────────────────────────────────
+
+export async function submitEvaluation(
+  submissionId: string
+): Promise<EvaluationSubmission> {
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_submissions')
+    .update({
+      status:
+        'submitted',
+
+      submitted_at:
+        new Date().toISOString(),
+
+      updated_at:
+        new Date().toISOString(),
+    })
+    .eq(
+      'id',
+      submissionId
+    )
+    .eq(
+      'expert_id',
+      (await supabase.auth.getUser()).data.user?.id
+    )
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to submit evaluation: ${error.message}`
+    );
+  }
+
+  return data as EvaluationSubmission;
+}
