@@ -33,7 +33,6 @@ import {
   AlertCircle,
   FileText,
   Briefcase,
-  ChevronRight,
   Upload,
   ShieldCheck,
   Activity,
@@ -78,6 +77,23 @@ export default function ExpertDashboard() {
 
   const [projectError, setProjectError] =
     useState<string | null>(null);
+
+  /*
+  ============================================================
+  TEMPORARY TESTING MODE
+  ============================================================
+
+  Verification is being bypassed temporarily so the complete
+  expert -> project -> application flow can be tested.
+
+  IMPORTANT:
+  This does NOT modify the database verification_status.
+
+  Remove/disable this constant when real verification is ready.
+  ============================================================
+  */
+
+  const TESTING_MODE = true;
 
   /*
   ============================================================
@@ -237,9 +253,21 @@ export default function ExpertDashboard() {
   ) => {
     if (!user?.id) return;
 
+    /*
+    ------------------------------------------------------------
+    TEMPORARY VERIFICATION BYPASS
+    ------------------------------------------------------------
+    In production this should check:
+      verification_status === 'approved'
+
+    For now TESTING_MODE allows applications.
+    ------------------------------------------------------------
+    */
+
     if (
+      !TESTING_MODE &&
       expertProfile?.verification_status !==
-      'approved'
+        'approved'
     ) {
       return;
     }
@@ -376,7 +404,28 @@ export default function ExpertDashboard() {
   const availableProjects =
     useMemo(() => {
       if (
-        !expertProfile ||
+        !expertProfile
+      ) {
+        return [];
+      }
+
+      /*
+      ----------------------------------------------------------
+      TEMPORARY TESTING BYPASS
+      ----------------------------------------------------------
+
+      Normally:
+
+      if verification_status !== approved
+        -> return []
+
+      During testing:
+        -> allow the expert to see projects
+      ----------------------------------------------------------
+      */
+
+      if (
+        !TESTING_MODE &&
         expertProfile.verification_status !==
           'approved'
       ) {
@@ -429,6 +478,12 @@ export default function ExpertDashboard() {
         )
         .filter(
           (project) => {
+            /*
+            ----------------------------------------------------
+            If no field is specified, show all open projects.
+            ----------------------------------------------------
+            */
+
             if (!field) {
               return true;
             }
@@ -446,24 +501,28 @@ export default function ExpertDashboard() {
             const fieldMatches =
               Boolean(
                 projectField &&
-                  (projectField.includes(
-                    field
-                  ) ||
+                  (
+                    projectField.includes(
+                      field
+                    ) ||
                     field.includes(
                       projectField
-                    ))
+                    )
+                  )
               );
 
             const specializationMatches =
               Boolean(
                 specialization &&
                   projectSpecialization &&
-                  (projectSpecialization.includes(
-                    specialization
-                  ) ||
+                  (
+                    projectSpecialization.includes(
+                      specialization
+                    ) ||
                     specialization.includes(
                       projectSpecialization
-                    ))
+                    )
+                  )
               );
 
             return (
@@ -505,13 +564,17 @@ export default function ExpertDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
+
           <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+
             <Activity className="h-5 w-5 animate-pulse text-primary" />
+
           </div>
 
           <p className="text-sm text-muted-foreground">
             Loading your workspace...
           </p>
+
         </div>
       </div>
     );
@@ -520,9 +583,13 @@ export default function ExpertDashboard() {
   if (!expertProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+
         <div className="text-center">
+
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-border/60 bg-muted/20">
+
             <UserRound className="h-5 w-5 text-muted-foreground" />
+
           </div>
 
           <h1 className="text-xl font-semibold">
@@ -532,7 +599,9 @@ export default function ExpertDashboard() {
           <p className="mt-2 text-sm text-muted-foreground">
             Your expert profile could not be loaded.
           </p>
+
         </div>
+
       </div>
     );
   }
@@ -547,17 +616,27 @@ export default function ExpertDashboard() {
     expertProfile.verification_status ||
     'pending';
 
+  /*
+  ------------------------------------------------------------
+  IMPORTANT:
+  isApproved is temporarily true in testing mode.
+  ------------------------------------------------------------
+  */
+
   const isApproved =
+    TESTING_MODE ||
     verificationStatus ===
-    'approved';
+      'approved';
 
   const isDeclined =
+    !TESTING_MODE &&
     verificationStatus ===
-    'declined';
+      'declined';
 
   const isPending =
+    !TESTING_MODE &&
     verificationStatus ===
-    'pending';
+      'pending';
 
   /*
   ============================================================
@@ -596,15 +675,26 @@ export default function ExpertDashboard() {
 
                 <div className="mb-5 flex flex-wrap items-center gap-2">
 
-                  {isPending && (
+                  {TESTING_MODE && (
                     <Badge
                       variant="outline"
-                      className="border-amber-500/30 bg-amber-500/10 text-amber-500"
+                      className="border-violet-500/30 bg-violet-500/10 text-violet-500"
                     >
-                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                      Verification pending
+                      <Activity className="mr-1.5 h-3.5 w-3.5" />
+                      Testing mode
                     </Badge>
                   )}
+
+                  {!TESTING_MODE &&
+                    isPending && (
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/30 bg-amber-500/10 text-amber-500"
+                      >
+                        <span className="mr-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                        Verification pending
+                      </Badge>
+                    )}
 
                   {isApproved && (
                     <Badge
@@ -612,7 +702,9 @@ export default function ExpertDashboard() {
                       className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
                     >
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                      Verified expert
+                      {TESTING_MODE
+                        ? 'Verified for testing'
+                        : 'Verified expert'}
                     </Badge>
                   )}
 
@@ -651,7 +743,9 @@ export default function ExpertDashboard() {
 
                 <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
 
-                  {isApproved
+                  {TESTING_MODE
+                    ? 'Testing mode is enabled. You can browse projects and submit applications while verification is temporarily bypassed.'
+                    : isApproved
                     ? 'Your expert account is verified. Browse projects matched to your expertise and apply to opportunities that interest you.'
                     : isDeclined
                     ? 'Your expert application was not approved at this time. Please review your profile information before contacting IUVAI.'
@@ -702,7 +796,9 @@ export default function ExpertDashboard() {
                 </p>
 
                 <p className="mt-0.5 text-sm font-medium capitalize">
-                  {verificationStatus}
+                  {TESTING_MODE
+                    ? 'Testing bypass'
+                    : verificationStatus}
                 </p>
 
               </div>
@@ -772,68 +868,66 @@ export default function ExpertDashboard() {
             VERIFICATION MESSAGE
             ================================================== */}
 
-        {isPending && (
-          <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-6">
+        {!TESTING_MODE &&
+          isPending && (
+            <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-6">
 
-            <div className="flex items-start gap-4">
+              <div className="flex items-start gap-4">
 
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
 
-                <Clock3 className="h-5 w-5 text-amber-500" />
+                  <Clock3 className="h-5 w-5 text-amber-500" />
 
-              </div>
+                </div>
 
-              <div>
+                <div>
 
-                <h3 className="font-semibold">
-                  Verification in progress
-                </h3>
+                  <h3 className="font-semibold">
+                    Verification in progress
+                  </h3>
 
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Our team is reviewing your credentials.
+                    Project applications will become available
+                    once your expert account has been approved.
+                  </p>
 
-                  Our team is reviewing your credentials.
-                  Project applications will become available
-                  once your expert account has been approved.
-
-                </p>
-
-              </div>
-
-            </div>
-
-          </section>
-        )}
-
-        {isDeclined && (
-          <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.04] p-6">
-
-            <div className="flex items-start gap-4">
-
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
-
-                <XCircle className="h-5 w-5 text-destructive" />
+                </div>
 
               </div>
 
-              <div>
+            </section>
+          )}
 
-                <h3 className="font-semibold">
-                  Verification was declined
-                </h3>
+        {!TESTING_MODE &&
+          isDeclined && (
+            <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.04] p-6">
 
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              <div className="flex items-start gap-4">
 
-                  Your account is currently not eligible
-                  for project applications.
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
 
-                </p>
+                  <XCircle className="h-5 w-5 text-destructive" />
+
+                </div>
+
+                <div>
+
+                  <h3 className="font-semibold">
+                    Verification was declined
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Your account is currently not eligible
+                    for project applications.
+                  </p>
+
+                </div>
 
               </div>
 
-            </div>
-
-          </section>
-        )}
+            </section>
+          )}
 
         {/* ==================================================
             PROJECT BOARD
@@ -906,127 +1000,146 @@ export default function ExpertDashboard() {
                 <div className="space-y-4">
 
                   {availableProjects.map(
-                    (project) => (
-                      <div
-                        key={project.id}
-                        className="rounded-xl border border-border/60 bg-card/30 p-5 transition-colors hover:border-primary/30"
-                      >
+                    (project) => {
 
-                        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                      const existingRequest =
+                        requestForProject(
+                          project.id
+                        );
 
-                          <div className="min-w-0 flex-1">
+                      return (
+                        <div
+                          key={project.id}
+                          className="rounded-xl border border-border/60 bg-card/30 p-5 transition-colors hover:border-primary/30"
+                        >
 
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 
-                              <h4 className="text-base font-semibold">
-                                {project.title}
-                              </h4>
+                            <div className="min-w-0 flex-1">
 
-                              <Badge
-                                variant="outline"
-                                className="border-emerald-500/20 bg-emerald-500/5 text-emerald-500"
-                              >
-                                OPEN
-                              </Badge>
+                              <div className="flex flex-wrap items-center gap-2">
 
-                            </div>
+                                <h4 className="text-base font-semibold">
+                                  {project.title}
+                                </h4>
 
-                            <p className="mt-2 text-sm text-muted-foreground">
+                                <Badge
+                                  variant="outline"
+                                  className="border-emerald-500/20 bg-emerald-500/5 text-emerald-500"
+                                >
+                                  OPEN
+                                </Badge>
 
-                              {project.primary_field ||
-                                'Field not specified'}
+                              </div>
 
-                              {project.specialization
-                                ? ` · ${project.specialization}`
-                                : ''}
+                              <p className="mt-2 text-sm text-muted-foreground">
 
-                            </p>
+                                {project.primary_field ||
+                                  'Field not specified'}
 
-                            {project.description && (
-                              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                                {project.description}
+                                {project.specialization
+                                  ? ` · ${project.specialization}`
+                                  : ''}
+
                               </p>
-                            )}
 
-                            <div className="mt-4 flex flex-wrap gap-2">
-
-                              {project.required_skills?.map(
-                                (skill) => (
-                                  <Badge
-                                    key={skill}
-                                    variant="outline"
-                                    className="font-normal text-[10px]"
-                                  >
-                                    {skill}
-                                  </Badge>
-                                )
+                              {project.description && (
+                                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                  {project.description}
+                                </p>
                               )}
+
+                              <div className="mt-4 flex flex-wrap gap-2">
+
+                                {project.required_skills?.map(
+                                  (skill) => (
+                                    <Badge
+                                      key={skill}
+                                      variant="outline"
+                                      className="font-normal text-[10px]"
+                                    >
+                                      {skill}
+                                    </Badge>
+                                  )
+                                )}
+
+                              </div>
+
+                              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+
+                                {project.project_type && (
+                                  <span>
+                                    Type:{' '}
+                                    <span className="font-medium text-foreground">
+                                      {project.project_type}
+                                    </span>
+                                  </span>
+                                )}
+
+                                {project.budget && (
+                                  <span>
+                                    Budget:{' '}
+                                    <span className="font-medium text-foreground">
+                                      {project.budget}
+                                    </span>
+                                  </span>
+                                )}
+
+                                {project.duration && (
+                                  <span>
+                                    Duration:{' '}
+                                    <span className="font-medium text-foreground">
+                                      {project.duration}
+                                    </span>
+                                  </span>
+                                )}
+
+                              </div>
 
                             </div>
 
-                            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+                            <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
 
-                              {project.project_type && (
-                                <span>
-                                  Type:{' '}
-                                  <span className="font-medium text-foreground">
-                                    {project.project_type}
-                                  </span>
-                                </span>
-                              )}
+                              {existingRequest ? (
+                                <Button
+                                  disabled
+                                  variant="outline"
+                                  className="sm:min-w-[150px]"
+                                >
+                                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                                  Applied
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={() =>
+                                    handleApply(
+                                      project
+                                    )
+                                  }
+                                  disabled={
+                                    actionProjectId ===
+                                    project.id
+                                  }
+                                  className="sm:min-w-[150px]"
+                                >
 
-                              {project.budget && (
-                                <span>
-                                  Budget:{' '}
-                                  <span className="font-medium text-foreground">
-                                    {project.budget}
-                                  </span>
-                                </span>
-                              )}
+                                  <Send className="mr-2 h-4 w-4" />
 
-                              {project.duration && (
-                                <span>
-                                  Duration:{' '}
-                                  <span className="font-medium text-foreground">
-                                    {project.duration}
-                                  </span>
-                                </span>
+                                  {actionProjectId ===
+                                  project.id
+                                    ? 'Applying...'
+                                    : 'Apply to project'}
+
+                                </Button>
                               )}
 
                             </div>
-
-                          </div>
-
-                          <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
-
-                            <Button
-                              onClick={() =>
-                                handleApply(
-                                  project
-                                )
-                              }
-                              disabled={
-                                actionProjectId ===
-                                project.id
-                              }
-                              className="sm:min-w-[150px]"
-                            >
-
-                              <Send className="mr-2 h-4 w-4" />
-
-                              {actionProjectId ===
-                              project.id
-                                ? 'Applying...'
-                                : 'Apply to project'}
-
-                            </Button>
 
                           </div>
 
                         </div>
-
-                      </div>
-                    )
+                      );
+                    }
                   )}
 
                 </div>
@@ -1195,10 +1308,13 @@ export default function ExpertDashboard() {
                             </h4>
 
                             <p className="mt-1 text-xs text-muted-foreground">
+
                               {project.primary_field}
+
                               {project.specialization
                                 ? ` · ${project.specialization}`
                                 : ''}
+
                             </p>
 
                           </div>
