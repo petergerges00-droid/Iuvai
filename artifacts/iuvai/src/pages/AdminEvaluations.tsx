@@ -1,24 +1,26 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'wouter';
+
 import {
   getAllEvaluations,
+  createEvaluation,
   type Evaluation,
 } from '../lib/supabase';
 
-interface Props {
-  onCreate?: () => void;
-  onEdit?: (evaluationId: string) => void;
-}
+export default function AdminEvaluations() {
+  const [, setLocation] = useLocation();
 
-export default function AdminEvaluations({
-  onCreate,
-  onEdit,
-}: Props) {
-  const [evaluations, setEvaluations] = useState<
-    Evaluation[]
-  >([]);
+  const [evaluations, setEvaluations] =
+    useState<Evaluation[]>([]);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] =
+    useState(true);
+
+  const [creating, setCreating] =
+    useState(false);
+
+  const [error, setError] =
+    useState('');
 
   useEffect(() => {
     loadEvaluations();
@@ -29,7 +31,8 @@ export default function AdminEvaluations({
       setLoading(true);
       setError('');
 
-      const data = await getAllEvaluations();
+      const data =
+        await getAllEvaluations();
 
       setEvaluations(data);
     } catch (err) {
@@ -41,6 +44,49 @@ export default function AdminEvaluations({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleCreateEvaluation() {
+    try {
+      setCreating(true);
+      setError('');
+
+      const evaluation =
+        await createEvaluation({
+          title: 'New evaluation',
+          description: null,
+          primary_field: null,
+          specialization: null,
+          instructions: null,
+          time_limit_minutes: null,
+          status: 'draft',
+        });
+
+      setEvaluations((current) => [
+        evaluation,
+        ...current,
+      ]);
+
+      setLocation(
+        `/admin/evaluations/${evaluation.id}`
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create evaluation.'
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function handleEditEvaluation(
+    evaluationId: string
+  ) {
+    setLocation(
+      `/admin/evaluations/${evaluationId}`
+    );
   }
 
   function getStatusClasses(
@@ -69,6 +115,9 @@ export default function AdminEvaluations({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-6">
+
+      {/* HEADER */}
+
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-semibold">
@@ -76,24 +125,32 @@ export default function AdminEvaluations({
           </h1>
 
           <p className="mt-1 text-sm text-gray-500">
-            Create and manage expert evaluations for IUVAI.
+            Create and manage expert evaluations
+            for IUVAI.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={onCreate}
-          className="rounded-lg bg-black px-5 py-3 text-sm font-medium text-white"
+          onClick={handleCreateEvaluation}
+          disabled={creating}
+          className="rounded-lg bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
-          + Create evaluation
+          {creating
+            ? 'Creating...'
+            : '+ Create evaluation'}
         </button>
       </div>
+
+      {/* ERROR */}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
+
+      {/* EMPTY STATE */}
 
       {evaluations.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
@@ -108,14 +165,23 @@ export default function AdminEvaluations({
 
           <button
             type="button"
-            onClick={onCreate}
-            className="mt-5 rounded-lg bg-black px-5 py-3 text-sm font-medium text-white"
+            onClick={handleCreateEvaluation}
+            disabled={creating}
+            className="mt-5 rounded-lg bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
           >
-            Create evaluation
+            {creating
+              ? 'Creating...'
+              : 'Create evaluation'}
           </button>
         </div>
       ) : (
+
+        /* EVALUATION LIST */
+
         <div className="overflow-hidden rounded-xl border">
+
+          {/* TABLE HEADER */}
+
           <div className="hidden grid-cols-[1fr_160px_180px_120px] gap-4 border-b bg-gray-50 px-5 py-3 text-xs font-medium uppercase tracking-wide text-gray-500 md:grid">
             <div>Evaluation</div>
             <div>Field</div>
@@ -123,49 +189,74 @@ export default function AdminEvaluations({
             <div>Status</div>
           </div>
 
+          {/* EVALUATIONS */}
+
           <div className="divide-y">
-            {evaluations.map((evaluation) => (
-              <button
-                key={evaluation.id}
-                type="button"
-                onClick={() => onEdit?.(evaluation.id)}
-                className="block w-full text-left transition hover:bg-gray-50"
-              >
-                <div className="grid gap-3 px-5 py-5 md:grid-cols-[1fr_160px_180px_120px] md:items-center md:gap-4">
-                  <div>
-                    <div className="font-medium">
-                      {evaluation.title}
+            {evaluations.map(
+              (evaluation) => (
+                <button
+                  key={evaluation.id}
+                  type="button"
+                  onClick={() =>
+                    handleEditEvaluation(
+                      evaluation.id
+                    )
+                  }
+                  className="block w-full text-left transition hover:bg-gray-50"
+                >
+                  <div className="grid gap-3 px-5 py-5 md:grid-cols-[1fr_160px_180px_120px] md:items-center md:gap-4">
+
+                    {/* EVALUATION */}
+
+                    <div>
+                      <div className="font-medium">
+                        {evaluation.title}
+                      </div>
+
+                      {evaluation.description && (
+                        <div className="mt-1 line-clamp-2 text-sm text-gray-500">
+                          {
+                            evaluation.description
+                          }
+                        </div>
+                      )}
                     </div>
 
-                    {evaluation.description && (
-                      <div className="mt-1 line-clamp-2 text-sm text-gray-500">
-                        {evaluation.description}
-                      </div>
-                    )}
-                  </div>
+                    {/* FIELD */}
 
-                  <div className="text-sm text-gray-600">
-                    {evaluation.primary_field || '—'}
-                  </div>
+                    <div className="text-sm text-gray-600">
+                      {
+                        evaluation.primary_field ||
+                        '—'
+                      }
+                    </div>
 
-                  <div className="text-sm text-gray-500">
-                    {new Date(
-                      evaluation.created_at
-                    ).toLocaleDateString()}
-                  </div>
+                    {/* CREATED */}
 
-                  <div>
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize ${getStatusClasses(
-                        evaluation.status
-                      )}`}
-                    >
-                      {evaluation.status}
-                    </span>
+                    <div className="text-sm text-gray-500">
+                      {new Date(
+                        evaluation.created_at
+                      ).toLocaleDateString()}
+                    </div>
+
+                    {/* STATUS */}
+
+                    <div>
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium capitalize ${getStatusClasses(
+                          evaluation.status
+                        )}`}
+                      >
+                        {
+                          evaluation.status
+                        }
+                      </span>
+                    </div>
+
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
