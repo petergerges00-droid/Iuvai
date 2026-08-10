@@ -587,7 +587,21 @@ function AppRouter() {
 
       {/* ======================================================
           PASSWORD RESET
-          ====================================================== */}
+          ======================================================
+
+          IMPORTANT:
+          This route intentionally bypasses PublicRoute,
+          OnboardingRoute, and ProtectedRoute.
+
+          Supabase password recovery creates an authenticated
+          recovery session. Treating that session like a normal
+          authenticated session can incorrectly redirect the
+          user to onboarding/dashboard before the password is
+          changed.
+
+          AuthProvider owns isPasswordRecovery and
+          ResetPassword is responsible for the recovery flow.
+      ====================================================== */}
 
       <Route
         path="/reset-password"
