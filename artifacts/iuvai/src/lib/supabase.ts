@@ -2501,3 +2501,131 @@ export async function getSubmittedEvaluations() {
 
   return data || [];
 }
+
+// ─────────────────────────────────────────────────────────────
+// ADMIN — EVALUATION MANAGEMENT
+// ─────────────────────────────────────────────────────────────
+
+export async function updateEvaluation(
+  evaluationId: string,
+  updates: Partial<Evaluation>
+): Promise<Evaluation> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluations')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', evaluationId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update evaluation: ${error.message}`
+    );
+  }
+
+  return data as Evaluation;
+}
+
+export async function createEvaluation(
+  evaluation: Omit<
+    Evaluation,
+    'id' | 'created_at' | 'updated_at'
+  >
+): Promise<Evaluation> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluations')
+    .insert(evaluation)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to create evaluation: ${error.message}`
+    );
+  }
+
+  return data as Evaluation;
+}
+
+export async function createEvaluationQuestion(
+  question: Omit<
+    EvaluationQuestion,
+    'id' | 'created_at'
+  >
+): Promise<EvaluationQuestion> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_questions')
+    .insert(question)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to create question: ${error.message}`
+    );
+  }
+
+  return data as EvaluationQuestion;
+}
+
+export async function updateEvaluationQuestion(
+  questionId: string,
+  updates: Partial<EvaluationQuestion>
+): Promise<EvaluationQuestion> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('evaluation_questions')
+    .update(updates)
+    .eq('id', questionId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update question: ${error.message}`
+    );
+  }
+
+  return data as EvaluationQuestion;
+}
+
+export async function deleteEvaluationQuestion(
+  questionId: string
+): Promise<void> {
+  const {
+    error,
+  } = await supabase
+    .from('evaluation_questions')
+    .delete()
+    .eq('id', questionId);
+
+  if (error) {
+    throw new Error(
+      `Failed to delete question: ${error.message}`
+    );
+  }
+}
+
+export async function setEvaluationStatus(
+  evaluationId: string,
+  status: EvaluationStatus
+): Promise<Evaluation> {
+  return updateEvaluation(
+    evaluationId,
+    { status }
+  );
+}
