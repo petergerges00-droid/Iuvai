@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-query';
 
 import { Toaster } from '@/components/ui/toaster';
-
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 import {
@@ -14,6 +13,7 @@ import {
   Switch,
   Router as WouterRouter,
   useLocation,
+  useRoute,
 } from 'wouter';
 
 import { Loader2 } from 'lucide-react';
@@ -32,7 +32,19 @@ import ResetPassword from '@/pages/reset-password';
 import Onboarding from '@/pages/onboarding';
 
 import ExpertDashboard from '@/pages/expert-dashboard';
+import ExpertProjects from '@/pages/expert-projects';
+import ExpertProject from '@/pages/expert-project';
+import ExpertEvaluations from '@/pages/expert-evaluations';
+import EvaluationPage from '@/pages/EvaluationPage';
+
 import CompanyDashboard from '@/pages/company-dashboard';
+import FindExperts from '@/pages/FindExperts';
+import CreateProject from '@/pages/create-project';
+import CompanyProject from '@/pages/company-project';
+import EditProject from '@/pages/edit-project';
+import CompanyProjectApplications from '@/pages/company-project-applications';
+
+import ApplyProject from '@/pages/apply-project';
 
 import AdminDashboard from '@/pages/admin-dashboard';
 import AdminProjects from '@/pages/admin-projects';
@@ -42,20 +54,8 @@ import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
 
-import EvaluationPage from '@/pages/EvaluationPage';
-
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
-import FindExperts from '@/pages/FindExperts';
-import CreateProject from '@/pages/create-project';
-import CompanyProject from '@/pages/company-project';
-import EditProject from '@/pages/edit-project';
-import ExpertProjects from '@/pages/expert-projects';
-import ExpertProject from '@/pages/expert-project';
-import ApplyProject from '@/pages/apply-project';
-import CompanyProjectApplications from '@/pages/company-project-applications';
-import ExpertEvaluations from '@/pages/expert-evaluations';
-import EvaluationPage from '@/pages/EvaluationPage';
 
 const queryClient = new QueryClient();
 
@@ -128,16 +128,6 @@ function PublicRoute({
       return;
     }
 
-    /*
-    Password recovery is NOT handled here.
-
-    /reset-password is deliberately NOT wrapped in
-    PublicRoute.
-
-    Therefore normal authenticated routing cannot
-    accidentally redirect the recovery session.
-    */
-
     if (isAdminUser(user?.id)) {
       setLocation('/admin');
       return;
@@ -148,16 +138,12 @@ function PublicRoute({
       return;
     }
 
-    if (
-      profile.account_type === 'expert'
-    ) {
+    if (profile.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
 
-    if (
-      profile.account_type === 'company'
-    ) {
+    if (profile.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
     }
@@ -206,10 +192,6 @@ function OnboardingRoute({
       return;
     }
 
-    /*
-    A recovery session should never enter onboarding.
-    */
-
     if (isPasswordRecovery) {
       setLocation('/reset-password');
       return;
@@ -225,16 +207,12 @@ function OnboardingRoute({
       return;
     }
 
-    if (
-      profile?.account_type === 'expert'
-    ) {
+    if (profile?.account_type === 'expert') {
       setLocation('/dashboard');
       return;
     }
 
-    if (
-      profile?.account_type === 'company'
-    ) {
+    if (profile?.account_type === 'company') {
       setLocation('/company-dashboard');
       return;
     }
@@ -293,11 +271,6 @@ function ProtectedRoute({
       return;
     }
 
-    /*
-    Recovery sessions must never be allowed to render
-    protected dashboard pages.
-    */
-
     if (isPasswordRecovery) {
       setLocation('/reset-password');
       return;
@@ -317,16 +290,12 @@ function ProtectedRoute({
       requireAccountType &&
       profile.account_type !== requireAccountType
     ) {
-      if (
-        profile.account_type === 'expert'
-      ) {
+      if (profile.account_type === 'expert') {
         setLocation('/dashboard');
         return;
       }
 
-      if (
-        profile.account_type === 'company'
-      ) {
+      if (profile.account_type === 'company') {
         setLocation('/company-dashboard');
         return;
       }
@@ -437,6 +406,61 @@ function AdminRoute({
 }
 
 /* ============================================================
+   EXPERT EVALUATION ROUTE
+   ============================================================
+
+   EvaluationPage requires:
+
+   - evaluationId
+   - expertId
+
+   Wouter provides evaluationId from the URL.
+   Auth provides the currently logged-in expert.
+
+============================================================ */
+
+function ExpertEvaluationRoute() {
+  const [, params] =
+    useRoute('/evaluations/:evaluationId');
+
+  const {
+    user,
+    profile,
+  } = useAuth();
+
+  if (!params?.evaluationId) {
+    return <FullPageLoader />;
+  }
+
+  /*
+   * The evaluation submission is tied to the expert.
+   *
+   * If your evaluations tables use the Supabase auth user ID
+   * as expert_id, user.id is correct.
+   */
+  const expertId =
+    user?.id;
+
+  if (!expertId) {
+    return <FullPageLoader />;
+  }
+
+  return (
+    <ProtectedRoute
+      component={() => (
+        <EvaluationPage
+          evaluationId={
+            params.evaluationId
+          }
+          expertId={expertId}
+        />
+      )}
+      requireAccountType="expert"
+    />
+  );
+}
+
+/* ============================================================
    ROUTER
    ============================================================ */
 
@@ -507,13 +531,6 @@ function AppRouter() {
 
       {/* ======================================================
           PASSWORD RESET
-
-          CRITICAL:
-
-          DO NOT put this inside PublicRoute.
-
-          Supabase creates a temporary authenticated
-          recovery session when the reset email is clicked.
           ====================================================== */}
 
       <Route
@@ -612,14 +629,28 @@ function AppRouter() {
       </Route>
 
       {/* ======================================================
-          EXPERT EVALUATION
+          EXPERT EVALUATIONS LIST
           ====================================================== */}
 
-      <Route path="/evaluations/:evaluationId">
+      <Route path="/evaluations">
         <ProtectedRoute
-          component={EvaluationPage}
+          component={ExpertEvaluations}
           requireAccountType="expert"
         />
+      </Route>
+
+      {/* ======================================================
+          SINGLE EXPERT EVALUATION
+
+          IMPORTANT:
+          This comes after /evaluations and uses the wrapper
+          because EvaluationPage requires route/auth props.
+          ====================================================== */}
+
+      <Route
+        path="/evaluations/:evaluationId"
+      >
+        <ExpertEvaluationRoute />
       </Route>
 
       {/* ======================================================
@@ -635,23 +666,8 @@ function AppRouter() {
 
       {/* ======================================================
           EXPERT PROJECT APPLICATION
-
-          IMPORTANT:
-          This must come BEFORE the project-detail route.
           ====================================================== */}
-<Route path="/evaluations">
-  <ProtectedRoute
-    component={ExpertEvaluations}
-    requireAccountType="expert"
-  />
-</Route>
 
-<Route path="/evaluations/:evaluationId">
-  <ProtectedRoute
-    component={EvaluationPage}
-    requireAccountType="expert"
-  />
-</Route>
       <Route
         path="/expert/projects/:projectId/apply"
       >
@@ -758,9 +774,7 @@ function AppRouter() {
           404
           ====================================================== */}
 
-      <Route
-        component={NotFound}
-      />
+      <Route component={NotFound} />
 
     </Switch>
   );
@@ -782,7 +796,6 @@ function App() {
       client={queryClient}
     >
       <AuthProvider>
-
         <TooltipProvider>
 
           <WouterRouter
@@ -794,7 +807,6 @@ function App() {
           <Toaster />
 
         </TooltipProvider>
-
       </AuthProvider>
     </QueryClientProvider>
   );
