@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   getEvaluation,
   getEvaluationQuestions,
@@ -29,9 +29,7 @@ export default function EvaluationPage({
     useState<EvaluationQuestion[]>([]);
 
   const [submission, setSubmission] =
-    useState<EvaluationSubmission | null>(
-      null
-    );
+    useState<EvaluationSubmission | null>(null);
 
   const [answers, setAnswers] =
     useState<Record<string, string>>({});
@@ -39,20 +37,31 @@ export default function EvaluationPage({
   const [loading, setLoading] =
     useState(true);
 
+  const [starting, setStarting] =
+    useState(false);
+
   const [saving, setSaving] =
     useState<string | null>(null);
 
   const [submitting, setSubmitting] =
     useState(false);
 
-  const [submitted, setSubmitted] =
-    useState(false);
-
   const [error, setError] =
     useState('');
 
+  // Keeps track of pending debounce timers.
+  const saveTimers = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
   useEffect(() => {
     loadEvaluation();
+
+    return () => {
+      Object.values(saveTimers.current).forEach(
+        clearTimeout
+      );
+    };
   }, [evaluationId, expertId]);
 
   async function loadEvaluation() {
@@ -90,47 +99,30 @@ export default function EvaluationPage({
 
       setEvaluation(evaluationData);
       setQuestions(questionData);
+      setSubmission(submissionData);
 
-      let activeSubmission =
-        submissionData;
-
-      if (!activeSubmission) {
-        activeSubmission =
-          await startEvaluation(
-            evaluationId,
-            expertId
+      // If the expert already started/submitted this
+      // evaluation, load their saved answers.
+      if (submissionData) {
+        const existingAnswers =
+          await getEvaluationAnswers(
+            submissionData.id
           );
-      }
 
-      setSubmission(activeSubmission);
+        const answerMap: Record<
+          string,
+          string
+        > = {};
 
-      if (
-        activeSubmission.status ===
-        'submitted'
-      ) {
-        setSubmitted(true);
-      }
-
-      const existingAnswers =
-        await getEvaluationAnswers(
-          activeSubmission.id
+        existingAnswers.forEach(
+          (answer: EvaluationAnswer) => {
+            answerMap[answer.question_id] =
+              answer.answer_text || '';
+          }
         );
 
-      const answerMap: Record<
-        string,
-        string
-      > = {};
-
-      existingAnswers.forEach(
-        (answer: EvaluationAnswer) => {
-          answerMap[
-            answer.question_id
-          ] =
-            answer.answer_text || '';
-        }
-      );
-
-      setAnswers(answerMap);
+        setAnswers(answerMap);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -142,38 +134,88 @@ export default function EvaluationPage({
     }
   }
 
-  async function handleAnswerChange(
+  async function handleStartEvaluation() {
+    if (submission) return;
+
+    try {
+      setStarting(true);
+      setError('');
+
+      const newSubmission =
+        await startEvaluation(
+          evaluationId,
+          expertId
+        );
+
+      setSubmission(newSubmission);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to start evaluation.'
+      );
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  function handleAnswerChange(
     questionId: string,
     value: string
   ) {
+    if (!submission) return;
+
+    if (
+      submission.status !==
+      'in_progress'
+    ) {
+      return;
+    }
+
     setAnswers((current) => ({
       ...current,
       [questionId]: value,
     }));
 
-    if (!submission) return;
-
-    try {
-      setSaving(questionId);
-
-      await saveEvaluationAnswer(
-        submission.id,
-        questionId,
-        value
+    // Clear previous timer for this question.
+    if (saveTimers.current[questionId]) {
+      clearTimeout(
+        saveTimers.current[questionId]
       );
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to save answer.'
-      );
-    } finally {
-      setSaving(null);
     }
+
+    // Wait 600ms after the user stops typing.
+    saveTimers.current[questionId] =
+      setTimeout(async () => {
+        try {
+          setSaving(questionId);
+
+          await saveEvaluationAnswer(
+            submission.id,
+            questionId,
+            value
+          );
+        } catch (err) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Failed to save answer.'
+          );
+        } finally {
+          setSaving(null);
+        }
+      }, 600);
   }
 
   async function handleSubmit() {
     if (!submission) return;
+
+    if (
+      submission.status !==
+      'in_progress'
+    ) {
+      return;
+    }
 
     const unanswered =
       questions.filter(
@@ -199,13 +241,24 @@ export default function EvaluationPage({
       setSubmitting(true);
       setError('');
 
+      // Flush any pending autosaves before submission.
+      for (const question of questions) {
+        const value =
+          answers[question.id] || '';
+
+        await saveEvaluationAnswer(
+          submission.id,
+          question.id,
+          value
+        );
+      }
+
       const result =
         await submitEvaluation(
           submission.id
         );
 
       setSubmission(result);
-      setSubmitted(true);
     } catch (err) {
       setError(
         err instanceof Error
@@ -235,11 +288,20 @@ export default function EvaluationPage({
     );
   }
 
-  if (!evaluation || !submission) {
+  if (!evaluation) {
     return null;
   }
 
-  if (submitted) {
+  /*
+   * ─────────────────────────────────────────────
+   * ALREADY SUBMITTED
+   * ─────────────────────────────────────────────
+   */
+
+  if (
+    submission?.status ===
+    'submitted'
+  ) {
     return (
       <div className="mx-auto max-w-2xl p-8">
         <div className="rounded-2xl border p-8 text-center">
@@ -252,13 +314,116 @@ export default function EvaluationPage({
           </h1>
 
           <p className="mt-3 text-gray-500">
-            Thank you. Your responses have been
-            submitted for review by IUVAI.
+            Thank you. Your responses have
+            been submitted for review by
+            IUVAI.
           </p>
+
+          <div className="mt-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+            Your submission is now under
+            review.
+          </div>
         </div>
       </div>
     );
   }
+
+  /*
+   * ─────────────────────────────────────────────
+   * EVALUATION INTRO / START SCREEN
+   * ─────────────────────────────────────────────
+   */
+
+  if (!submission) {
+    return (
+      <div className="mx-auto max-w-3xl p-6">
+        <div className="space-y-8">
+          <header>
+            <h1 className="text-3xl font-semibold">
+              {evaluation.title}
+            </h1>
+
+            {evaluation.description && (
+              <p className="mt-3 text-gray-600">
+                {evaluation.description}
+              </p>
+            )}
+          </header>
+
+          {evaluation.instructions && (
+            <section className="rounded-xl border p-6">
+              <h2 className="font-semibold">
+                Instructions
+              </h2>
+
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+                {evaluation.instructions}
+              </p>
+            </section>
+          )}
+
+          <section className="rounded-xl border bg-gray-50 p-6">
+            <h2 className="font-semibold">
+              Before you begin
+            </h2>
+
+            <ul className="mt-4 space-y-2 text-sm text-gray-600">
+              <li>
+                • There are {questions.length}{' '}
+                questions.
+              </li>
+
+              <li>
+                • Your answers should be based
+                on your professional expertise.
+              </li>
+
+              <li>
+                • Your responses will be
+                reviewed by IUVAI.
+              </li>
+
+              {evaluation.time_limit_minutes && (
+                <li>
+                  • Time limit:{' '}
+                  {
+                    evaluation.time_limit_minutes
+                  }{' '}
+                  minutes.
+                </li>
+              )}
+            </ul>
+          </section>
+
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              onClick={
+                handleStartEvaluation
+              }
+              disabled={starting}
+              className="rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+            >
+              {starting
+                ? 'Starting...'
+                : 'Start evaluation'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * ─────────────────────────────────────────────
+   * ACTIVE EVALUATION
+   * ─────────────────────────────────────────────
+   */
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-6">
@@ -307,7 +472,7 @@ export default function EvaluationPage({
               key={question.id}
               className="rounded-xl border p-6"
             >
-              <div className="mb-4 font-medium">
+              <div className="mb-4 font-medium leading-6">
                 {index + 1}.{' '}
                 {question.prompt}
               </div>
@@ -321,7 +486,7 @@ export default function EvaluationPage({
               {question.response_type ===
               'text' ? (
                 <input
-                  className="w-full rounded-lg border p-3"
+                  className="w-full rounded-lg border p-3 outline-none focus:border-black"
                   value={
                     answers[question.id] ||
                     ''
@@ -336,7 +501,7 @@ export default function EvaluationPage({
                 />
               ) : (
                 <textarea
-                  className="min-h-40 w-full rounded-lg border p-3"
+                  className="min-h-40 w-full resize-y rounded-lg border p-3 leading-6 outline-none focus:border-black"
                   value={
                     answers[question.id] ||
                     ''
@@ -361,14 +526,26 @@ export default function EvaluationPage({
         )}
       </div>
 
-      <div className="flex justify-end border-t pt-6">
+      <div className="flex items-center justify-between border-t pt-6">
+        <div className="text-sm text-gray-500">
+          {
+            questions.filter(
+              (question) =>
+                answers[
+                  question.id
+                ]?.trim()
+            ).length
+          }{' '}
+          of {questions.length} answered
+        </div>
+
         <button
           disabled={
             submitting ||
             questions.length === 0
           }
           onClick={handleSubmit}
-          className="rounded-lg bg-black px-6 py-3 font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {submitting
             ? 'Submitting...'
