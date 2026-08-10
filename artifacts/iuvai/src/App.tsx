@@ -42,6 +42,8 @@ import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
 
+import EvaluationPage from '@/pages/EvaluationPage';
+
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
 import FindExperts from '@/pages/FindExperts';
@@ -604,6 +606,17 @@ function AppRouter() {
       <Route path="/admin/projects/:projectId">
         <AdminRoute
           component={AdminProjects}
+        />
+      </Route>
+
+      {/* ======================================================
+          EXPERT EVALUATION
+          ====================================================== */}
+
+      <Route path="/evaluations/:evaluationId">
+        <ProtectedRoute
+          component={EvaluationPage}
+          requireAccountType="expert"
         />
       </Route>
 
