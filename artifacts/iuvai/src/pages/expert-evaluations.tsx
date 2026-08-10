@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
 
 import {
   getOpenEvaluations,
@@ -8,14 +9,9 @@ import {
   type EvaluationSubmission,
 } from '../lib/supabase';
 
-interface Props {
-  expertId: string;
-}
-
-export default function ExpertEvaluations({
-  expertId,
-}: Props) {
+export default function ExpertEvaluations() {
   const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
 
   const [evaluations, setEvaluations] =
     useState<Evaluation[]>([]);
@@ -25,17 +21,20 @@ export default function ExpertEvaluations({
       Record<string, EvaluationSubmission | null>
     >({});
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    loadEvaluations();
-  }, [expertId]);
+    if (authLoading || !user?.id) {
+      return;
+    }
 
-  async function loadEvaluations() {
+    loadEvaluations(user.id);
+  }, [authLoading, user?.id]);
+
+  async function loadEvaluations(
+    expertId: string
+  ) {
     try {
       setLoading(true);
       setError('');
@@ -85,12 +84,16 @@ export default function ExpertEvaluations({
     );
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-5xl p-6">
         Loading evaluations...
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
