@@ -55,6 +55,7 @@ import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
 import AdminEvaluationEditor from '@/pages/AdminEvaluationEditor';
+import ExpertProjectWorkspace from '@/pages/expert-project-workspace';
 
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
@@ -556,7 +557,12 @@ function AppRouter() {
           component={Login}
         />
       </Route>
-
+<Route path="/expert/projects/:projectId/workspace">
+  <ProtectedRoute
+    component={ExpertProjectWorkspace}
+    requireAccountType="expert"
+  />
+</Route>
       {/* ======================================================
           SIGNUP
           ====================================================== */}
