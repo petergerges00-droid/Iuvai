@@ -58,21 +58,18 @@ export default function Landing() {
               >
                 Experts
               </a>
-
               <a
                 href="#companies"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Companies
               </a>
-
               <a
                 href="#how-it-works"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 How it works
               </a>
-
               <a
                 href="#about"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -89,7 +86,6 @@ export default function Landing() {
               >
                 Sign in
               </Link>
-
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20"
@@ -123,7 +119,6 @@ export default function Landing() {
                 >
                   Experts
                 </a>
-
                 <a
                   href="#companies"
                   onClick={() => setMobileMenuOpen(false)}
@@ -131,7 +126,6 @@ export default function Landing() {
                 >
                   Companies
                 </a>
-
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
@@ -139,7 +133,6 @@ export default function Landing() {
                 >
                   How it works
                 </a>
-
                 <a
                   href="#about"
                   onClick={() => setMobileMenuOpen(false)}
@@ -179,7 +172,6 @@ export default function Landing() {
 
               {/* Hero text */}
               <div className="relative z-10">
-
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   AI Red Teaming & Expert Evaluation
@@ -189,15 +181,12 @@ export default function Landing() {
                   <span className="block">
                     Bridging the gap
                   </span>
-
                   <span className="block">
                     between
                   </span>
-
                   <span className="block text-primary">
                     humanity
                   </span>
-
                   <span className="block">
                     and <span className="text-primary">AI</span>
                   </span>
@@ -377,7 +366,7 @@ export default function Landing() {
                   href="/signup"
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
-                  Become an expert
+                  Be a part of tomorrow
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
@@ -400,7 +389,7 @@ export default function Landing() {
                 </p>
 
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Build AI with the intelligence it needs.
+                  Stress-test your AI model.
                 </h3>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
@@ -512,11 +501,9 @@ export default function Landing() {
 
               <div>
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Quality-first
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Expertise is verified and matched carefully to the
                   requirements of each project.
@@ -525,11 +512,9 @@ export default function Landing() {
 
               <div>
                 <Brain className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Human intelligence
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Real expertise remains at the center of the AI
                   development process.
@@ -538,11 +523,9 @@ export default function Landing() {
 
               <div>
                 <Globe2 className="mb-5 h-7 w-7 text-primary" />
-
                 <h3 className="text-lg font-semibold">
                   Built globally
                 </h3>
-
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Connect with opportunities and expertise beyond
                   geographical boundaries.
