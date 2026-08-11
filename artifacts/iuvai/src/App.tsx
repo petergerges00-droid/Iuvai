@@ -55,7 +55,6 @@ import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
 import AdminEvaluationEditor from '@/pages/AdminEvaluationEditor';
-import ExpertProjectWorkspace from '@/pages/expert-project-workspace';
 
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
@@ -410,17 +409,7 @@ function AdminRoute({
 
 /* ============================================================
    EXPERT EVALUATION ROUTE
-   ============================================================
-
-   EvaluationPage requires:
-
-   - evaluationId
-   - expertId
-
-   Wouter provides evaluationId from the URL.
-   Auth provides the currently logged-in expert.
-
-============================================================ */
+   ============================================================ */
 
 function ExpertEvaluationRoute() {
   const [, params] =
@@ -432,12 +421,6 @@ function ExpertEvaluationRoute() {
     return <FullPageLoader />;
   }
 
-  /*
-   * The evaluation submission is tied to the expert.
-   *
-   * If your evaluations tables use the Supabase auth user ID
-   * as expert_id, user.id is correct.
-   */
   const expertId = user?.id;
 
   if (!expertId) {
@@ -469,12 +452,6 @@ function AdminEvaluationsRoute() {
       component={() => (
         <AdminEvaluations
           onCreate={() => {
-            /*
-             * Evaluation creation is not implemented yet.
-             *
-             * We will add /admin/evaluations/new once the
-             * createEvaluation() Supabase function exists.
-             */
             setLocation('/admin/evaluations/new');
           }}
           onEdit={(evaluationId) => {
@@ -552,26 +529,30 @@ function AppRouter() {
           LOGIN
           ====================================================== */}
 
-      <Route path="/login">
-        <PublicRoute
-          component={Login}
-        />
-      </Route>
-<Route path="/expert/projects/:projectId/workspace">
-  <ProtectedRoute
-    component={ExpertProjectWorkspace}
-    requireAccountType="expert"
-  />
-</Route>
+      {/* IMPORTANT:
+          Login is intentionally NOT wrapped in PublicRoute.
+
+          PublicRoute redirects authenticated users to
+          onboarding/dashboard/company-dashboard. That caused
+          /login to redirect to onboarding when a session existed
+          without an account_type.
+
+          The Login page now renders directly.
+      */}
+
+      <Route
+        path="/login"
+        component={Login}
+      />
+
       {/* ======================================================
           SIGNUP
           ====================================================== */}
 
-      <Route path="/signup">
-        <PublicRoute
-          component={Signup}
-        />
-      </Route>
+      <Route
+        path="/signup"
+        component={Signup}
+      />
 
       {/* ======================================================
           EMAIL VERIFICATION
@@ -746,24 +727,7 @@ function AppRouter() {
 
       {/* ======================================================
           EXPERT PROJECT WORKSPACE
-          ======================================================
-
-          This is the actual work environment for an expert
-          who has been assigned to a project.
-
-          URL:
-
-          /expert/projects/:projectId/workspace
-
-          The workspace will later:
-          - Load assigned tasks
-          - Allow the expert to start a task
-          - Display the client's task/input
-          - Allow the expert to enter an answer
-          - Save/submit the answer
-          - Track task progress
-          - Eventually support reviewer feedback
-      ====================================================== */}
+          ====================================================== */}
 
       <Route
         path="/expert/projects/:projectId/workspace"
