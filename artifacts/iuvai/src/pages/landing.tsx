@@ -30,6 +30,7 @@ export default function Landing() {
           <div className="absolute -right-48 top-[45%] h-[600px] w-[600px] rounded-full bg-primary/[0.05] blur-[140px]" />
           <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[140px]" />
 
+          {/* Subtle Grid */}
           <div
             className="absolute inset-0 opacity-[0.035]"
             style={{
@@ -46,8 +47,10 @@ export default function Landing() {
         <header className="sticky top-0 z-50 border-b border-border/60 bg-background/75 backdrop-blur-2xl">
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
 
+            {/* Logo */}
             <IUVAILogo href="/" />
 
+            {/* Desktop Navigation */}
             <nav className="hidden items-center gap-8 md:flex">
               <a
                 href="#experts"
@@ -55,18 +58,21 @@ export default function Landing() {
               >
                 Experts
               </a>
+
               <a
                 href="#companies"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Companies
               </a>
+
               <a
                 href="#how-it-works"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 How it works
               </a>
+
               <a
                 href="#about"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -75,6 +81,7 @@ export default function Landing() {
               </a>
             </nav>
 
+            {/* Desktop Actions */}
             <div className="hidden items-center gap-3 md:flex">
               <Link
                 href="/login"
@@ -82,6 +89,7 @@ export default function Landing() {
               >
                 Sign in
               </Link>
+
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20"
@@ -90,6 +98,7 @@ export default function Landing() {
               </Link>
             </div>
 
+            {/* Mobile menu */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 md:hidden"
@@ -103,6 +112,7 @@ export default function Landing() {
             </button>
           </div>
 
+          {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <div className="border-t border-border/60 bg-background/95 px-5 py-5 backdrop-blur-2xl md:hidden">
               <nav className="flex flex-col gap-1">
@@ -113,6 +123,7 @@ export default function Landing() {
                 >
                   Experts
                 </a>
+
                 <a
                   href="#companies"
                   onClick={() => setMobileMenuOpen(false)}
@@ -120,6 +131,7 @@ export default function Landing() {
                 >
                   Companies
                 </a>
+
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
@@ -127,6 +139,7 @@ export default function Landing() {
                 >
                   How it works
                 </a>
+
                 <a
                   href="#about"
                   onClick={() => setMobileMenuOpen(false)}
@@ -164,7 +177,9 @@ export default function Landing() {
           <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center px-6 py-20 sm:px-8 lg:px-8 lg:py-24">
             <div className="grid w-full items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
 
+              {/* Hero text */}
               <div className="relative z-10">
+
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
                   Bridging the gap between humanity and AI
@@ -174,12 +189,15 @@ export default function Landing() {
                   <span className="block">
                     Bridging the gap
                   </span>
+
                   <span className="block">
                     between
                   </span>
+
                   <span className="block text-primary">
                     humanity
                   </span>
+
                   <span className="block">
                     and <span className="text-primary">AI</span>
                   </span>
@@ -191,22 +209,24 @@ export default function Landing() {
                   intelligence.
                 </p>
 
+                {/* CTA */}
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                   <Link href="/signup">
                     <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
-                      Be a part of tomorrow
+                      Join as an Expert
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </button>
                   </Link>
 
                   <Link href="/signup">
                     <button className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-7 py-4 font-medium backdrop-blur transition-colors hover:bg-muted sm:w-auto">
-                      Stress-test your AI model
+                      Build with IUVAI
                       <Building2 className="h-4 w-4" />
                     </button>
                   </Link>
                 </div>
 
+                {/* Trust indicators */}
                 <div className="mt-10 flex flex-wrap gap-x-7 gap-y-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -225,6 +245,9 @@ export default function Landing() {
                 </div>
               </div>
 
+              {/* =================================================
+                  FUTURISTIC HUMAN / AI CONNECTION
+              ================================================== */}
               <div className="relative mx-auto hidden h-[470px] w-[470px] lg:block">
                 <div className="absolute inset-[15%] rounded-full bg-primary/[0.08] blur-[70px]" />
 
@@ -279,6 +302,7 @@ export default function Landing() {
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
                 AI is evolving rapidly.
                 <br />
+
                 <span className="text-muted-foreground">
                   Human expertise remains essential.
                 </span>
@@ -303,10 +327,12 @@ export default function Landing() {
         >
           <div className="grid lg:grid-cols-2">
 
+            {/* EXPERTS */}
             <div className="relative overflow-hidden border-b border-border/70 p-8 sm:p-12 lg:border-b-0 lg:border-r lg:p-20">
               <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
@@ -342,6 +368,7 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -354,11 +381,13 @@ export default function Landing() {
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Become an expert
+
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
             </div>
 
+            {/* COMPANIES */}
             <div
               id="companies"
               className="relative overflow-hidden p-8 sm:p-12 lg:p-20"
@@ -366,6 +395,7 @@ export default function Landing() {
               <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
 
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
@@ -375,7 +405,7 @@ export default function Landing() {
                 </p>
 
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Build AI with the intelligence it needs.
+                  Stress-test your AI model.
                 </h3>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
@@ -396,6 +426,7 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -408,6 +439,7 @@ export default function Landing() {
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Work with IUVAI
+
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
@@ -423,6 +455,7 @@ export default function Landing() {
           className="border-t border-border/70 py-24 lg:py-32"
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="mb-16 max-w-2xl">
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                 How it works
@@ -430,6 +463,7 @@ export default function Landing() {
 
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
                 Connecting intelligence
+
                 <span className="text-muted-foreground">
                   {' '}with opportunity.
                 </span>
@@ -483,13 +517,16 @@ export default function Landing() {
         ====================================================== */}
         <section className="border-t border-border/70 py-24">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="grid gap-10 md:grid-cols-3">
 
               <div>
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Quality-first
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Expertise is verified and matched carefully to the
                   requirements of each project.
@@ -498,9 +535,11 @@ export default function Landing() {
 
               <div>
                 <Brain className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Human intelligence
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Real expertise remains at the center of the AI
                   development process.
@@ -509,9 +548,11 @@ export default function Landing() {
 
               <div>
                 <Globe2 className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Built globally
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   Connect with opportunities and expertise beyond
                   geographical boundaries.
@@ -529,6 +570,7 @@ export default function Landing() {
           <div className="pointer-events-none absolute inset-0 bg-primary/[0.035]" />
 
           <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
+
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
               <Sparkles className="h-3.5 w-3.5" />
               The future needs human intelligence
@@ -548,6 +590,7 @@ export default function Landing() {
               <Link href="/signup">
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
                   Join IUVAI
+
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
@@ -567,6 +610,7 @@ export default function Landing() {
         <footer className="border-t border-border/70">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
 
+            {/* Footer Logo */}
             <IUVAILogo href="/" />
 
             <p className="text-center text-sm text-muted-foreground">
