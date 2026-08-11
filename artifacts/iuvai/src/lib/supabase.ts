@@ -314,7 +314,7 @@ export async function resetPassword(
   return supabase.auth.resetPasswordForEmail(
     email.trim(),
     {
-      redirectTo: PASSWORD_RESET_URL,
+      redirectTo: 'https://iuvai.pages.dev/reset-password',
     }
   );
 }
