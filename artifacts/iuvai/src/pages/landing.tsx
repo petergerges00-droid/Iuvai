@@ -58,18 +58,21 @@ export default function Landing() {
               >
                 Experts
               </a>
+
               <a
                 href="#companies"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Companies
               </a>
+
               <a
                 href="#how-it-works"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 How it works
               </a>
+
               <a
                 href="#about"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -86,6 +89,7 @@ export default function Landing() {
               >
                 Sign in
               </Link>
+
               <Link
                 href="/signup"
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20"
@@ -119,6 +123,7 @@ export default function Landing() {
                 >
                   Experts
                 </a>
+
                 <a
                   href="#companies"
                   onClick={() => setMobileMenuOpen(false)}
@@ -126,6 +131,7 @@ export default function Landing() {
                 >
                   Companies
                 </a>
+
                 <a
                   href="#how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
@@ -133,10 +139,11 @@ export default function Landing() {
                 >
                   How it works
                 </a>
+
                 <a
                   href="#about"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  className="rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50"
                 >
                   About
                 </a>
@@ -172,21 +179,25 @@ export default function Landing() {
 
               {/* Hero text */}
               <div className="relative z-10">
+
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
-                  AI Red Teaming & Expert Evaluation
+                  Human-led AI testing
                 </div>
 
                 <h1 className="text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
                   <span className="block">
                     Bridging the gap
                   </span>
+
                   <span className="block">
                     between
                   </span>
+
                   <span className="block text-primary">
                     humanity
                   </span>
+
                   <span className="block">
                     and <span className="text-primary">AI</span>
                   </span>
@@ -195,7 +206,8 @@ export default function Landing() {
                 <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
                   IUVAI connects exceptional human expertise with the
                   companies building the next generation of artificial
-                  intelligence.
+                  intelligence — enabling human-led AI evaluation,
+                  adversarial testing, red teaming and jailbreak testing.
                 </p>
 
                 {/* CTA */}
@@ -284,8 +296,9 @@ export default function Landing() {
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
             <div className="max-w-3xl">
+
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
-                The infrastructure
+                Why IUVAI
               </p>
 
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
@@ -297,11 +310,19 @@ export default function Landing() {
               </h2>
 
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-                The most capable AI systems require more than computation.
-                They require people who understand medicine, science,
-                engineering, law, finance, language and the countless
-                domains that make the real world complex.
+                AI systems are becoming increasingly capable, but they
+                can still fail in unexpected ways. Finding those failures
+                requires people who understand how real-world systems,
+                domains and users behave.
               </p>
+
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                IUVAI brings qualified human experts into the AI
+                development process to evaluate models, uncover
+                vulnerabilities, stress-test their behavior and identify
+                failures that automated testing alone may miss.
+              </p>
+
             </div>
           </div>
         </section>
@@ -320,6 +341,7 @@ export default function Landing() {
               <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
@@ -339,14 +361,15 @@ export default function Landing() {
                 <p className="mt-5 leading-relaxed text-muted-foreground">
                   Put your knowledge to work on the systems shaping the
                   future of AI. IUVAI gives domain experts access to
-                  meaningful AI training, evaluation and research
-                  opportunities.
+                  meaningful AI training, evaluation, red teaming,
+                  adversarial testing and research opportunities.
                 </p>
 
                 <ul className="mt-8 space-y-4">
                   {[
                     'Work on projects matched to your expertise',
                     'Get paid to train and evaluate AI models',
+                    'Contribute to AI red teaming and adversarial testing',
                     'Build a professional expert profile',
                     'Access opportunities from anywhere',
                   ].map((item) => (
@@ -355,6 +378,7 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -366,9 +390,10 @@ export default function Landing() {
                   href="/signup"
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
-                  Be a part of tomorrow
+                  Become an expert
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
+
               </div>
             </div>
 
@@ -380,6 +405,7 @@ export default function Landing() {
               <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
 
               <div className="relative max-w-xl">
+
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
@@ -393,23 +419,27 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  Access a network of qualified experts who can help
-                  train, evaluate and improve your AI systems with
-                  real-world domain knowledge.
+                  Put your AI systems through rigorous human-led
+                  adversarial testing. IUVAI connects companies with
+                  qualified experts who probe models for vulnerabilities,
+                  jailbreaks, unsafe behavior, hallucinations and
+                  domain-specific failures.
                 </p>
 
                 <ul className="mt-8 space-y-4">
                   {[
-                    'Access qualified domain experts',
-                    'Accelerate AI training and evaluation',
-                    'Match expertise to your exact requirements',
-                    'Scale human intelligence when you need it',
+                    'AI red teaming and adversarial testing',
+                    'Jailbreak and prompt-injection testing',
+                    'Safety and behavioral evaluation',
+                    'Domain-specific model evaluation',
+                    'Identify vulnerabilities and failure modes',
                   ].map((item) => (
                     <li
                       key={item}
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -424,8 +454,10 @@ export default function Landing() {
                   Work with IUVAI
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
+
               </div>
             </div>
+
           </div>
         </section>
 
@@ -437,7 +469,9 @@ export default function Landing() {
           className="border-t border-border/70 py-24 lg:py-32"
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="mb-16 max-w-2xl">
+
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                 How it works
               </p>
@@ -448,27 +482,29 @@ export default function Landing() {
                   {' '}with opportunity.
                 </span>
               </h2>
+
             </div>
 
             <div className="grid overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
+
               {[
                 {
                   number: '01',
-                  title: 'Discover',
+                  title: 'Define',
                   description:
-                    'Experts create profiles around their real-world knowledge, experience and skills.',
+                    'Companies define the AI system, domain and testing requirements that need human expertise.',
                 },
                 {
                   number: '02',
-                  title: 'Match',
+                  title: 'Test',
                   description:
-                    'IUVAI connects the right expertise with projects that need it.',
+                    'Qualified experts evaluate models through adversarial testing, red teaming, jailbreak attempts and domain-specific scenarios.',
                 },
                 {
                   number: '03',
-                  title: 'Build',
+                  title: 'Improve',
                   description:
-                    'Experts and companies work together to create better AI systems.',
+                    'Human findings reveal vulnerabilities, failure modes and opportunities to improve the AI system.',
                 },
               ].map((step) => (
                 <div
@@ -488,6 +524,7 @@ export default function Landing() {
                   </p>
                 </div>
               ))}
+
             </div>
           </div>
         </section>
@@ -497,38 +534,45 @@ export default function Landing() {
         ====================================================== */}
         <section className="border-t border-border/70 py-24">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
             <div className="grid gap-10 md:grid-cols-3">
 
               <div>
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
-                  Quality-first
+                  Human-led testing
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Expertise is verified and matched carefully to the
-                  requirements of each project.
+                  Real experts bring creativity, domain knowledge and
+                  unpredictable human reasoning to AI testing.
                 </p>
               </div>
 
               <div>
                 <Brain className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
-                  Human intelligence
+                  Adversarial by design
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Real expertise remains at the center of the AI
-                  development process.
+                  Models are challenged through red teaming, jailbreak
+                  attempts and targeted adversarial scenarios.
                 </p>
               </div>
 
               <div>
                 <Globe2 className="mb-5 h-7 w-7 text-primary" />
+
                 <h3 className="text-lg font-semibold">
                   Built globally
                 </h3>
+
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Connect with opportunities and expertise beyond
-                  geographical boundaries.
+                  Connect with qualified expertise and AI testing
+                  opportunities beyond geographical boundaries.
                 </p>
               </div>
 
@@ -540,12 +584,14 @@ export default function Landing() {
             FINAL CTA
         ====================================================== */}
         <section className="relative overflow-hidden border-t border-border/70">
+
           <div className="pointer-events-none absolute inset-0 bg-primary/[0.035]" />
 
           <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
+
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
               <Sparkles className="h-3.5 w-3.5" />
-              The future needs human intelligence
+              Human expertise for better AI
             </div>
 
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
@@ -554,11 +600,12 @@ export default function Landing() {
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
               Whether you are an expert ready to contribute or a company
-              building the next generation of AI, IUVAI is where human
-              intelligence meets opportunity.
+              looking to stress-test and improve your AI systems, IUVAI
+              connects human expertise with the future of AI.
             </p>
 
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+
               <Link href="/signup">
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
                   Join IUVAI
@@ -571,6 +618,7 @@ export default function Landing() {
                   Sign in
                 </button>
               </Link>
+
             </div>
           </div>
         </section>
@@ -579,6 +627,7 @@ export default function Landing() {
             FOOTER
         ====================================================== */}
         <footer className="border-t border-border/70">
+
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
 
             {/* Footer Logo */}
