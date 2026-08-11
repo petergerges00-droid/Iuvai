@@ -182,7 +182,7 @@ export default function Landing() {
 
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Bridging the gap between humanity and AI
+                  AI Red Teaming & Expert Evaluation
                 </div>
 
                 <h1 className="text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
@@ -204,10 +204,9 @@ export default function Landing() {
                 </h1>
 
                 <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                  IUVAI connects human expertise with AI development,
-                  helping companies evaluate, red-team, and stress-test
-                  AI systems through rigorous human testing and
-                  domain expertise.
+                  IUVAI connects exceptional human expertise with the
+                  companies building the next generation of artificial
+                  intelligence.
                 </p>
 
                 {/* CTA */}
@@ -296,34 +295,24 @@ export default function Landing() {
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
             <div className="max-w-3xl">
-
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
-                The challenge
+                The infrastructure
               </p>
 
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
                 AI is evolving rapidly.
                 <br />
-
                 <span className="text-muted-foreground">
-                  But powerful AI needs to be challenged.
+                  Human expertise remains essential.
                 </span>
               </h2>
 
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-                AI systems can be evaluated against expected behavior,
-                but real-world reliability requires people capable of
-                thinking beyond the expected answer. IUVAI connects
-                companies with qualified human experts to evaluate,
-                red-team, and adversarially test AI systems.
+                The most capable AI systems require more than computation.
+                They require people who understand medicine, science,
+                engineering, law, finance, language and the countless
+                domains that make the real world complex.
               </p>
-
-              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-                From domain-specific evaluation to jailbreak testing
-                and safety testing, we help expose weaknesses before
-                they become real-world problems.
-              </p>
-
             </div>
           </div>
         </section>
@@ -342,7 +331,6 @@ export default function Landing() {
               <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
 
               <div className="relative max-w-xl">
-
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
@@ -356,21 +344,20 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-4 text-xl font-medium text-foreground">
-                  Get paid to train, evaluate and test AI.
+                  Get paid to train AI models.
                 </p>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  Put your knowledge to work on the AI systems shaping
-                  the future. IUVAI gives domain experts access to
-                  meaningful AI training, evaluation, red teaming,
-                  adversarial testing and research opportunities.
+                  Put your knowledge to work on the systems shaping the
+                  future of AI. IUVAI gives domain experts access to
+                  meaningful AI training, evaluation and research
+                  opportunities.
                 </p>
 
                 <ul className="mt-8 space-y-4">
                   {[
                     'Work on projects matched to your expertise',
-                    'Get paid to train, evaluate and test AI models',
-                    'Contribute to red teaming and adversarial testing',
+                    'Get paid to train and evaluate AI models',
                     'Build a professional expert profile',
                     'Access opportunities from anywhere',
                   ].map((item) => (
@@ -379,7 +366,6 @@ export default function Landing() {
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -392,10 +378,8 @@ export default function Landing() {
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Become an expert
-
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
-
               </div>
             </div>
 
@@ -407,7 +391,6 @@ export default function Landing() {
               <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
 
               <div className="relative max-w-xl">
-
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
@@ -417,30 +400,27 @@ export default function Landing() {
                 </p>
 
                 <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Stress-test your AI model.
+                  Build AI with the intelligence it needs.
                 </h3>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  Access qualified human experts who can challenge
-                  your AI systems through structured evaluation,
-                  red teaming and adversarial testing. Identify
-                  weaknesses, uncover unexpected behaviors and test
-                  how your models respond under pressure.
+                  Access a network of qualified experts who can help
+                  train, evaluate and improve your AI systems with
+                  real-world domain knowledge.
                 </p>
 
                 <ul className="mt-8 space-y-4">
                   {[
-                    'Evaluate AI systems with qualified human experts',
-                    'Red-team models for unexpected weaknesses',
-                    'Test for jailbreaks and adversarial behavior',
-                    'Match domain expertise to your exact requirements',
+                    'Access qualified domain experts',
+                    'Accelerate AI training and evaluation',
+                    'Match expertise to your exact requirements',
+                    'Scale human intelligence when you need it',
                   ].map((item) => (
                     <li
                       key={item}
                       className="flex items-start gap-3"
                     >
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
@@ -453,10 +433,8 @@ export default function Landing() {
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
                   Work with IUVAI
-
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
-
               </div>
             </div>
           </div>
@@ -470,9 +448,7 @@ export default function Landing() {
           className="border-t border-border/70 py-24 lg:py-32"
         >
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
-
             <div className="mb-16 max-w-2xl">
-
               <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
                 How it works
               </p>
@@ -480,39 +456,36 @@ export default function Landing() {
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
                 Connecting intelligence
                 <span className="text-muted-foreground">
-                  {' '}with AI testing.
+                  {' '}with opportunity.
                 </span>
               </h2>
-
             </div>
 
             <div className="grid overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
-
               {[
                 {
                   number: '01',
-                  title: 'Define',
+                  title: 'Discover',
                   description:
-                    'Companies identify the AI system, domain, risks and testing requirements.',
+                    'Experts create profiles around their real-world knowledge, experience and skills.',
                 },
                 {
                   number: '02',
-                  title: 'Challenge',
+                  title: 'Match',
                   description:
-                    'IUVAI matches the project with relevant human experts who evaluate and adversarially test the system.',
+                    'IUVAI connects the right expertise with projects that need it.',
                 },
                 {
                   number: '03',
-                  title: 'Improve',
+                  title: 'Build',
                   description:
-                    'Companies use the findings to identify weaknesses and strengthen their AI systems.',
+                    'Experts and companies work together to create better AI systems.',
                 },
               ].map((step) => (
                 <div
                   key={step.number}
                   className="bg-background p-8 sm:p-10 lg:p-12"
                 >
-
                   <div className="mb-8 font-mono text-sm text-primary">
                     {step.number}
                   </div>
@@ -524,10 +497,8 @@ export default function Landing() {
                   <p className="mt-4 leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
-
                 </div>
               ))}
-
             </div>
           </div>
         </section>
@@ -537,7 +508,6 @@ export default function Landing() {
         ====================================================== */}
         <section className="border-t border-border/70 py-24">
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
-
             <div className="grid gap-10 md:grid-cols-3">
 
               <div>
@@ -548,8 +518,8 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Human expertise is matched carefully to the
-                  requirements and risks of each AI testing project.
+                  Expertise is verified and matched carefully to the
+                  requirements of each project.
                 </p>
               </div>
 
@@ -557,12 +527,12 @@ export default function Landing() {
                 <Brain className="mb-5 h-7 w-7 text-primary" />
 
                 <h3 className="text-lg font-semibold">
-                  Adversarial by design
+                  Human intelligence
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  AI systems improve when they are challenged by
-                  people capable of thinking beyond the expected answer.
+                  Real expertise remains at the center of the AI
+                  development process.
                 </p>
               </div>
 
@@ -574,8 +544,8 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Connect with qualified expertise beyond geographical
-                  boundaries and test AI against diverse perspectives.
+                  Connect with opportunities and expertise beyond
+                  geographical boundaries.
                 </p>
               </div>
 
@@ -590,7 +560,6 @@ export default function Landing() {
           <div className="pointer-events-none absolute inset-0 bg-primary/[0.035]" />
 
           <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
-
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
               <Sparkles className="h-3.5 w-3.5" />
               The future needs human intelligence
@@ -601,17 +570,15 @@ export default function Landing() {
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Whether you are an expert ready to challenge AI or a
-              company building the next generation of AI, IUVAI brings
-              human expertise into the process.
+              Whether you are an expert ready to contribute or a company
+              building the next generation of AI, IUVAI is where human
+              intelligence meets opportunity.
             </p>
 
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-
               <Link href="/signup">
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
                   Join IUVAI
-
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
@@ -621,7 +588,6 @@ export default function Landing() {
                   Sign in
                 </button>
               </Link>
-
             </div>
           </div>
         </section>
