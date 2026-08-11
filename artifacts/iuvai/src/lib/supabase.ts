@@ -302,8 +302,8 @@ export async function signOut() {
 // PASSWORD RECOVERY
 // ─────────────────────────────────────────────────────────────
 
-const PRODUCTION_URL =
-  'https://6736f081.iuvai.pages.dev';
+cconst PRODUCTION_URL =
+  'https://iuvai.pages.dev';
 
 const PASSWORD_RESET_URL =
   `${PRODUCTION_URL}/reset-password`;
