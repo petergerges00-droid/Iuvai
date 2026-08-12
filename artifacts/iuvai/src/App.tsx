@@ -102,6 +102,179 @@ function isAdminUser(
 }
 
 /* ============================================================
+   ROOT / LANDING ROUTE
+   ============================================================
+
+   IMPORTANT:
+
+   The Supabase email confirmation redirect may return the user
+   to "/" after the confirmation link is clicked.
+
+   Previously "/" ALWAYS rendered Landing.
+
+   That meant:
+
+      signup
+        ↓
+      confirmation email
+        ↓
+      confirm email
+        ↓
+      Supabase creates session
+        ↓
+      "/"
+        ↓
+      Landing
+
+   even though the user was already authenticated.
+
+   We now inspect the authentication state:
+
+      NOT authenticated
+          → Landing
+
+      authenticated + no account_type
+          → Onboarding
+
+      authenticated + expert
+          → Expert Dashboard
+
+      authenticated + company
+          → Company Dashboard
+
+      authenticated + admin
+          → Admin Dashboard
+
+      password recovery
+          → Reset Password
+============================================================ */
+
+function RootRoute() {
+  const {
+    session,
+    user,
+    profile,
+    isLoading,
+    isPasswordRecovery,
+  } = useAuth();
+
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    /*
+    ==========================================================
+    PASSWORD RECOVERY
+    ==========================================================
+    */
+
+    if (isPasswordRecovery) {
+      setLocation('/reset-password');
+      return;
+    }
+
+    /*
+    ==========================================================
+    NOT AUTHENTICATED
+    ==========================================================
+    */
+
+    if (!session) {
+      return;
+    }
+
+    /*
+    ==========================================================
+    ADMIN
+    ==========================================================
+    */
+
+    if (isAdminUser(user?.id)) {
+      setLocation('/admin');
+      return;
+    }
+
+    /*
+    ==========================================================
+    AUTHENTICATED BUT ONBOARDING NOT COMPLETE
+    ==========================================================
+
+    This is the important case for email confirmation.
+
+    A newly confirmed user has a valid session but normally
+    does not have an account_type yet.
+
+    Send them directly to onboarding.
+    */
+
+    if (!profile?.account_type) {
+      setLocation('/onboarding');
+      return;
+    }
+
+    /*
+    ==========================================================
+    EXPERT
+    ==========================================================
+    */
+
+    if (
+      profile.account_type === 'expert'
+    ) {
+      setLocation('/dashboard');
+      return;
+    }
+
+    /*
+    ==========================================================
+    COMPANY
+    ==========================================================
+    */
+
+    if (
+      profile.account_type === 'company'
+    ) {
+      setLocation('/company-dashboard');
+      return;
+    }
+  }, [
+    session,
+    user,
+    profile,
+    isLoading,
+    isPasswordRecovery,
+    setLocation,
+  ]);
+
+  /*
+  While authentication state is being determined, don't
+  temporarily show the landing page and then redirect.
+  */
+
+  if (isLoading) {
+    return <FullPageLoader />;
+  }
+
+  /*
+  If authenticated, RootRoute is redirecting to the appropriate
+  destination. Show loader while that navigation occurs.
+  */
+
+  if (session) {
+    return <FullPageLoader />;
+  }
+
+  /*
+  Unauthenticated users see the normal landing page.
+  */
+
+  return <Landing />;
+}
+
+/* ============================================================
    PUBLIC ROUTE
    ============================================================ */
 
@@ -140,12 +313,16 @@ function PublicRoute({
       return;
     }
 
-    if (profile.account_type === 'expert') {
+    if (
+      profile.account_type === 'expert'
+    ) {
       setLocation('/dashboard');
       return;
     }
 
-    if (profile.account_type === 'company') {
+    if (
+      profile.account_type === 'company'
+    ) {
       setLocation('/company-dashboard');
       return;
     }
@@ -209,12 +386,16 @@ function OnboardingRoute({
       return;
     }
 
-    if (profile?.account_type === 'expert') {
+    if (
+      profile?.account_type === 'expert'
+    ) {
       setLocation('/dashboard');
       return;
     }
 
-    if (profile?.account_type === 'company') {
+    if (
+      profile?.account_type === 'company'
+    ) {
       setLocation('/company-dashboard');
       return;
     }
@@ -238,6 +419,17 @@ function OnboardingRoute({
   if (isPasswordRecovery) {
     return <FullPageLoader />;
   }
+
+  /*
+   * This is intentionally allowed.
+   *
+   * A newly confirmed user can have:
+   *
+   *   session = true
+   *   profile.account_type = null
+   *
+   * That user needs to see onboarding.
+   */
 
   if (!profile?.account_type) {
     return <Component />;
@@ -292,12 +484,16 @@ function ProtectedRoute({
       requireAccountType &&
       profile.account_type !== requireAccountType
     ) {
-      if (profile.account_type === 'expert') {
+      if (
+        profile.account_type === 'expert'
+      ) {
         setLocation('/dashboard');
         return;
       }
 
-      if (profile.account_type === 'company') {
+      if (
+        profile.account_type === 'company'
+      ) {
         setLocation('/company-dashboard');
         return;
       }
@@ -452,7 +648,9 @@ function AdminEvaluationsRoute() {
       component={() => (
         <AdminEvaluations
           onCreate={() => {
-            setLocation('/admin/evaluations/new');
+            setLocation(
+              '/admin/evaluations/new'
+            );
           }}
           onEdit={(evaluationId) => {
             setLocation(
@@ -487,7 +685,9 @@ function AdminEvaluationEditorRoute() {
         <AdminEvaluationEditor
           evaluationId={params.evaluationId}
           onBack={() =>
-            setLocation('/admin/evaluations')
+            setLocation(
+              '/admin/evaluations'
+            )
           }
         />
       )}
@@ -504,12 +704,12 @@ function AppRouter() {
     <Switch>
 
       {/* ======================================================
-          LANDING
+          LANDING / ROOT
           ====================================================== */}
 
       <Route
         path="/"
-        component={Landing}
+        component={RootRoute}
       />
 
       {/* ======================================================
@@ -532,12 +732,10 @@ function AppRouter() {
       {/* IMPORTANT:
           Login is intentionally NOT wrapped in PublicRoute.
 
-          PublicRoute redirects authenticated users to
-          onboarding/dashboard/company-dashboard. That caused
-          /login to redirect to onboarding when a session existed
-          without an account_type.
-
-          The Login page now renders directly.
+          This prevents an authenticated user without an
+          account_type from being redirected away from /login
+          before the Login page can handle the authentication
+          flow.
       */}
 
       <Route
@@ -634,7 +832,9 @@ function AppRouter() {
           ADMIN PROJECT EXPERTS
           ====================================================== */}
 
-      <Route path="/admin/projects/:projectId/experts">
+      <Route
+        path="/admin/projects/:projectId/experts"
+      >
         <AdminRoute
           component={ProjectExperts}
         />
@@ -654,7 +854,9 @@ function AppRouter() {
           ADMIN EXPERT PROFILE
           ====================================================== */}
 
-      <Route path="/admin/experts/:expertId">
+      <Route
+        path="/admin/experts/:expertId"
+      >
         <AdminRoute
           component={AdminExpertProfile}
         />
@@ -664,7 +866,9 @@ function AppRouter() {
           ADMIN EXPERT REVIEW
           ====================================================== */}
 
-      <Route path="/admin/projects/:projectId/experts/:expertId">
+      <Route
+        path="/admin/projects/:projectId/experts/:expertId"
+      >
         <AdminRoute
           component={AdminExpertReview}
         />
@@ -674,7 +878,9 @@ function AppRouter() {
           ADMIN SINGLE PROJECT
           ====================================================== */}
 
-      <Route path="/admin/projects/:projectId">
+      <Route
+        path="/admin/projects/:projectId"
+      >
         <AdminRoute
           component={AdminProjects}
         />
@@ -803,7 +1009,9 @@ function AppRouter() {
           CREATE COMPANY PROJECT
           ====================================================== */}
 
-      <Route path="/company-dashboard/projects/new">
+      <Route
+        path="/company-dashboard/projects/new"
+      >
         <ProtectedRoute
           component={CreateProject}
           requireAccountType="company"
