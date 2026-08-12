@@ -121,8 +121,6 @@ export interface CompanyProfile {
 
 // ─────────────────────────────────────────────────────────────
 // PROJECT TYPES
-//
-// Also deliberately field-agnostic.
 // ─────────────────────────────────────────────────────────────
 
 export interface Project {
@@ -194,18 +192,20 @@ export interface ProjectExpert {
 // ─────────────────────────────────────────────────────────────
 // INTERNAL DATABASE TYPE
 //
-// Your existing database unfortunately uses:
+// The database currently uses:
 //
 //   Resume_path
 //   Resume_file_name
 //
 // with capital letters.
 //
-// The application interface above intentionally uses the
-// cleaner resume_path / resume_file_name names.
+// The application interface intentionally uses:
+//
+//   resume_path
+//   resume_file_name
 //
 // These helpers keep the rest of the application consistent
-// without requiring an immediate database migration.
+// without requiring a database migration.
 // ─────────────────────────────────────────────────────────────
 
 type DatabaseExpertProfile = Omit<
@@ -314,7 +314,8 @@ export async function resetPassword(
   return supabase.auth.resetPasswordForEmail(
     email.trim(),
     {
-      redirectTo: 'https://iuvai.pages.dev/reset-password',
+      redirectTo:
+        PASSWORD_RESET_URL,
     }
   );
 }
@@ -1089,7 +1090,10 @@ export async function updateProjectRequestStatus(
       updated_at:
         new Date().toISOString(),
     })
-    .eq('id', requestId)
+    .eq(
+      'id',
+      requestId
+    )
     .select()
     .single();
 
@@ -1253,20 +1257,114 @@ export async function deleteResume(
 // ─────────────────────────────────────────────────────────────
 // MEDICAL CERTIFICATE STORAGE
 //
-// This remains supported because your current database already
-// contains these fields.
+// Existing bucket:
 //
-// It does NOT make the overall IUVAI architecture medical.
-// It is simply one optional credential type for V1.
+//   medical-certificates
+//
+// Database columns:
+//
+//   medical_certificate_path
+//   medical_certificate_file_name
+//   medical_certificate_status
+//
+// Storage path:
+//
+//   <user_id>/medical-certificate.<extension>
+//
+// The bucket is private.
+//
+// Existing RLS policies allow an authenticated expert to:
+//
+//   - upload their own certificate
+//   - view their own certificate
+//   - update their own certificate
+//   - delete their own certificate
+//
+// Admins can manage certificates through the existing
+// is_admin() policy.
 // ─────────────────────────────────────────────────────────────
 
 const MEDICAL_CERTIFICATE_BUCKET =
   'medical-certificates';
 
+const MAX_CERTIFICATE_SIZE =
+  10 * 1024 * 1024;
+
+const ALLOWED_CERTIFICATE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+
+const ALLOWED_CERTIFICATE_EXTENSIONS = [
+  'pdf',
+  'jpg',
+  'jpeg',
+  'png',
+  'webp',
+];
+
+// ─────────────────────────────────────────────────────────────
+// UPLOAD MEDICAL CERTIFICATE
+// ─────────────────────────────────────────────────────────────
+
 export async function uploadMedicalCertificate(
   userId: string,
   file: File
-) {
+): Promise<string> {
+
+  if (!userId) {
+    throw new Error(
+      'Cannot upload certificate: user ID is missing.'
+    );
+  }
+
+  if (!file) {
+    throw new Error(
+      'Please select a certificate file.'
+    );
+  }
+
+  // Verify authentication.
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to upload a certificate.'
+    );
+  }
+
+  // Prevent one authenticated user from uploading
+  // into another user's folder.
+  if (user.id !== userId) {
+    throw new Error(
+      'You are not authorized to upload this certificate.'
+    );
+  }
+
+  // File size validation.
+  if (file.size > MAX_CERTIFICATE_SIZE) {
+    throw new Error(
+      'Certificate file is too large. Maximum size is 10 MB.'
+    );
+  }
+
+  // Validate MIME type when provided by the browser.
+  if (
+    file.type &&
+    !ALLOWED_CERTIFICATE_TYPES.includes(file.type)
+  ) {
+    throw new Error(
+      'Invalid certificate file type. Please upload a PDF, JPG, PNG, or WebP file.'
+    );
+  }
+
   const extension =
     file.name
       .split('.')
@@ -1274,8 +1372,23 @@ export async function uploadMedicalCertificate(
       ?.toLowerCase() ||
     'pdf';
 
+  if (
+    !ALLOWED_CERTIFICATE_EXTENSIONS.includes(
+      extension
+    )
+  ) {
+    throw new Error(
+      'Invalid certificate file extension.'
+    );
+  }
+
   const filePath =
     `${userId}/medical-certificate.${extension}`;
+
+  // ───────────────────────────────────────────────────────────
+  // Find and remove previous certificates.
+  // Only one certificate is maintained for V1.
+  // ───────────────────────────────────────────────────────────
 
   const {
     data: existingFiles,
@@ -1299,29 +1412,43 @@ export async function uploadMedicalCertificate(
     existingFiles.length > 0
   ) {
     const filesToRemove =
-      existingFiles.map(
-        (existingFile) =>
-          `${userId}/${existingFile.name}`
-      );
-
-    const {
-      error: removeError,
-    } =
-      await supabase.storage
-        .from(
-          MEDICAL_CERTIFICATE_BUCKET
+      existingFiles
+        .filter(
+          (existingFile) =>
+            existingFile.name !==
+            '.emptyFolderPlaceholder'
         )
-        .remove(
-          filesToRemove
+        .map(
+          (existingFile) =>
+            `${userId}/${existingFile.name}`
         );
 
-    if (removeError) {
-      console.warn(
-        'Could not remove old medical certificate:',
-        removeError
-      );
+    if (
+      filesToRemove.length > 0
+    ) {
+      const {
+        error: removeError,
+      } =
+        await supabase.storage
+          .from(
+            MEDICAL_CERTIFICATE_BUCKET
+          )
+          .remove(
+            filesToRemove
+          );
+
+      if (removeError) {
+        console.warn(
+          'Could not remove old medical certificate:',
+          removeError
+        );
+      }
     }
   }
+
+  // ───────────────────────────────────────────────────────────
+  // Upload certificate
+  // ───────────────────────────────────────────────────────────
 
   const {
     error: uploadError,
@@ -1335,9 +1462,13 @@ export async function uploadMedicalCertificate(
         file,
         {
           upsert: true,
+
           contentType:
             file.type ||
             'application/pdf',
+
+          cacheControl:
+            '3600',
         }
       );
 
@@ -1347,25 +1478,106 @@ export async function uploadMedicalCertificate(
     );
   }
 
-  await upsertExpertProfile({
-    id: userId,
+  // ───────────────────────────────────────────────────────────
+  // Save certificate metadata
+  //
+  // Any new upload returns the certificate to "pending"
+  // because it must be reviewed again.
+  // ───────────────────────────────────────────────────────────
 
-    medical_certificate_path:
-      filePath,
+  try {
+    await upsertExpertProfile({
+      id: userId,
 
-    medical_certificate_file_name:
-      file.name,
+      medical_certificate_path:
+        filePath,
 
-    medical_certificate_status:
-      'pending',
-  });
+      medical_certificate_file_name:
+        file.name,
+
+      medical_certificate_status:
+        'pending',
+    });
+  } catch (databaseError) {
+
+    // Avoid leaving an orphaned storage object
+    // if the database update fails.
+    try {
+      await supabase.storage
+        .from(
+          MEDICAL_CERTIFICATE_BUCKET
+        )
+        .remove([
+          filePath,
+        ]);
+    } catch (cleanupError) {
+      console.warn(
+        'Could not clean up uploaded certificate after database failure:',
+        cleanupError
+      );
+    }
+
+    throw databaseError;
+  }
 
   return filePath;
 }
 
+// ─────────────────────────────────────────────────────────────
+// GENERIC ONBOARDING CERTIFICATE FUNCTION
+//
+// The onboarding UI should use this function:
+//
+//   uploadCertificate(userId, file)
+//
+// The underlying V1 database remains unchanged.
+// ─────────────────────────────────────────────────────────────
+
+export async function uploadCertificate(
+  userId: string,
+  file: File
+): Promise<string> {
+  return uploadMedicalCertificate(
+    userId,
+    file
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// DELETE MEDICAL CERTIFICATE
+// ─────────────────────────────────────────────────────────────
+
 export async function deleteMedicalCertificate(
   userId: string
-) {
+): Promise<void> {
+
+  if (!userId) {
+    throw new Error(
+      'Cannot delete certificate: user ID is missing.'
+    );
+  }
+
+  // Verify authentication.
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to delete a certificate.'
+    );
+  }
+
+  // Prevent deleting another user's certificate.
+  if (user.id !== userId) {
+    throw new Error(
+      'You are not authorized to delete this certificate.'
+    );
+  }
+
   const {
     data: files,
     error: listError,
@@ -1387,28 +1599,41 @@ export async function deleteMedicalCertificate(
     files &&
     files.length > 0
   ) {
-    const {
-      error,
-    } =
-      await supabase.storage
-        .from(
-          MEDICAL_CERTIFICATE_BUCKET
+    const filesToRemove =
+      files
+        .filter(
+          (file) =>
+            file.name !==
+            '.emptyFolderPlaceholder'
         )
-        .remove(
-          files.map(
-            (file) =>
-              `${userId}/${file.name}`
-          )
+        .map(
+          (file) =>
+            `${userId}/${file.name}`
         );
 
-    if (error) {
-      console.warn(
-        'Could not remove medical certificate files:',
-        error
-      );
+    if (
+      filesToRemove.length > 0
+    ) {
+      const {
+        error,
+      } =
+        await supabase.storage
+          .from(
+            MEDICAL_CERTIFICATE_BUCKET
+          )
+          .remove(
+            filesToRemove
+          );
+
+      if (error) {
+        throw new Error(
+          `Failed to delete medical certificate: ${error.message}`
+        );
+      }
     }
   }
 
+  // Clear certificate metadata.
   await upsertExpertProfile({
     id: userId,
 
@@ -1423,22 +1648,45 @@ export async function deleteMedicalCertificate(
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+// GENERIC ONBOARDING DELETE FUNCTION
+// ─────────────────────────────────────────────────────────────
+
+export async function deleteCertificate(
+  userId: string
+): Promise<void> {
+  return deleteMedicalCertificate(
+    userId
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// UPDATE MEDICAL CERTIFICATE STATUS
+//
+// Intended for admin/reviewer workflows.
+// ─────────────────────────────────────────────────────────────
+
 export async function updateMedicalCertificateStatus(
   expertId: string,
   status: VerificationStatus
 ): Promise<ExpertProfile> {
+
   const {
     data,
     error,
-  } = await supabase
-    .from('expert_profiles')
-    .update({
-      medical_certificate_status:
-        status,
-    })
-    .eq('id', expertId)
-    .select()
-    .single();
+  } =
+    await supabase
+      .from('expert_profiles')
+      .update({
+        medical_certificate_status:
+          status,
+      })
+      .eq(
+        'id',
+        expertId
+      )
+      .select()
+      .single();
 
   if (error) {
     throw new Error(
@@ -1451,9 +1699,25 @@ export async function updateMedicalCertificateStatus(
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// GET SIGNED MEDICAL CERTIFICATE URL
+//
+// The bucket is PRIVATE.
+//
+// This creates a temporary signed URL rather than exposing
+// the certificate publicly.
+// ─────────────────────────────────────────────────────────────
+
 export async function getMedicalCertificateUrl(
   certificatePath: string
 ): Promise<string> {
+
+  if (!certificatePath) {
+    throw new Error(
+      'Certificate path is missing.'
+    );
+  }
+
   const {
     data,
     error,
@@ -1480,6 +1744,18 @@ export async function getMedicalCertificateUrl(
   }
 
   return data.signedUrl;
+}
+
+// ─────────────────────────────────────────────────────────────
+// GENERIC ONBOARDING CERTIFICATE URL FUNCTION
+// ─────────────────────────────────────────────────────────────
+
+export async function getCertificateUrl(
+  certificatePath: string
+): Promise<string> {
+  return getMedicalCertificateUrl(
+    certificatePath
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1919,7 +2195,6 @@ export interface EvaluationAnswer {
   updated_at: string;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // GET OPEN EVALUATIONS
 // ─────────────────────────────────────────────────────────────
@@ -1944,7 +2219,6 @@ export async function getOpenEvaluations(): Promise<Evaluation[]> {
 
   return (data || []) as Evaluation[];
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // GET EVALUATION
@@ -1973,7 +2247,6 @@ export async function getEvaluation(
 
   return data as Evaluation;
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // GET EVALUATION QUESTIONS
@@ -2004,7 +2277,6 @@ export async function getEvaluationQuestions(
 
   return (data || []) as EvaluationQuestion[];
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // GET EXISTING SUBMISSION
@@ -2038,7 +2310,6 @@ export async function getEvaluationSubmission(
 
   return data as EvaluationSubmission | null;
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // START EVALUATION
@@ -2086,7 +2357,6 @@ export async function startEvaluation(
   return data as EvaluationSubmission;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // GET ANSWERS
 // ─────────────────────────────────────────────────────────────
@@ -2113,7 +2383,6 @@ export async function getEvaluationAnswers(
 
   return (data || []) as EvaluationAnswer[];
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // SAVE ANSWER
@@ -2161,7 +2430,6 @@ export async function saveEvaluationAnswer(
   return data as EvaluationAnswer;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // SUBMIT EVALUATION
 // ─────────────────────────────────────────────────────────────
@@ -2204,7 +2472,6 @@ export async function submitEvaluation(
 
   return data as EvaluationSubmission;
 }
-
 
 export async function getAllEvaluations(): Promise<Evaluation[]> {
   const {
@@ -2266,7 +2533,6 @@ export interface EvaluationQuestionReview {
   updated_at: string;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // CREATE OR GET REVIEW
 // ─────────────────────────────────────────────────────────────
@@ -2291,7 +2557,6 @@ export async function getEvaluationReview(
 
   return data as EvaluationReview | null;
 }
-
 
 export async function createEvaluationReview(
   submissionId: string,
@@ -2333,7 +2598,6 @@ export async function createEvaluationReview(
   return data as EvaluationReview;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // GET QUESTION REVIEWS
 // ─────────────────────────────────────────────────────────────
@@ -2364,7 +2628,6 @@ export async function getEvaluationQuestionReviews(
     data || []
   ) as EvaluationQuestionReview[];
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // SAVE QUESTION REVIEW
@@ -2415,7 +2678,6 @@ export async function saveEvaluationQuestionReview(
   return data as EvaluationQuestionReview;
 }
 
-
 // ─────────────────────────────────────────────────────────────
 // UPDATE OVERALL REVIEW
 // ─────────────────────────────────────────────────────────────
@@ -2459,7 +2721,6 @@ export async function updateEvaluationReview(
 
   return data as EvaluationReview;
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // GET SUBMITTED EVALUATIONS FOR ADMIN
