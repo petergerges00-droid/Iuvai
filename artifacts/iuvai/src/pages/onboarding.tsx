@@ -25,6 +25,7 @@ import {
   upsertExpertProfile,
   upsertCompanyProfile,
   getProfile,
+  uploadCertificate,
   AccountType,
 } from '@/lib/supabase';
 
@@ -62,6 +63,8 @@ import {
   CheckCircle2,
   ShieldCheck,
   Sparkles,
+  Upload,
+  FileCheck2,
 } from 'lucide-react';
 
 
@@ -191,6 +194,16 @@ export default function Onboarding() {
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  const [
+    certificateFile,
+    setCertificateFile,
+  ] = useState<File | null>(null);
+
+  const [
+    isUploadingCertificate,
+    setIsUploadingCertificate,
+  ] = useState(false);
 
 
   // ==========================================================
@@ -344,6 +357,80 @@ export default function Onboarding() {
 
 
   // ==========================================================
+  // CERTIFICATE FILE HANDLER
+  // ==========================================================
+
+  const handleCertificateChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+
+      toast({
+
+        variant:
+          'destructive',
+
+        title:
+          'Unsupported file type',
+
+        description:
+          'Please upload a PDF, JPG, PNG, or WebP file.',
+
+      });
+
+      event.target.value = '';
+
+      return;
+    }
+
+    if (
+      file.size >
+      10 * 1024 * 1024
+    ) {
+
+      toast({
+
+        variant:
+          'destructive',
+
+        title:
+          'File is too large',
+
+        description:
+          'Certificate files must be 10 MB or smaller.',
+
+      });
+
+      event.target.value = '';
+
+      return;
+    }
+
+    setCertificateFile(file);
+
+  };
+
+
+  // ==========================================================
   // VERIFY PROFILE AFTER SUBMISSION
   // ==========================================================
 
@@ -411,6 +498,29 @@ export default function Onboarding() {
         typeof expertSchema
       >
     ) => {
+
+      /*
+       * Certificate is required for Expert onboarding.
+       */
+
+      if (!certificateFile) {
+
+        toast({
+
+          variant:
+            'destructive',
+
+          title:
+            'Certificate required',
+
+          description:
+            'Please upload your professional certificate before completing your expert profile.',
+
+        });
+
+        return;
+      }
+
 
       setIsSubmitting(true);
 
@@ -485,6 +595,30 @@ export default function Onboarding() {
 
 
         // ------------------------------------------------------
+        // UPLOAD CERTIFICATE
+        // ------------------------------------------------------
+
+        setIsUploadingCertificate(
+          true
+        );
+
+        try {
+
+          await uploadCertificate(
+            user.id,
+            certificateFile
+          );
+
+        } finally {
+
+          setIsUploadingCertificate(
+            false
+          );
+
+        }
+
+
+        // ------------------------------------------------------
         // VERIFY DATABASE STATE
         // ------------------------------------------------------
 
@@ -529,6 +663,10 @@ export default function Onboarding() {
         });
 
       } finally {
+
+        setIsUploadingCertificate(
+          false
+        );
 
         setIsSubmitting(false);
 
@@ -1580,6 +1718,142 @@ export default function Onboarding() {
                         </section>
 
 
+                        <div className="h-px bg-border/60" />
+
+
+                        {/* =================================================
+                            CERTIFICATE
+                        ================================================== */}
+
+                        <section>
+
+                          <div className="mb-5">
+
+                            <h3 className="text-sm font-semibold">
+                              Professional verification
+                            </h3>
+
+                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                              Upload a certificate or credential that verifies your professional or academic qualification.
+                            </p>
+
+                          </div>
+
+
+                          <div className="rounded-xl border border-border/70 bg-muted/10 p-5">
+
+                            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+
+                              <div className="flex gap-4">
+
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary">
+
+                                  {certificateFile ? (
+
+                                    <FileCheck2 className="h-5 w-5" />
+
+                                  ) : (
+
+                                    <Upload className="h-5 w-5" />
+
+                                  )}
+
+                                </div>
+
+                                <div>
+
+                                  <div className="text-sm font-medium">
+
+                                    Professional Certificate
+
+                                  </div>
+
+                                  <p className="mt-1 max-w-md text-[11px] leading-5 text-muted-foreground">
+
+                                    PDF, JPG, PNG, or WebP. Maximum file size: 10 MB.
+
+                                  </p>
+
+                                </div>
+
+                              </div>
+
+
+                              <label className="inline-flex shrink-0 cursor-pointer">
+
+                                <Input
+                                  type="file"
+                                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                                  onChange={
+                                    handleCertificateChange
+                                  }
+                                  disabled={
+                                    isSubmitting ||
+                                    isUploadingCertificate
+                                  }
+                                  className="sr-only"
+                                />
+
+                                <span className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted">
+
+                                  <Upload className="mr-2 h-4 w-4" />
+
+                                  {certificateFile
+                                    ? 'Replace file'
+                                    : 'Choose file'}
+
+                                </span>
+
+                              </label>
+
+                            </div>
+
+
+                            {certificateFile && (
+
+                              <div className="mt-5 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+
+                                <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
+
+                                <div className="min-w-0 flex-1">
+
+                                  <div className="truncate text-xs font-medium">
+
+                                    {certificateFile.name}
+
+                                  </div>
+
+                                  <div className="mt-0.5 text-[10px] text-muted-foreground">
+
+                                    {(
+                                      certificateFile.size /
+                                      (1024 * 1024)
+                                    ).toFixed(2)}{' '}
+                                    MB
+
+                                  </div>
+
+                                </div>
+
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+
+                              </div>
+
+                            )}
+
+                          </div>
+
+                          <p className="mt-3 flex items-center gap-1.5 text-[10px] leading-5 text-muted-foreground">
+
+                            <ShieldCheck className="h-3 w-3 shrink-0" />
+
+                            Your certificate is stored securely and will be reviewed for verification.
+
+                          </p>
+
+                        </section>
+
+
                         {/* ACTIONS */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
@@ -1591,7 +1865,8 @@ export default function Onboarding() {
                               setStep(1)
                             }
                             disabled={
-                              isSubmitting
+                              isSubmitting ||
+                              isUploadingCertificate
                             }
                           >
 
@@ -1606,7 +1881,8 @@ export default function Onboarding() {
                             type="submit"
                             size="lg"
                             disabled={
-                              isSubmitting
+                              isSubmitting ||
+                              isUploadingCertificate
                             }
                             className="min-w-[180px]"
                           >
@@ -1616,7 +1892,9 @@ export default function Onboarding() {
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
-                                Creating profile...
+                                {isUploadingCertificate
+                                  ? 'Uploading certificate...'
+                                  : 'Creating profile...'}
                               </>
 
                             ) : (
