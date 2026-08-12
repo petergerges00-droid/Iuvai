@@ -25,9 +25,11 @@ import {
   upsertExpertProfile,
   upsertCompanyProfile,
   getProfile,
-  uploadCertificate,
   AccountType,
+  supabase,
 } from '@/lib/supabase';
+
+import IUVAILogo from '@/components/ui/iuvai-logo';
 
 import { Button } from '@/components/ui/button';
 
@@ -65,6 +67,7 @@ import {
   Sparkles,
   Upload,
   FileCheck2,
+  X,
 } from 'lucide-react';
 
 
@@ -169,6 +172,20 @@ const companySchema = z.object({
 
 
 // ============================================================
+// CONSTANTS
+// ============================================================
+
+const MAX_CERTIFICATE_SIZE =
+  10 * 1024 * 1024;
+
+const ALLOWED_CERTIFICATE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+];
+
+
+// ============================================================
 // COMPONENT
 // ============================================================
 
@@ -201,9 +218,14 @@ export default function Onboarding() {
   ] = useState<File | null>(null);
 
   const [
-    isUploadingCertificate,
-    setIsUploadingCertificate,
-  ] = useState(false);
+    certificateError,
+    setCertificateError,
+  ] = useState('');
+
+  const [
+    certificatePath,
+    setCertificatePath,
+  ] = useState<string | null>(null);
 
 
   // ==========================================================
@@ -211,17 +233,6 @@ export default function Onboarding() {
   // ==========================================================
 
   useEffect(() => {
-
-    /*
-     * IMPORTANT:
-     *
-     * Do not redirect while the onboarding form is being
-     * submitted.
-     *
-     * The profile state can temporarily represent the old
-     * database state while the upsert/refresh operation is
-     * still completing.
-     */
 
     if (isSubmitting) {
       return;
@@ -357,7 +368,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // CERTIFICATE FILE HANDLER
+  // CERTIFICATE SELECTION
   // ==========================================================
 
   const handleCertificateChange = (
@@ -367,35 +378,24 @@ export default function Onboarding() {
     const file =
       event.target.files?.[0];
 
+    setCertificateError('');
+
     if (!file) {
+      setCertificateFile(null);
       return;
     }
 
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-    ];
-
     if (
-      !allowedTypes.includes(
+      !ALLOWED_CERTIFICATE_TYPES.includes(
         file.type
       )
     ) {
 
-      toast({
+      setCertificateFile(null);
 
-        variant:
-          'destructive',
-
-        title:
-          'Unsupported file type',
-
-        description:
-          'Please upload a PDF, JPG, PNG, or WebP file.',
-
-      });
+      setCertificateError(
+        'Please upload a PDF, JPG, or PNG file.'
+      );
 
       event.target.value = '';
 
@@ -404,21 +404,14 @@ export default function Onboarding() {
 
     if (
       file.size >
-      10 * 1024 * 1024
+      MAX_CERTIFICATE_SIZE
     ) {
 
-      toast({
+      setCertificateFile(null);
 
-        variant:
-          'destructive',
-
-        title:
-          'File is too large',
-
-        description:
-          'Certificate files must be 10 MB or smaller.',
-
-      });
+      setCertificateError(
+        'Certificate file must be smaller than 10 MB.'
+      );
 
       event.target.value = '';
 
@@ -431,6 +424,78 @@ export default function Onboarding() {
 
 
   // ==========================================================
+  // REMOVE CERTIFICATE
+  // ==========================================================
+
+  const removeCertificate = () => {
+
+    setCertificateFile(null);
+
+    setCertificateError('');
+
+  };
+
+
+  // ==========================================================
+  // UPLOAD CERTIFICATE
+  // ==========================================================
+
+  const uploadCertificate =
+    async () => {
+
+      if (!certificateFile) {
+        return null;
+      }
+
+      /*
+       * Each expert gets their own folder.
+       *
+       * Example:
+       *
+       * certificates/
+       *   USER_ID/
+       *     timestamp-certificate.pdf
+       */
+
+      const extension =
+        certificateFile.name
+          .split('.')
+          .pop()
+          ?.toLowerCase() || 'pdf';
+
+      const filePath =
+        `${user.id}/${Date.now()}-certificate.${extension}`;
+
+
+      const {
+        error,
+      } = await supabase.storage
+        .from('certificates')
+        .upload(
+          filePath,
+          certificateFile,
+          {
+            cacheControl:
+              '3600',
+
+            upsert:
+              false,
+
+            contentType:
+              certificateFile.type,
+          }
+        );
+
+
+      if (error) {
+        throw error;
+      }
+
+      return filePath;
+    };
+
+
+  // ==========================================================
   // VERIFY PROFILE AFTER SUBMISSION
   // ==========================================================
 
@@ -439,17 +504,6 @@ export default function Onboarding() {
       expectedAccountType:
         AccountType
     ) => {
-
-      /*
-       * Fetch directly from Supabase.
-       *
-       * This is intentionally separate from the React
-       * profile state.
-       *
-       * The purpose is to verify that the database actually
-       * contains the newly-created account type before
-       * navigating away from onboarding.
-       */
 
       const savedProfile =
         await getProfile(
@@ -478,10 +532,6 @@ export default function Onboarding() {
         );
       }
 
-      /*
-       * Synchronize AuthProvider state as well.
-       */
-
       await refreshProfile();
 
       return savedProfile;
@@ -500,10 +550,14 @@ export default function Onboarding() {
     ) => {
 
       /*
-       * Certificate is required for Expert onboarding.
+       * Certificate is required for expert onboarding.
        */
 
       if (!certificateFile) {
+
+        setCertificateError(
+          'Please upload a certificate or qualification document.'
+        );
 
         toast({
 
@@ -514,7 +568,7 @@ export default function Onboarding() {
             'Certificate required',
 
           description:
-            'Please upload your professional certificate before completing your expert profile.',
+            'Please upload your qualification certificate before completing your profile.',
 
         });
 
@@ -595,27 +649,31 @@ export default function Onboarding() {
 
 
         // ------------------------------------------------------
-        // UPLOAD CERTIFICATE
+        // CERTIFICATE
         // ------------------------------------------------------
 
-        setIsUploadingCertificate(
-          true
+        const uploadedCertificatePath =
+          await uploadCertificate();
+
+        setCertificatePath(
+          uploadedCertificatePath
         );
 
-        try {
 
-          await uploadCertificate(
-            user.id,
-            certificateFile
-          );
-
-        } finally {
-
-          setIsUploadingCertificate(
-            false
-          );
-
-        }
+        /*
+         * IMPORTANT:
+         *
+         * The certificate path is now stored in Supabase
+         * Storage.
+         *
+         * To make the certificate permanently associated
+         * with the expert profile, your Supabase database
+         * should also contain a certificate_path column
+         * in the expert_profiles table.
+         *
+         * That column should then be added to
+         * upsertExpertProfile().
+         */
 
 
         // ------------------------------------------------------
@@ -663,10 +721,6 @@ export default function Onboarding() {
         });
 
       } finally {
-
-        setIsUploadingCertificate(
-          false
-        );
 
         setIsSubmitting(false);
 
@@ -827,32 +881,10 @@ export default function Onboarding() {
 
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
 
-          <button
-            type="button"
-            onClick={() =>
-              setLocation('/')
-            }
-            className="group flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80"
-          >
-
-            {/* IUVAI LOGO */}
-
-            <div className="relative h-8 w-8 shrink-0">
-
-              <div className="absolute left-0 top-0 h-6 w-6 rounded-full bg-primary" />
-
-              <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full border-2 border-primary bg-background" />
-
-              <div className="absolute left-[9px] top-[9px] h-2.5 w-2.5 rounded-full bg-primary-foreground" />
-
-            </div>
-
-            <span className="text-sm font-bold tracking-[0.22em] text-foreground">
-              IUVAI
-            </span>
-
-          </button>
-
+          <IUVAILogo
+            href="/"
+            className="transition-opacity hover:opacity-80"
+          />
 
           <div className="hidden items-center gap-2 sm:flex">
 
@@ -988,9 +1020,7 @@ export default function Onboarding() {
             >
 
 
-              {/* =================================================
-                  EXPERT
-              ================================================== */}
+              {/* EXPERT */}
 
               <button
                 type="button"
@@ -1072,9 +1102,7 @@ export default function Onboarding() {
               </button>
 
 
-              {/* =================================================
-                  COMPANY
-              ================================================== */}
+              {/* COMPANY */}
 
               <button
                 type="button"
@@ -1160,9 +1188,9 @@ export default function Onboarding() {
           )}
 
 
-          {/* ===================================================
+          {/* =================================================
               EXPERT FORM
-          ==================================================== */}
+          ================================================== */}
 
           {step === 2 &&
             accountType === 'expert' && (
@@ -1345,7 +1373,6 @@ export default function Onboarding() {
                           </div>
 
                           <div className="grid gap-5 sm:grid-cols-2">
-
 
                             <FormField
                               control={
@@ -1730,112 +1757,93 @@ export default function Onboarding() {
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              Professional verification
+                              Qualification verification
                             </h3>
 
                             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                              Upload a certificate or credential that verifies your professional or academic qualification.
+                              Upload a certificate or qualification document that supports your professional expertise.
                             </p>
 
                           </div>
 
 
-                          <div className="rounded-xl border border-border/70 bg-muted/10 p-5">
+                          <div className="rounded-xl border border-dashed border-border/80 bg-muted/10 p-5 transition-colors hover:border-primary/40">
 
-                            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                            {!certificateFile ? (
 
-                              <div className="flex gap-4">
+                              <label
+                                htmlFor="certificate-upload"
+                                className="flex cursor-pointer flex-col items-center justify-center py-7 text-center"
+                              >
 
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary">
+                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 text-primary">
 
-                                  {certificateFile ? (
-
-                                    <FileCheck2 className="h-5 w-5" />
-
-                                  ) : (
-
-                                    <Upload className="h-5 w-5" />
-
-                                  )}
+                                  <Upload className="h-5 w-5" />
 
                                 </div>
 
-                                <div>
-
-                                  <div className="text-sm font-medium">
-
-                                    Professional Certificate
-
-                                  </div>
-
-                                  <p className="mt-1 max-w-md text-[11px] leading-5 text-muted-foreground">
-
-                                    PDF, JPG, PNG, or WebP. Maximum file size: 10 MB.
-
-                                  </p>
-
+                                <div className="text-sm font-medium">
+                                  Upload certificate
                                 </div>
 
-                              </div>
+                                <div className="mt-1 text-xs text-muted-foreground">
+                                  PDF, JPG, or PNG · Maximum 10 MB
+                                </div>
 
-
-                              <label className="inline-flex shrink-0 cursor-pointer">
+                                <div className="mt-4 rounded-lg border border-border/60 bg-background px-4 py-2 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary">
+                                  Choose file
+                                </div>
 
                                 <Input
+                                  id="certificate-upload"
                                   type="file"
-                                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                   onChange={
                                     handleCertificateChange
-                                  }
-                                  disabled={
-                                    isSubmitting ||
-                                    isUploadingCertificate
                                   }
                                   className="sr-only"
                                 />
 
-                                <span className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted">
-
-                                  <Upload className="mr-2 h-4 w-4" />
-
-                                  {certificateFile
-                                    ? 'Replace file'
-                                    : 'Choose file'}
-
-                                </span>
-
                               </label>
 
-                            </div>
+                            ) : (
 
+                              <div className="flex items-center gap-4">
 
-                            {certificateFile && (
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
 
-                              <div className="mt-5 flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+                                  <FileCheck2 className="h-5 w-5" />
 
-                                <FileCheck2 className="h-4 w-4 shrink-0 text-primary" />
+                                </div>
 
                                 <div className="min-w-0 flex-1">
 
-                                  <div className="truncate text-xs font-medium">
-
+                                  <div className="truncate text-sm font-medium">
                                     {certificateFile.name}
-
                                   </div>
 
-                                  <div className="mt-0.5 text-[10px] text-muted-foreground">
-
-                                    {(
-                                      certificateFile.size /
-                                      (1024 * 1024)
-                                    ).toFixed(2)}{' '}
-                                    MB
-
+                                  <div className="mt-1 text-xs text-muted-foreground">
+                                    {(certificateFile.size / 1024 / 1024).toFixed(2)} MB
                                   </div>
 
                                 </div>
 
-                                <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={
+                                    removeCertificate
+                                  }
+                                  disabled={
+                                    isSubmitting
+                                  }
+                                  className="shrink-0"
+                                >
+
+                                  <X className="h-4 w-4" />
+
+                                </Button>
 
                               </div>
 
@@ -1843,11 +1851,20 @@ export default function Onboarding() {
 
                           </div>
 
-                          <p className="mt-3 flex items-center gap-1.5 text-[10px] leading-5 text-muted-foreground">
 
-                            <ShieldCheck className="h-3 w-3 shrink-0" />
+                          {certificateError && (
 
-                            Your certificate is stored securely and will be reviewed for verification.
+                            <p className="mt-2 text-xs text-destructive">
+                              {certificateError}
+                            </p>
+
+                          )}
+
+                          <p className="mt-3 flex items-start gap-2 text-[11px] leading-5 text-muted-foreground">
+
+                            <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+
+                            Your document is stored securely and is used only for expert verification.
 
                           </p>
 
@@ -1865,8 +1882,7 @@ export default function Onboarding() {
                               setStep(1)
                             }
                             disabled={
-                              isSubmitting ||
-                              isUploadingCertificate
+                              isSubmitting
                             }
                           >
 
@@ -1881,8 +1897,7 @@ export default function Onboarding() {
                             type="submit"
                             size="lg"
                             disabled={
-                              isSubmitting ||
-                              isUploadingCertificate
+                              isSubmitting
                             }
                             className="min-w-[180px]"
                           >
@@ -1892,9 +1907,7 @@ export default function Onboarding() {
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
-                                {isUploadingCertificate
-                                  ? 'Uploading certificate...'
-                                  : 'Creating profile...'}
+                                Creating profile...
                               </>
 
                             ) : (
@@ -1924,9 +1937,9 @@ export default function Onboarding() {
             )}
 
 
-          {/* ===================================================
+          {/* =================================================
               COMPANY FORM
-          ==================================================== */}
+          ================================================== */}
 
           {step === 2 &&
             accountType === 'company' && (
@@ -2354,6 +2367,7 @@ export default function Onboarding() {
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
+
                               </>
 
                             )}
