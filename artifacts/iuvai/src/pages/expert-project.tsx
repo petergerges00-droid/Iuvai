@@ -19,39 +19,13 @@ import {
 
 import AppLayout from '@/components/layout/app-layout';
 import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/lib/supabase';
+import {
+  getProject,
+  type Project,
+} from '@/lib/supabase';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-/*
-============================================================
-PROJECT TYPE
-============================================================
-*/
-
-interface Project {
-  id: string;
-  company_id: string;
-  title: string;
-  description: string | null;
-  project_type: string | null;
-  required_field: string | null;
-  required_skills: string[] | null;
-  experts_needed: number | null;
-  estimated_hours: number | null;
-  deadline: string | null;
-  budget: string | number | null;
-  status:
-    | 'draft'
-    | 'open'
-    | 'in_progress'
-    | 'completed'
-    | 'cancelled'
-    | string;
-  created_at: string;
-  updated_at?: string | null;
-}
 
 /*
 ============================================================
@@ -63,14 +37,19 @@ function getStatusLabel(status: string) {
   switch (status) {
     case 'draft':
       return 'Draft';
+
     case 'open':
       return 'Open';
+
     case 'in_progress':
       return 'In Progress';
+
     case 'completed':
       return 'Completed';
+
     case 'cancelled':
       return 'Cancelled';
+
     default:
       return status.replace(/_/g, ' ');
   }
@@ -148,6 +127,12 @@ export default function ExpertProject() {
 
   useEffect(() => {
     if (!user?.id || !projectId) {
+      setIsLoading(false);
+
+      if (!projectId) {
+        setError('Project ID is missing.');
+      }
+
       return;
     }
 
@@ -158,70 +143,37 @@ export default function ExpertProject() {
       setError(null);
 
       try {
-        const {
-          data,
-          error: projectError,
-        } = await supabase
-          .from('projects')
-          .select(
-            `
-              id,
-              company_id,
-              title,
-              description,
-              project_type,
-              required_field,
-              required_skills,
-              experts_needed,
-              estimated_hours,
-              deadline,
-              budget,
-              status,
-              created_at,
-              updated_at
-            `
-          )
-          .eq('id', projectId)
-          .eq('status', 'open')
-          .maybeSingle();
+        const data =
+          await getProject(projectId);
 
-        if (projectError) {
-          console.error(
-            'EXPERT PROJECT LOAD ERROR:',
-            projectError
-          );
-
-          if (mounted) {
-            setError(
-              'We could not load this project.'
-            );
-          }
-
+        if (!mounted) {
           return;
         }
 
         if (!data) {
-          if (mounted) {
-            setError(
-              'This project is no longer available or could not be found.'
-            );
-          }
+          setError(
+            'This project could not be found or is no longer available.'
+          );
+
+          setProject(null);
 
           return;
         }
 
-        if (mounted) {
-          setProject(data as Project);
-        }
+        setProject(data);
       } catch (err) {
         console.error(
-          'EXPERT PROJECT LOAD EXCEPTION:',
+          'EXPERT PROJECT LOAD ERROR:',
           err
         );
 
         if (mounted) {
+          setProject(null);
+
           setError(
-            'Something went wrong while loading the project.'
+            err instanceof Error
+              ? err.message
+              : 'We could not load this project.'
           );
         }
       } finally {
@@ -248,6 +200,7 @@ export default function ExpertProject() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
+
           <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
@@ -255,6 +208,7 @@ export default function ExpertProject() {
           <p className="text-sm text-muted-foreground">
             Initializing workspace...
           </p>
+
         </div>
       </div>
     );
@@ -270,6 +224,7 @@ export default function ExpertProject() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
+
           <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-border/60 bg-muted/20">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           </div>
@@ -281,6 +236,7 @@ export default function ExpertProject() {
           <p className="mt-2 text-sm text-muted-foreground">
             Preparing project details...
           </p>
+
         </div>
       </div>
     );
@@ -295,8 +251,11 @@ export default function ExpertProject() {
   if (error || !project) {
     return (
       <AppLayout title="Project">
+
         <div className="flex min-h-[70vh] items-center justify-center">
+
           <div className="max-w-md px-6 text-center">
+
             <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-destructive/20 bg-destructive/10">
               <AlertCircle className="h-5 w-5 text-destructive" />
             </div>
@@ -320,8 +279,11 @@ export default function ExpertProject() {
                 Back to projects
               </Link>
             </Button>
+
           </div>
+
         </div>
+
       </AppLayout>
     );
   }
@@ -343,6 +305,23 @@ export default function ExpertProject() {
   const statusClasses =
     getStatusClasses(project.status);
 
+  const expertise =
+    project.primary_field ||
+    'Not specified';
+
+  const specialization =
+    project.specialization ||
+    null;
+
+  const duration =
+    project.duration ||
+    'Not specified';
+
+  const compensation =
+    project.compensation ||
+    project.budget ||
+    'Not specified';
+
   /*
   ============================================================
   RENDER
@@ -351,6 +330,7 @@ export default function ExpertProject() {
 
   return (
     <AppLayout title="Project">
+
       <div className="space-y-6">
 
         {/* ==================================================
@@ -429,12 +409,20 @@ export default function ExpertProject() {
                   size="lg"
                   asChild
                   className="min-w-[170px]"
+                  disabled={
+                    project.status !== 'open'
+                  }
                 >
                   <Link
                     href={`/expert/projects/${project.id}/apply`}
                   >
-                    Apply to Project
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
+                    {project.status === 'open'
+                      ? 'Apply to Project'
+                      : 'Applications Closed'}
+
+                    {project.status === 'open' && (
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    )}
                   </Link>
                 </Button>
 
@@ -442,6 +430,7 @@ export default function ExpertProject() {
 
             </div>
           </div>
+
         </section>
 
         {/* ==================================================
@@ -466,38 +455,56 @@ export default function ExpertProject() {
               <ShieldCheck className="h-4 w-4 text-primary" />
             }
             label="Expertise"
-            value={
-              project.required_field ||
-              'Not specified'
-            }
+            value={expertise}
           />
 
           <ProjectStat
             icon={
               <Clock3 className="h-4 w-4 text-primary" />
             }
-            label="Estimated hours"
-            value={
-              project.estimated_hours != null
-                ? `${project.estimated_hours} hrs`
-                : 'Not specified'
-            }
+            label="Duration"
+            value={duration}
           />
 
           <ProjectStat
             icon={
               <DollarSign className="h-4 w-4 text-emerald-500" />
             }
-            label="Budget"
-            value={
-              project.budget != null &&
-              project.budget !== ''
-                ? String(project.budget)
-                : 'Not specified'
-            }
+            label="Compensation"
+            value={String(compensation)}
           />
 
         </div>
+
+        {/* ==================================================
+            SPECIALIZATION
+            ================================================== */}
+
+        {specialization && (
+          <section className="rounded-2xl border border-border/60 bg-card/40 p-5 sm:p-6">
+
+            <div className="flex items-start gap-4">
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+
+              <div>
+
+                <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                  Specialization
+                </p>
+
+                <p className="mt-1 text-sm font-semibold">
+                  {specialization}
+                </p>
+
+              </div>
+
+            </div>
+
+          </section>
+        )}
 
         {/* ==================================================
             MAIN CONTENT
@@ -512,6 +519,7 @@ export default function ExpertProject() {
           <section className="lg:col-span-2">
 
             <div className="mb-4">
+
               <p className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground/40">
                 Project requirements
               </p>
@@ -524,6 +532,7 @@ export default function ExpertProject() {
                 Review the requirements carefully before
                 submitting your application.
               </p>
+
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-card/40">
@@ -545,8 +554,7 @@ export default function ExpertProject() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold">
-                      {project.required_field ||
-                        'Not specified'}
+                      {expertise}
                     </p>
 
                   </div>
@@ -554,6 +562,22 @@ export default function ExpertProject() {
                 </div>
 
               </div>
+
+              {/* SPECIALIZATION */}
+
+              {specialization && (
+                <div className="border-b border-border/60 p-5 sm:p-6">
+
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                    Specialization
+                  </p>
+
+                  <p className="mt-2 text-sm font-medium">
+                    {specialization}
+                  </p>
+
+                </div>
+              )}
 
               {/* SKILLS */}
 
@@ -588,6 +612,7 @@ export default function ExpertProject() {
               </div>
 
             </div>
+
           </section>
 
           {/* ==================================================
@@ -597,6 +622,7 @@ export default function ExpertProject() {
           <section>
 
             <div className="mb-4">
+
               <p className="text-[9px] uppercase tracking-[0.22em] text-muted-foreground/40">
                 Project details
               </p>
@@ -604,6 +630,7 @@ export default function ExpertProject() {
               <h2 className="mt-1 text-xl font-semibold tracking-tight">
                 Timeline & compensation
               </h2>
+
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-card/40">
@@ -624,13 +651,8 @@ export default function ExpertProject() {
                   icon={
                     <Clock3 className="h-4 w-4" />
                   }
-                  label="Estimated work"
-                  value={
-                    project.estimated_hours !=
-                    null
-                      ? `${project.estimated_hours} hours`
-                      : 'Not specified'
-                  }
+                  label="Duration"
+                  value={duration}
                 />
 
                 <DetailRow
@@ -655,13 +677,10 @@ export default function ExpertProject() {
                   icon={
                     <DollarSign className="h-4 w-4" />
                   }
-                  label="Project budget"
-                  value={
-                    project.budget != null &&
-                    project.budget !== ''
-                      ? String(project.budget)
-                      : 'Not specified'
-                  }
+                  label="Compensation"
+                  value={String(
+                    compensation
+                  )}
                 />
 
               </div>
@@ -683,54 +702,59 @@ export default function ExpertProject() {
               </div>
 
             </div>
+
           </section>
+
         </div>
 
         {/* ==================================================
             APPLICATION CTA
             ================================================== */}
 
-        <section className="overflow-hidden rounded-2xl border border-primary/20 bg-primary/[0.035]">
+        {project.status === 'open' && (
+          <section className="overflow-hidden rounded-2xl border border-primary/20 bg-primary/[0.035]">
 
-          <div className="p-6 sm:p-8">
+            <div className="p-6 sm:p-8">
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
-              <div className="max-w-2xl">
+                <div className="max-w-2xl">
 
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+
+                  <h2 className="text-xl font-semibold tracking-tight">
+                    Think you're a good fit?
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Tell the company why your expertise is
+                    relevant to this project. Your application
+                    will be reviewed by the project team.
+                  </p>
+
                 </div>
 
-                <h2 className="text-xl font-semibold tracking-tight">
-                  Think you're a good fit?
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Tell the company why your expertise is
-                  relevant to this project. Your application
-                  will be reviewed by the project team.
-                </p>
+                <Button
+                  size="lg"
+                  asChild
+                  className="shrink-0"
+                >
+                  <Link
+                    href={`/expert/projects/${project.id}/apply`}
+                  >
+                    Apply to Project
+                    <ArrowUpRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
 
               </div>
 
-              <Button
-                size="lg"
-                asChild
-                className="shrink-0"
-              >
-                <Link
-                  href={`/expert/projects/${project.id}/apply`}
-                >
-                  Apply to Project
-                  <ArrowUpRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-
             </div>
 
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ==================================================
             FOOTER
@@ -751,6 +775,7 @@ export default function ExpertProject() {
         </div>
 
       </div>
+
     </AppLayout>
   );
 }
