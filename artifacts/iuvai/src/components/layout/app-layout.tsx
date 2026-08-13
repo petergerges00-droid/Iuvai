@@ -29,9 +29,6 @@ interface AppLayoutProps {
 ============================================================
 ADMIN ACCOUNT
 ============================================================
-
-Must match the admin ID in App.tsx.
-============================================================
 */
 
 const ADMIN_USER_ID =
@@ -109,7 +106,10 @@ export function AppLayout({
   ============================================================
   EXPERT NAVIGATION
 
-  These are now fully active.
+  All three items are fully active.
+
+  Dashboard:
+    /dashboard
 
   Assessments:
     /evaluations
@@ -182,32 +182,25 @@ export function AppLayout({
   /*
   ============================================================
   ACTIVE ROUTE
-
-  Dashboard gets exact matching.
-
-  Nested routes such as:
-
-    /expert/projects
-    /expert/projects/123
-    /expert/projects/123/workspace
-
-  will keep "Available Projects" highlighted.
-
-  Similarly:
-
-    /evaluations
-    /evaluations/123
-
-  will keep "Assessments" highlighted.
   ============================================================
   */
 
   const isNavItemActive = (
     path: string
   ) => {
+    /*
+    Dashboard should only be active on the
+    actual dashboard route.
+    */
+
     if (path === '/dashboard') {
       return location === '/dashboard';
     }
+
+    /*
+    Admin root should remain active for
+    admin child pages.
+    */
 
     if (path === '/admin') {
       return (
@@ -215,6 +208,11 @@ export function AppLayout({
         location.startsWith('/admin/')
       );
     }
+
+    /*
+    Company dashboard should remain active
+    for company dashboard child pages.
+    */
 
     if (path === '/company-dashboard') {
       return (
@@ -225,10 +223,119 @@ export function AppLayout({
       );
     }
 
+    /*
+    Expert routes:
+
+      /evaluations
+      /evaluations/123
+
+      /expert/projects
+      /expert/projects/123
+      /expert/projects/123/workspace
+    */
+
     return (
       location === path ||
       location.startsWith(`${path}/`)
     );
+  };
+
+  /*
+  ============================================================
+  NAVIGATION ITEM CLASS
+  ============================================================
+  */
+
+  const getNavItemClass = (
+    isActive: boolean
+  ) => {
+    if (isActive) {
+      return `
+        group
+        relative
+        flex
+        items-center
+        gap-3
+        rounded-xl
+        px-3
+        py-2.5
+        text-sm
+        font-medium
+        text-primary
+        bg-primary/10
+        transition-all
+      `;
+    }
+
+    /*
+    IMPORTANT:
+
+    These are NOT disabled anymore.
+
+    Previously:
+      text-muted-foreground
+
+    made Assessments and Available Projects
+    visually look unavailable.
+
+    They now use normal foreground text.
+    */
+
+    return `
+      group
+      relative
+      flex
+      items-center
+      gap-3
+      rounded-xl
+      px-3
+      py-2.5
+      text-sm
+      text-foreground/80
+      hover:bg-muted/50
+      hover:text-foreground
+      transition-all
+    `;
+  };
+
+  /*
+  ============================================================
+  MOBILE NAVIGATION ITEM CLASS
+  ============================================================
+  */
+
+  const getMobileNavItemClass = (
+    isActive: boolean
+  ) => {
+    if (isActive) {
+      return `
+        flex
+        items-center
+        gap-3
+        rounded-xl
+        px-4
+        py-3
+        text-sm
+        font-medium
+        text-primary
+        bg-primary/10
+        transition-colors
+      `;
+    }
+
+    return `
+      flex
+      items-center
+      gap-3
+      rounded-xl
+      px-4
+      py-3
+      text-sm
+      text-foreground/80
+      hover:bg-muted/50
+      hover:text-foreground
+      transition-colors
+    `;
   };
 
   /*
@@ -337,11 +444,9 @@ export function AppLayout({
                     onClick={() =>
                       setMobileOpen(false)
                     }
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
+                    className={getMobileNavItemClass(
                       isActive
-                        ? 'bg-primary/10 font-medium text-primary'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
+                    )}
                   >
 
                     <item.icon className="h-4 w-4" />
@@ -351,10 +456,10 @@ export function AppLayout({
                     </span>
 
                     <ChevronRight
-                      className={`ml-auto h-4 w-4 transition-opacity ${
+                      className={`ml-auto h-4 w-4 transition-all ${
                         isActive
                           ? 'opacity-40'
-                          : 'opacity-0 group-hover:opacity-40'
+                          : 'opacity-0 group-hover:translate-x-0.5 group-hover:opacity-40'
                       }`}
                     />
 
@@ -374,7 +479,7 @@ export function AppLayout({
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
                 location === '/settings'
                   ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
               }`}
             >
               <Settings className="h-4 w-4" />
@@ -465,11 +570,9 @@ export function AppLayout({
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+                  className={getNavItemClass(
                     isActive
-                      ? 'bg-primary/10 font-medium text-primary'
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                  }`}
+                  )}
                 >
 
                   {isActive && (
@@ -558,7 +661,7 @@ export function AppLayout({
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                 location === '/settings'
                   ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
               }`}
             >
               <Settings className="h-4 w-4" />
