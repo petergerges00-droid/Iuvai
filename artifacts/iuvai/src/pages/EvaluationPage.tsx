@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'wouter';
+
 import {
   getEvaluation,
   getEvaluationQuestions,
@@ -13,6 +15,18 @@ import {
   type EvaluationSubmission,
 } from '../lib/supabase';
 
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Info,
+  Loader2,
+  Send,
+} from 'lucide-react';
+
 interface Props {
   evaluationId: string;
   expertId: string;
@@ -22,6 +36,8 @@ export default function EvaluationPage({
   evaluationId,
   expertId,
 }: Props) {
+  const [, setLocation] = useLocation();
+
   const [evaluation, setEvaluation] =
     useState<Evaluation | null>(null);
 
@@ -49,18 +65,32 @@ export default function EvaluationPage({
   const [error, setError] =
     useState('');
 
-  // Keeps track of pending debounce timers.
+  /*
+  ============================================================
+  AUTOSAVE TIMERS
+  ============================================================
+  */
+
   const saveTimers = useRef<
-    Record<string, ReturnType<typeof setTimeout>>
+    Record<
+      string,
+      ReturnType<typeof setTimeout>
+    >
   >({});
+
+  /*
+  ============================================================
+  LOAD EVALUATION
+  ============================================================
+  */
 
   useEffect(() => {
     loadEvaluation();
 
     return () => {
-      Object.values(saveTimers.current).forEach(
-        clearTimeout
-      );
+      Object.values(
+        saveTimers.current
+      ).forEach(clearTimeout);
     };
   }, [evaluationId, expertId]);
 
@@ -75,7 +105,11 @@ export default function EvaluationPage({
         submissionData,
       ] = await Promise.all([
         getEvaluation(evaluationId),
-        getEvaluationQuestions(evaluationId),
+
+        getEvaluationQuestions(
+          evaluationId
+        ),
+
         getEvaluationSubmission(
           evaluationId,
           expertId
@@ -101,8 +135,12 @@ export default function EvaluationPage({
       setQuestions(questionData);
       setSubmission(submissionData);
 
-      // If the expert already started/submitted this
-      // evaluation, load their saved answers.
+      /*
+      ----------------------------------------------------------
+      LOAD EXISTING ANSWERS
+      ----------------------------------------------------------
+      */
+
       if (submissionData) {
         const existingAnswers =
           await getEvaluationAnswers(
@@ -115,8 +153,12 @@ export default function EvaluationPage({
         > = {};
 
         existingAnswers.forEach(
-          (answer: EvaluationAnswer) => {
-            answerMap[answer.question_id] =
+          (
+            answer: EvaluationAnswer
+          ) => {
+            answerMap[
+              answer.question_id
+            ] =
               answer.answer_text || '';
           }
         );
@@ -134,8 +176,16 @@ export default function EvaluationPage({
     }
   }
 
+  /*
+  ============================================================
+  START EVALUATION
+  ============================================================
+  */
+
   async function handleStartEvaluation() {
-    if (submission) return;
+    if (submission) {
+      return;
+    }
 
     try {
       setStarting(true);
@@ -159,11 +209,19 @@ export default function EvaluationPage({
     }
   }
 
+  /*
+  ============================================================
+  ANSWER CHANGE
+  ============================================================
+  */
+
   function handleAnswerChange(
     questionId: string,
     value: string
   ) {
-    if (!submission) return;
+    if (!submission) {
+      return;
+    }
 
     if (
       submission.status !==
@@ -177,38 +235,63 @@ export default function EvaluationPage({
       [questionId]: value,
     }));
 
-    // Clear previous timer for this question.
-    if (saveTimers.current[questionId]) {
+    /*
+    ----------------------------------------------------------
+    CLEAR PREVIOUS TIMER
+    ----------------------------------------------------------
+    */
+
+    if (
+      saveTimers.current[
+        questionId
+      ]
+    ) {
       clearTimeout(
-        saveTimers.current[questionId]
+        saveTimers.current[
+          questionId
+        ]
       );
     }
 
-    // Wait 600ms after the user stops typing.
-    saveTimers.current[questionId] =
-      setTimeout(async () => {
-        try {
-          setSaving(questionId);
+    /*
+    ----------------------------------------------------------
+    AUTOSAVE AFTER 600MS
+    ----------------------------------------------------------
+    */
 
-          await saveEvaluationAnswer(
-            submission.id,
-            questionId,
-            value
-          );
-        } catch (err) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Failed to save answer.'
-          );
-        } finally {
-          setSaving(null);
-        }
-      }, 600);
+    saveTimers.current[
+      questionId
+    ] = setTimeout(async () => {
+      try {
+        setSaving(questionId);
+
+        await saveEvaluationAnswer(
+          submission.id,
+          questionId,
+          value
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to save answer.'
+        );
+      } finally {
+        setSaving(null);
+      }
+    }, 600);
   }
 
+  /*
+  ============================================================
+  SUBMIT EVALUATION
+  ============================================================
+  */
+
   async function handleSubmit() {
-    if (!submission) return;
+    if (!submission) {
+      return;
+    }
 
     if (
       submission.status !==
@@ -220,13 +303,21 @@ export default function EvaluationPage({
     const unanswered =
       questions.filter(
         (question) =>
-          !answers[question.id]?.trim()
+          !answers[
+            question.id
+          ]?.trim()
       );
 
     if (unanswered.length > 0) {
       setError(
         `Please answer all questions before submitting. ${unanswered.length} question(s) remain.`
       );
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+
       return;
     }
 
@@ -235,13 +326,20 @@ export default function EvaluationPage({
         'Submit your evaluation? You will not be able to edit your answers afterward.'
       );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
       setSubmitting(true);
       setError('');
 
-      // Flush any pending autosaves before submission.
+      /*
+      ----------------------------------------------------------
+      FLUSH PENDING AUTOSAVES
+      ----------------------------------------------------------
+      */
+
       for (const question of questions) {
         const value =
           answers[question.id] || '';
@@ -252,6 +350,12 @@ export default function EvaluationPage({
           value
         );
       }
+
+      /*
+      ----------------------------------------------------------
+      SUBMIT
+      ----------------------------------------------------------
+      */
 
       const result =
         await submitEvaluation(
@@ -270,20 +374,52 @@ export default function EvaluationPage({
     }
   }
 
+  /*
+  ============================================================
+  LOADING
+  ============================================================
+  */
+
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl p-8">
-        Loading evaluation...
+      <div className="flex min-h-[500px] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-7 w-7 animate-spin text-primary" />
+
+          <p className="text-sm text-muted-foreground/60">
+            Loading assessment...
+          </p>
+        </div>
       </div>
     );
   }
 
+  /*
+  ============================================================
+  FATAL ERROR
+  ============================================================
+  */
+
   if (error && !evaluation) {
     return (
-      <div className="mx-auto max-w-3xl p-8">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
-          {error}
+      <div className="mx-auto max-w-3xl">
+
+        <div className="flex items-start gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
+
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+
+          <div>
+            <p className="text-sm font-medium text-destructive">
+              Unable to load assessment
+            </p>
+
+            <p className="mt-1 text-sm text-destructive/70">
+              {error}
+            </p>
+          </div>
+
         </div>
+
       </div>
     );
   }
@@ -293,265 +429,679 @@ export default function EvaluationPage({
   }
 
   /*
-   * ─────────────────────────────────────────────
-   * ALREADY SUBMITTED
-   * ─────────────────────────────────────────────
-   */
+  ============================================================
+  CALCULATED STATE
+  ============================================================
+  */
+
+  const answeredCount =
+    questions.filter(
+      (question) =>
+        answers[
+          question.id
+        ]?.trim()
+    ).length;
+
+  const progress =
+    questions.length > 0
+      ? Math.round(
+          (answeredCount /
+            questions.length) *
+            100
+        )
+      : 0;
+
+  /*
+  ============================================================
+  ALREADY SUBMITTED
+  ============================================================
+  */
 
   if (
     submission?.status ===
     'submitted'
   ) {
     return (
-      <div className="mx-auto max-w-2xl p-8">
-        <div className="rounded-2xl border p-8 text-center">
-          <div className="mb-4 text-4xl">
-            ✓
+      <div className="mx-auto max-w-2xl">
+
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-white/[0.015] p-8 text-center sm:p-12">
+
+          {/* Glow */}
+
+          <div className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.08] blur-3xl" />
+
+          <div className="relative">
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08]">
+
+              <CheckCircle2 className="h-7 w-7 text-emerald-500" />
+
+            </div>
+
+            <h1 className="mt-6 text-2xl font-semibold tracking-tight">
+              Assessment submitted
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted-foreground/65">
+              Thank you. Your responses have
+              been submitted for review by
+              IUVAI.
+            </p>
+
+            <div className="mt-6 rounded-xl border border-border/50 bg-background/40 p-4 text-left">
+
+              <div className="flex items-start gap-3">
+
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary/70" />
+
+                <p className="text-xs leading-5 text-muted-foreground/60">
+                  Your submission is now under
+                  review. You will be contacted
+                  if your expertise is selected
+                  for a relevant project.
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setLocation(
+                  '/evaluations'
+                )
+              }
+              className="mt-7 inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-muted/50"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Back to assessments
+            </button>
+
           </div>
 
-          <h1 className="text-2xl font-semibold">
-            Evaluation submitted
-          </h1>
-
-          <p className="mt-3 text-gray-500">
-            Thank you. Your responses have
-            been submitted for review by
-            IUVAI.
-          </p>
-
-          <div className="mt-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-            Your submission is now under
-            review.
-          </div>
         </div>
+
       </div>
     );
   }
 
   /*
-   * ─────────────────────────────────────────────
-   * EVALUATION INTRO / START SCREEN
-   * ─────────────────────────────────────────────
-   */
+  ============================================================
+  INTRO / START SCREEN
+  ============================================================
+  */
 
   if (!submission) {
     return (
-      <div className="mx-auto max-w-3xl p-6">
-        <div className="space-y-8">
-          <header>
-            <h1 className="text-3xl font-semibold">
-              {evaluation.title}
-            </h1>
+      <div className="mx-auto max-w-4xl space-y-7">
 
-            {evaluation.description && (
-              <p className="mt-3 text-gray-600">
-                {evaluation.description}
-              </p>
-            )}
-          </header>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-          {evaluation.instructions && (
-            <section className="rounded-xl border p-6">
-              <h2 className="font-semibold">
+        <header>
+
+          <button
+            type="button"
+            onClick={() =>
+              setLocation(
+                '/evaluations'
+              )
+            }
+            className="mb-5 inline-flex items-center gap-2 text-xs text-muted-foreground/50 transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to assessments
+          </button>
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
+
+            <div className="min-w-0">
+
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {evaluation.title}
+              </h1>
+
+              {evaluation.description && (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground/65">
+                  {evaluation.description}
+                </p>
+              )}
+
+            </div>
+
+          </div>
+
+        </header>
+
+        {/* ==================================================
+            INSTRUCTIONS
+            ================================================== */}
+
+        {evaluation.instructions && (
+          <section className="rounded-2xl border border-border/60 bg-white/[0.015] p-6">
+
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50">
+                <Info className="h-4 w-4 text-primary/70" />
+              </div>
+
+              <h2 className="text-sm font-semibold">
                 Instructions
               </h2>
 
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
-                {evaluation.instructions}
-              </p>
-            </section>
-          )}
+            </div>
 
-          <section className="rounded-xl border bg-gray-50 p-6">
-            <h2 className="font-semibold">
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground/65">
+              {evaluation.instructions}
+            </p>
+
+          </section>
+        )}
+
+        {/* ==================================================
+            BEFORE YOU BEGIN
+            ================================================== */}
+
+        <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-white/[0.015] p-6">
+
+          <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-primary/[0.04] blur-3xl" />
+
+          <div className="relative">
+
+            <h2 className="text-sm font-semibold">
               Before you begin
             </h2>
 
-            <ul className="mt-4 space-y-2 text-sm text-gray-600">
-              <li>
-                • There are {questions.length}{' '}
-                questions.
-              </li>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
 
-              <li>
-                • Your answers should be based
-                on your professional expertise.
-              </li>
+              <div className="rounded-xl border border-border/50 bg-background/30 p-4">
 
-              <li>
-                • Your responses will be
-                reviewed by IUVAI.
-              </li>
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-muted-foreground/50">
+                      Questions
+                    </p>
+
+                    <p className="mt-0.5 text-sm font-medium">
+                      {questions.length}
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
 
               {evaluation.time_limit_minutes && (
-                <li>
-                  • Time limit:{' '}
-                  {
-                    evaluation.time_limit_minutes
-                  }{' '}
-                  minutes.
-                </li>
+                <div className="rounded-xl border border-border/50 bg-background/30 p-4">
+
+                  <div className="flex items-center gap-3">
+
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Clock className="h-4 w-4" />
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground/50">
+                        Time limit
+                      </p>
+
+                      <p className="mt-0.5 text-sm font-medium">
+                        {
+                          evaluation.time_limit_minutes
+                        }{' '}
+                        minutes
+                      </p>
+                    </div>
+
+                  </div>
+
+                </div>
               )}
-            </ul>
-          </section>
 
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {error}
+              <div className="rounded-xl border border-border/50 bg-background/30 p-4 sm:col-span-2">
+
+                <div className="flex items-start gap-3">
+
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Info className="h-4 w-4" />
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-muted-foreground/50">
+                      Purpose
+                    </p>
+
+                    <p className="mt-0.5 text-sm leading-6 text-muted-foreground/70">
+                      Your answers should be based
+                      on your professional expertise
+                      and will be reviewed by IUVAI.
+                    </p>
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
-          )}
 
-          <div className="flex justify-end">
-            <button
-              onClick={
-                handleStartEvaluation
-              }
-              disabled={starting}
-              className="rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-            >
-              {starting
-                ? 'Starting...'
-                : 'Start evaluation'}
-            </button>
           </div>
+
+        </section>
+
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+
+            <p className="text-sm text-destructive/80">
+              {error}
+            </p>
+
+          </div>
+        )}
+
+        {/* ==================================================
+            START
+            ================================================== */}
+
+        <div className="flex justify-end">
+
+          <button
+            type="button"
+            onClick={
+              handleStartEvaluation
+            }
+            disabled={starting}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(99,102,241,0.18)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+
+            {starting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Starting...
+              </>
+            ) : (
+              <>
+                Start assessment
+                <ArrowRight className="h-3.5 w-3.5" />
+              </>
+            )}
+
+          </button>
+
         </div>
+
       </div>
     );
   }
 
   /*
-   * ─────────────────────────────────────────────
-   * ACTIVE EVALUATION
-   * ─────────────────────────────────────────────
-   */
+  ============================================================
+  ACTIVE EVALUATION
+  ============================================================
+  */
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 p-6">
+    <div className="mx-auto max-w-4xl space-y-7">
+
+      {/* ======================================================
+          HEADER
+          ====================================================== */}
+
       <header>
-        <h1 className="text-3xl font-semibold">
-          {evaluation.title}
-        </h1>
 
-        {evaluation.description && (
-          <p className="mt-3 text-gray-600">
-            {evaluation.description}
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={() =>
+            setLocation(
+              '/evaluations'
+            )
+          }
+          className="mb-5 inline-flex items-center gap-2 text-xs text-muted-foreground/50 transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to assessments
+        </button>
 
-        {evaluation.time_limit_minutes && (
-          <div className="mt-4 rounded-lg bg-gray-50 p-3 text-sm">
-            Time limit:{' '}
-            {evaluation.time_limit_minutes}{' '}
-            minutes
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+
+          <div className="flex items-start gap-4">
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
+
+            <div>
+
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {evaluation.title}
+              </h1>
+
+              {evaluation.description && (
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground/65">
+                  {evaluation.description}
+                </p>
+              )}
+
+            </div>
+
           </div>
-        )}
+
+          {evaluation.time_limit_minutes && (
+            <div className="flex shrink-0 items-center gap-2 rounded-full border border-border/60 bg-background/40 px-3 py-1.5">
+
+              <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
+
+              <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground/60">
+                {
+                  evaluation.time_limit_minutes
+                }{' '}
+                min
+              </span>
+
+            </div>
+          )}
+
+        </div>
+
       </header>
 
-      {evaluation.instructions && (
-        <section className="rounded-xl border p-5">
-          <h2 className="font-semibold">
-            Instructions
-          </h2>
+      {/* ======================================================
+          PROGRESS
+          ====================================================== */}
 
-          <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600">
+      <div className="rounded-2xl border border-border/60 bg-white/[0.015] p-4">
+
+        <div className="flex items-center justify-between">
+
+          <span className="text-xs font-medium text-muted-foreground/60">
+            Assessment progress
+          </span>
+
+          <span className="text-xs font-medium text-primary">
+            {answeredCount} / {questions.length}
+          </span>
+
+        </div>
+
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted/40">
+
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+
+        </div>
+
+        <div className="mt-2 text-[10px] text-muted-foreground/40">
+          {progress}% complete
+        </div>
+
+      </div>
+
+      {/* ======================================================
+          INSTRUCTIONS
+          ====================================================== */}
+
+      {evaluation.instructions && (
+        <section className="rounded-2xl border border-border/60 bg-white/[0.015] p-5">
+
+          <div className="flex items-center gap-3">
+
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-background/50">
+              <Info className="h-4 w-4 text-primary/70" />
+            </div>
+
+            <h2 className="text-sm font-semibold">
+              Instructions
+            </h2>
+
+          </div>
+
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground/65">
             {evaluation.instructions}
           </p>
+
         </section>
       )}
 
+      {/* ======================================================
+          ERROR
+          ====================================================== */}
+
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+
+          <p className="text-sm text-destructive/80">
+            {error}
+          </p>
+
         </div>
       )}
 
-      <div className="space-y-6">
+      {/* ======================================================
+          QUESTIONS
+          ====================================================== */}
+
+      <div className="space-y-5">
+
         {questions.map(
-          (question, index) => (
-            <section
-              key={question.id}
-              className="rounded-xl border p-6"
-            >
-              <div className="mb-4 font-medium leading-6">
-                {index + 1}.{' '}
-                {question.prompt}
-              </div>
+          (
+            question,
+            index
+          ) => {
 
-              {question.context && (
-                <div className="mb-4 whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                  {question.context}
-                </div>
-              )}
+            const answer =
+              answers[
+                question.id
+              ] || '';
 
-              {question.response_type ===
-              'text' ? (
-                <input
-                  className="w-full rounded-lg border p-3 outline-none focus:border-black"
-                  value={
-                    answers[question.id] ||
-                    ''
-                  }
-                  onChange={(e) =>
-                    handleAnswerChange(
-                      question.id,
-                      e.target.value
-                    )
-                  }
-                  placeholder="Your answer..."
+            const isAnswered =
+              answer.trim().length > 0;
+
+            return (
+              <section
+                key={question.id}
+                className={`group relative overflow-hidden rounded-2xl border bg-white/[0.015] p-6 transition-all duration-300 ${
+                  isAnswered
+                    ? 'border-border/60'
+                    : 'border-border/50'
+                }`}
+              >
+
+                {/* Question accent */}
+
+                <div
+                  className={`absolute left-0 top-0 h-full w-[2px] transition-colors ${
+                    isAnswered
+                      ? 'bg-primary/50'
+                      : 'bg-border/40'
+                  }`}
                 />
-              ) : (
-                <textarea
-                  className="min-h-40 w-full resize-y rounded-lg border p-3 leading-6 outline-none focus:border-black"
-                  value={
-                    answers[question.id] ||
-                    ''
-                  }
-                  onChange={(e) =>
-                    handleAnswerChange(
-                      question.id,
-                      e.target.value
-                    )
-                  }
-                  placeholder="Write your answer..."
-                />
-              )}
 
-              {saving === question.id && (
-                <div className="mt-2 text-xs text-gray-400">
-                  Saving...
+                {/* ==================================================
+                    QUESTION HEADER
+                    ================================================== */}
+
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/50 text-xs font-semibold text-muted-foreground/60">
+                    {index + 1}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+
+                      <p className="text-sm font-medium leading-6">
+                        {question.prompt}
+                      </p>
+
+                      {isAnswered && (
+                        <span className="flex shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-[0.08em] text-emerald-500/80">
+
+                          <CheckCircle2 className="h-3 w-3" />
+
+                          Answered
+
+                        </span>
+                      )}
+
+                    </div>
+
+                    {/* ==================================================
+                        CONTEXT
+                        ================================================== */}
+
+                    {question.context && (
+                      <div className="mt-4 whitespace-pre-wrap rounded-xl border border-border/50 bg-background/40 p-4 text-sm leading-6 text-muted-foreground/60">
+                        {question.context}
+                      </div>
+                    )}
+
+                    {/* ==================================================
+                        RESPONSE
+                        ================================================== */}
+
+                    <div className="mt-5">
+
+                      {question.response_type ===
+                      'text' ? (
+
+                        <input
+                          type="text"
+                          value={answer}
+                          onChange={(e) =>
+                            handleAnswerChange(
+                              question.id,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Your answer..."
+                          className="w-full rounded-xl border border-border/60 bg-background/40 px-4 py-3 text-sm outline-none transition-all placeholder:text-muted-foreground/30 focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                        />
+
+                      ) : (
+
+                        <textarea
+                          value={answer}
+                          onChange={(e) =>
+                            handleAnswerChange(
+                              question.id,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Write your answer..."
+                          className="min-h-[180px] w-full resize-y rounded-xl border border-border/60 bg-background/40 px-4 py-3 text-sm leading-6 outline-none transition-all placeholder:text-muted-foreground/30 focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                        />
+
+                      )}
+
+                    </div>
+
+                    {/* ==================================================
+                        SAVING
+                        ================================================== */}
+
+                    {saving ===
+                      question.id && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground/40">
+
+                        <Loader2 className="h-3 w-3 animate-spin" />
+
+                        Saving...
+
+                      </div>
+                    )}
+
+                  </div>
+
                 </div>
-              )}
-            </section>
-          )
+
+              </section>
+            );
+          }
         )}
+
       </div>
 
-      <div className="flex items-center justify-between border-t pt-6">
-        <div className="text-sm text-gray-500">
-          {
-            questions.filter(
-              (question) =>
-                answers[
-                  question.id
-                ]?.trim()
-            ).length
-          }{' '}
-          of {questions.length} answered
+      {/* ======================================================
+          SUBMISSION FOOTER
+          ====================================================== */}
+
+      <div className="sticky bottom-4 z-10">
+
+        <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/90 p-4 shadow-xl shadow-black/5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+
+          <div>
+
+            <div className="flex items-center gap-2">
+
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+
+              <p className="text-xs font-medium">
+                {answeredCount} of{' '}
+                {questions.length}{' '}
+                answered
+              </p>
+
+            </div>
+
+            <p className="mt-1 text-[10px] text-muted-foreground/40">
+              All questions must be answered
+              before submission.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            disabled={
+              submitting ||
+              questions.length === 0
+            }
+            onClick={handleSubmit}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(99,102,241,0.18)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+
+            {submitting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="h-3.5 w-3.5" />
+                Submit assessment
+              </>
+            )}
+
+          </button>
+
         </div>
 
-        <button
-          disabled={
-            submitting ||
-            questions.length === 0
-          }
-          onClick={handleSubmit}
-          className="rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-        >
-          {submitting
-            ? 'Submitting...'
-            : 'Submit evaluation'}
-        </button>
       </div>
+
     </div>
   );
 }
