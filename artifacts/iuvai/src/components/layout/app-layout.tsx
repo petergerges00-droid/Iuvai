@@ -88,6 +88,19 @@ export function AppLayout({
     },
   ];
 
+  /*
+  ------------------------------------------------------------
+  EXPERT NAVIGATION
+  ------------------------------------------------------------
+
+  Assessments and Available Projects are now active.
+
+  These routes point to the existing expert pages:
+    /expert-evaluations
+    /expert-projects
+  ------------------------------------------------------------
+  */
+
   const expertNavItems = [
     {
       name: 'Dashboard',
@@ -96,15 +109,13 @@ export function AppLayout({
     },
     {
       name: 'Assessments',
-      path: '/dashboard',
+      path: '/expert-evaluations',
       icon: FileText,
-      disabled: true,
     },
     {
       name: 'Available Projects',
-      path: '/dashboard',
+      path: '/expert-projects',
       icon: Briefcase,
-      disabled: true,
     },
   ];
 
@@ -150,6 +161,14 @@ export function AppLayout({
     : isExpert
       ? '/dashboard'
       : '/company-dashboard';
+
+  /*
+  ============================================================
+  CURRENT PATH
+  ============================================================
+  */
+
+  const [location] = useLocation();
 
   /*
   ============================================================
@@ -244,41 +263,50 @@ export function AppLayout({
 
             <nav className="space-y-1">
 
-              {navItems.map((item) => (
-                <div key={item.name}>
+              {navItems.map((item) => {
+                const isActive =
+                  location === item.path;
 
-                  {item.disabled ? (
-                    <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground/40">
+                return (
+                  <div key={item.name}>
 
-                      <item.icon className="h-4 w-4" />
+                    {item.disabled ? (
+                      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground/40">
 
-                      {item.name}
+                        <item.icon className="h-4 w-4" />
 
-                      <span className="ml-auto text-[9px] uppercase tracking-widest">
-                        Soon
-                      </span>
+                        {item.name}
 
-                    </div>
-                  ) : (
-                    <Link
-                      href={item.path}
-                      onClick={() =>
-                        setMobileOpen(false)
-                      }
-                      className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary"
-                    >
+                        <span className="ml-auto text-[9px] uppercase tracking-widest">
+                          Soon
+                        </span>
 
-                      <item.icon className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.path}
+                        onClick={() =>
+                          setMobileOpen(false)
+                        }
+                        className={
+                          isActive
+                            ? 'flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary'
+                            : 'flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground'
+                        }
+                      >
 
-                      {item.name}
+                        <item.icon className="h-4 w-4" />
 
-                      <ChevronRight className="ml-auto h-4 w-4" />
+                        {item.name}
 
-                    </Link>
-                  )}
+                        <ChevronRight className="ml-auto h-4 w-4" />
 
-                </div>
-              ))}
+                      </Link>
+                    )}
+
+                  </div>
+                );
+              })}
 
             </nav>
 
@@ -369,40 +397,57 @@ export function AppLayout({
 
           <nav className="space-y-1">
 
-            {navItems.map((item) => (
-              <div key={item.name}>
+            {navItems.map((item) => {
+              const isActive =
+                location === item.path;
 
-                {item.disabled ? (
-                  <div className="group flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground/35">
+              return (
+                <div key={item.name}>
 
-                    <item.icon className="h-4 w-4" />
+                  {item.disabled ? (
+                    <div className="group flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground/35">
 
-                    <span>{item.name}</span>
+                      <item.icon className="h-4 w-4" />
 
-                    <span className="ml-auto text-[8px] uppercase tracking-widest opacity-0 transition-opacity group-hover:opacity-100">
-                      Soon
-                    </span>
+                      <span>{item.name}</span>
 
-                  </div>
-                ) : (
-                  <Link
-                    href={item.path}
-                    className="group relative flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/15"
-                  >
+                      <span className="ml-auto text-[8px] uppercase tracking-widest opacity-0 transition-opacity group-hover:opacity-100">
+                        Soon
+                      </span>
 
-                    <div className="absolute -left-[17px] h-5 w-[2px] rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.path}
+                      className={
+                        isActive
+                          ? 'group relative flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/15'
+                          : 'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground'
+                      }
+                    >
 
-                    <item.icon className="h-4 w-4" />
+                      {isActive && (
+                        <div className="absolute -left-[17px] h-5 w-[2px] rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                      )}
 
-                    <span>{item.name}</span>
+                      <item.icon className="h-4 w-4" />
 
-                    <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5" />
+                      <span>{item.name}</span>
 
-                  </Link>
-                )}
+                      <ChevronRight
+                        className={
+                          isActive
+                            ? 'ml-auto h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5'
+                            : 'ml-auto h-3.5 w-3.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-40'
+                        }
+                      />
 
-              </div>
-            ))}
+                    </Link>
+                  )}
+
+                </div>
+              );
+            })}
 
           </nav>
 
