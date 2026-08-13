@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { IUVAILogo } from '@/components/ui/iuvai-logo';
+
 import {
   LogOut,
   Settings,
@@ -14,6 +15,7 @@ import {
   Circle,
   Users,
 } from 'lucide-react';
+
 import { signOut } from '@/lib/supabase';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -27,6 +29,7 @@ interface AppLayoutProps {
 ============================================================
 ADMIN ACCOUNT
 ============================================================
+
 Must match the admin ID in App.tsx.
 ============================================================
 */
@@ -34,15 +37,29 @@ Must match the admin ID in App.tsx.
 const ADMIN_USER_ID =
   '0f29b27d-45b6-4377-9242-e983f95039af';
 
+/*
+============================================================
+APP LAYOUT
+============================================================
+*/
+
 export function AppLayout({
   children,
   title,
 }: AppLayoutProps) {
   const { profile, user } = useAuth();
-  const [, setLocation] = useLocation();
+
+  const [location, setLocation] =
+    useLocation();
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
+
+  /*
+  ============================================================
+  SIGN OUT
+  ============================================================
+  */
 
   const handleSignOut = async () => {
     await signOut();
@@ -89,16 +106,17 @@ export function AppLayout({
   ];
 
   /*
-  ------------------------------------------------------------
+  ============================================================
   EXPERT NAVIGATION
-  ------------------------------------------------------------
 
-  Assessments and Available Projects are now active.
+  These are now fully active.
 
-  These routes point to the existing expert pages:
-    /expert-evaluations
-    /expert-projects
-  ------------------------------------------------------------
+  Assessments:
+    /evaluations
+
+  Available Projects:
+    /expert/projects
+  ============================================================
   */
 
   const expertNavItems = [
@@ -109,12 +127,12 @@ export function AppLayout({
     },
     {
       name: 'Assessments',
-      path: '/expert-evaluations',
+      path: '/evaluations',
       icon: FileText,
     },
     {
       name: 'Available Projects',
-      path: '/expert-projects',
+      path: '/expert/projects',
       icon: Briefcase,
     },
   ];
@@ -134,7 +152,6 @@ export function AppLayout({
       name: 'Active Projects',
       path: '/company-dashboard',
       icon: Briefcase,
-      disabled: true,
     },
   ];
 
@@ -164,11 +181,55 @@ export function AppLayout({
 
   /*
   ============================================================
-  CURRENT PATH
+  ACTIVE ROUTE
+
+  Dashboard gets exact matching.
+
+  Nested routes such as:
+
+    /expert/projects
+    /expert/projects/123
+    /expert/projects/123/workspace
+
+  will keep "Available Projects" highlighted.
+
+  Similarly:
+
+    /evaluations
+    /evaluations/123
+
+  will keep "Assessments" highlighted.
   ============================================================
   */
 
-  const [location] = useLocation();
+  const isNavItemActive = (
+    path: string
+  ) => {
+    if (path === '/dashboard') {
+      return location === '/dashboard';
+    }
+
+    if (path === '/admin') {
+      return (
+        location === '/admin' ||
+        location.startsWith('/admin/')
+      );
+    }
+
+    if (path === '/company-dashboard') {
+      return (
+        location === '/company-dashboard' ||
+        location.startsWith(
+          '/company-dashboard/'
+        )
+      );
+    }
+
+    return (
+      location === path ||
+      location.startsWith(`${path}/`)
+    );
+  };
 
   /*
   ============================================================
@@ -265,46 +326,39 @@ export function AppLayout({
 
               {navItems.map((item) => {
                 const isActive =
-                  location === item.path;
+                  isNavItemActive(
+                    item.path
+                  );
 
                 return (
-                  <div key={item.name}>
+                  <Link
+                    key={item.name}
+                    href={item.path}
+                    onClick={() =>
+                      setMobileOpen(false)
+                    }
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
+                      isActive
+                        ? 'bg-primary/10 font-medium text-primary'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    }`}
+                  >
 
-                    {item.disabled ? (
-                      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground/40">
+                    <item.icon className="h-4 w-4" />
 
-                        <item.icon className="h-4 w-4" />
+                    <span>
+                      {item.name}
+                    </span>
 
-                        {item.name}
+                    <ChevronRight
+                      className={`ml-auto h-4 w-4 transition-opacity ${
+                        isActive
+                          ? 'opacity-40'
+                          : 'opacity-0 group-hover:opacity-40'
+                      }`}
+                    />
 
-                        <span className="ml-auto text-[9px] uppercase tracking-widest">
-                          Soon
-                        </span>
-
-                      </div>
-                    ) : (
-                      <Link
-                        href={item.path}
-                        onClick={() =>
-                          setMobileOpen(false)
-                        }
-                        className={
-                          isActive
-                            ? 'flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 text-sm font-medium text-primary'
-                            : 'flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground'
-                        }
-                      >
-
-                        <item.icon className="h-4 w-4" />
-
-                        {item.name}
-
-                        <ChevronRight className="ml-auto h-4 w-4" />
-
-                      </Link>
-                    )}
-
-                  </div>
+                  </Link>
                 );
               })}
 
@@ -317,7 +371,11 @@ export function AppLayout({
               onClick={() =>
                 setMobileOpen(false)
               }
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
+                location === '/settings'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              }`}
             >
               <Settings className="h-4 w-4" />
               Settings
@@ -399,53 +457,40 @@ export function AppLayout({
 
             {navItems.map((item) => {
               const isActive =
-                location === item.path;
+                isNavItemActive(
+                  item.path
+                );
 
               return (
-                <div key={item.name}>
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+                    isActive
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  }`}
+                >
 
-                  {item.disabled ? (
-                    <div className="group flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground/35">
-
-                      <item.icon className="h-4 w-4" />
-
-                      <span>{item.name}</span>
-
-                      <span className="ml-auto text-[8px] uppercase tracking-widest opacity-0 transition-opacity group-hover:opacity-100">
-                        Soon
-                      </span>
-
-                    </div>
-                  ) : (
-                    <Link
-                      href={item.path}
-                      className={
-                        isActive
-                          ? 'group relative flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/15'
-                          : 'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground'
-                      }
-                    >
-
-                      {isActive && (
-                        <div className="absolute -left-[17px] h-5 w-[2px] rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-                      )}
-
-                      <item.icon className="h-4 w-4" />
-
-                      <span>{item.name}</span>
-
-                      <ChevronRight
-                        className={
-                          isActive
-                            ? 'ml-auto h-3.5 w-3.5 opacity-40 transition-transform group-hover:translate-x-0.5'
-                            : 'ml-auto h-3.5 w-3.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-40'
-                        }
-                      />
-
-                    </Link>
+                  {isActive && (
+                    <div className="absolute -left-[17px] h-5 w-[2px] rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
                   )}
 
-                </div>
+                  <item.icon className="h-4 w-4" />
+
+                  <span>
+                    {item.name}
+                  </span>
+
+                  <ChevronRight
+                    className={`ml-auto h-3.5 w-3.5 transition-all ${
+                      isActive
+                        ? 'opacity-40'
+                        : 'opacity-0 group-hover:translate-x-0.5 group-hover:opacity-40'
+                    }`}
+                  />
+
+                </Link>
               );
             })}
 
@@ -510,7 +555,11 @@ export function AppLayout({
 
             <Link
               href="/settings"
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                location === '/settings'
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              }`}
             >
               <Settings className="h-4 w-4" />
               Settings
