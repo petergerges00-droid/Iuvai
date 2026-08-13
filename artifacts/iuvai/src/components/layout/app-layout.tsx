@@ -1,6 +1,5 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { IUVAILogo } from '@/components/ui/iuvai-logo';
 
 import {
   LogOut,
@@ -28,6 +27,9 @@ interface AppLayoutProps {
 /*
 ============================================================
 ADMIN ACCOUNT
+============================================================
+
+Must match the admin ID in App.tsx.
 ============================================================
 */
 
@@ -106,7 +108,7 @@ export function AppLayout({
   ============================================================
   EXPERT NAVIGATION
 
-  All three items are fully active.
+  All expert navigation items use exactly the same styling.
 
   Dashboard:
     /dashboard
@@ -183,14 +185,27 @@ export function AppLayout({
   ============================================================
   ACTIVE ROUTE
   ============================================================
+
+  Dashboard:
+    Exact match only.
+
+  Assessments:
+    /evaluations
+    /evaluations/:evaluationId
+
+  Available Projects:
+    /expert/projects
+    /expert/projects/:projectId
+    /expert/projects/:projectId/workspace
+  ============================================================
   */
 
   const isNavItemActive = (
     path: string
   ) => {
     /*
-    Dashboard should only be active on the
-    actual dashboard route.
+    Dashboard should only be active on
+    the actual dashboard route.
     */
 
     if (path === '/dashboard') {
@@ -198,7 +213,7 @@ export function AppLayout({
     }
 
     /*
-    Admin root should remain active for
+    Admin dashboard remains active on
     admin child pages.
     */
 
@@ -210,8 +225,8 @@ export function AppLayout({
     }
 
     /*
-    Company dashboard should remain active
-    for company dashboard child pages.
+    Company dashboard remains active on
+    company dashboard child pages.
     */
 
     if (path === '/company-dashboard') {
@@ -224,14 +239,8 @@ export function AppLayout({
     }
 
     /*
-    Expert routes:
-
-      /evaluations
-      /evaluations/123
-
-      /expert/projects
-      /expert/projects/123
-      /expert/projects/123/workspace
+    All other navigation items support
+    nested routes.
     */
 
     return (
@@ -242,45 +251,30 @@ export function AppLayout({
 
   /*
   ============================================================
-  NAVIGATION ITEM CLASS
+  NAVIGATION STYLING
+
+  IMPORTANT:
+
+  Dashboard, Assessments and Available Projects
+  intentionally use the EXACT same styling.
+
+  There is no "disabled" styling.
+
+  Inactive:
+    text-muted-foreground
+    hover:bg-muted/50
+    hover:text-foreground
+
+  Active:
+    bg-primary/10
+    font-medium
+    text-primary
   ============================================================
   */
 
   const getNavItemClass = (
     isActive: boolean
   ) => {
-    if (isActive) {
-      return `
-        group
-        relative
-        flex
-        items-center
-        gap-3
-        rounded-xl
-        px-3
-        py-2.5
-        text-sm
-        font-medium
-        text-primary
-        bg-primary/10
-        transition-all
-      `;
-    }
-
-    /*
-    IMPORTANT:
-
-    These are NOT disabled anymore.
-
-    Previously:
-      text-muted-foreground
-
-    made Assessments and Available Projects
-    visually look unavailable.
-
-    They now use normal foreground text.
-    */
-
     return `
       group
       relative
@@ -291,38 +285,26 @@ export function AppLayout({
       px-3
       py-2.5
       text-sm
-      text-foreground/80
-      hover:bg-muted/50
-      hover:text-foreground
       transition-all
+      ${
+        isActive
+          ? 'bg-primary/10 font-medium text-primary'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+      }
     `;
   };
 
   /*
   ============================================================
-  MOBILE NAVIGATION ITEM CLASS
+  MOBILE NAVIGATION STYLING
+
+  Same styling principle as desktop.
   ============================================================
   */
 
   const getMobileNavItemClass = (
     isActive: boolean
   ) => {
-    if (isActive) {
-      return `
-        flex
-        items-center
-        gap-3
-        rounded-xl
-        px-4
-        py-3
-        text-sm
-        font-medium
-        text-primary
-        bg-primary/10
-        transition-colors
-      `;
-    }
-
     return `
       flex
       items-center
@@ -331,10 +313,12 @@ export function AppLayout({
       px-4
       py-3
       text-sm
-      text-foreground/80
-      hover:bg-muted/50
-      hover:text-foreground
       transition-colors
+      ${
+        isActive
+          ? 'bg-primary/10 font-medium text-primary'
+          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+      }
     `;
   };
 
@@ -479,7 +463,7 @@ export function AppLayout({
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors ${
                 location === '/settings'
                   ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               }`}
             >
               <Settings className="h-4 w-4" />
@@ -661,7 +645,7 @@ export function AppLayout({
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                 location === '/settings'
                   ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               }`}
             >
               <Settings className="h-4 w-4" />
