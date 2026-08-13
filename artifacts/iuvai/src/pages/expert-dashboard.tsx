@@ -80,23 +80,6 @@ export default function ExpertDashboard() {
 
   /*
   ============================================================
-  TEMPORARY TESTING MODE
-  ============================================================
-
-  Verification is being bypassed temporarily so the complete
-  expert -> project -> application flow can be tested.
-
-  IMPORTANT:
-  This does NOT modify the database verification_status.
-
-  Remove/disable this constant when real verification is ready.
-  ============================================================
-  */
-
-  const TESTING_MODE = true;
-
-  /*
-  ============================================================
   LOAD DASHBOARD
   ============================================================
   */
@@ -255,20 +238,22 @@ export default function ExpertDashboard() {
 
     /*
     ------------------------------------------------------------
-    TEMPORARY VERIFICATION BYPASS
+    VERIFICATION GATE
     ------------------------------------------------------------
-    In production this should check:
-      verification_status === 'approved'
 
-    For now TESTING_MODE allows applications.
+    Experts must be officially approved before they can
+    apply to projects.
     ------------------------------------------------------------
     */
 
     if (
-      !TESTING_MODE &&
       expertProfile?.verification_status !==
-        'approved'
+      'approved'
     ) {
+      setProjectError(
+        'Your expert account must be verified before you can apply to projects.'
+      );
+
       return;
     }
 
@@ -403,31 +388,23 @@ export default function ExpertDashboard() {
 
   const availableProjects =
     useMemo(() => {
-      if (
-        !expertProfile
-      ) {
+      if (!expertProfile) {
         return [];
       }
 
       /*
       ----------------------------------------------------------
-      TEMPORARY TESTING BYPASS
+      VERIFICATION GATE
       ----------------------------------------------------------
 
-      Normally:
-
-      if verification_status !== approved
-        -> return []
-
-      During testing:
-        -> allow the expert to see projects
+      Only officially approved experts can see available
+      projects.
       ----------------------------------------------------------
       */
 
       if (
-        !TESTING_MODE &&
         expertProfile.verification_status !==
-          'approved'
+        'approved'
       ) {
         return [];
       }
@@ -616,27 +593,17 @@ export default function ExpertDashboard() {
     expertProfile.verification_status ||
     'pending';
 
-  /*
-  ------------------------------------------------------------
-  IMPORTANT:
-  isApproved is temporarily true in testing mode.
-  ------------------------------------------------------------
-  */
-
   const isApproved =
-    TESTING_MODE ||
     verificationStatus ===
-      'approved';
+    'approved';
 
   const isDeclined =
-    !TESTING_MODE &&
     verificationStatus ===
-      'declined';
+    'declined';
 
   const isPending =
-    !TESTING_MODE &&
     verificationStatus ===
-      'pending';
+    'pending';
 
   /*
   ============================================================
@@ -675,26 +642,17 @@ export default function ExpertDashboard() {
 
                 <div className="mb-5 flex flex-wrap items-center gap-2">
 
-                  {TESTING_MODE && (
+                  {/* VERIFICATION STATUS */}
+
+                  {isPending && (
                     <Badge
                       variant="outline"
-                      className="border-violet-500/30 bg-violet-500/10 text-violet-500"
+                      className="border-amber-500/30 bg-amber-500/10 text-amber-500"
                     >
-                      <Activity className="mr-1.5 h-3.5 w-3.5" />
-                      Testing mode
+                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Verification pending
                     </Badge>
                   )}
-
-                  {!TESTING_MODE &&
-                    isPending && (
-                      <Badge
-                        variant="outline"
-                        className="border-amber-500/30 bg-amber-500/10 text-amber-500"
-                      >
-                        <span className="mr-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        Verification pending
-                      </Badge>
-                    )}
 
                   {isApproved && (
                     <Badge
@@ -702,9 +660,7 @@ export default function ExpertDashboard() {
                       className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
                     >
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                      {TESTING_MODE
-                        ? 'Verified for testing'
-                        : 'Verified expert'}
+                      Verified expert
                     </Badge>
                   )}
 
@@ -743,13 +699,11 @@ export default function ExpertDashboard() {
 
                 <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
 
-                  {TESTING_MODE
-                    ? 'Testing mode is enabled. You can browse projects and submit applications while verification is temporarily bypassed.'
-                    : isApproved
+                  {isApproved
                     ? 'Your expert account is verified. Browse projects matched to your expertise and apply to opportunities that interest you.'
                     : isDeclined
                     ? 'Your expert application was not approved at this time. Please review your profile information before contacting IUVAI.'
-                    : 'Your expert profile is currently being reviewed. Complete your profile and keep your professional information up to date while verification is pending.'}
+                    : 'Your expert profile is currently being reviewed. Complete your evaluation and keep your professional information up to date while verification is pending.'}
 
                 </p>
 
@@ -779,6 +733,8 @@ export default function ExpertDashboard() {
 
         <div className="grid gap-3 sm:grid-cols-3">
 
+          {/* VERIFICATION */}
+
           <div className="rounded-xl border border-border/60 bg-card/50 p-4">
 
             <div className="flex items-center gap-3">
@@ -796,9 +752,7 @@ export default function ExpertDashboard() {
                 </p>
 
                 <p className="mt-0.5 text-sm font-medium capitalize">
-                  {TESTING_MODE
-                    ? 'Testing bypass'
-                    : verificationStatus}
+                  {verificationStatus}
                 </p>
 
               </div>
@@ -806,6 +760,8 @@ export default function ExpertDashboard() {
             </div>
 
           </div>
+
+          {/* PROJECTS */}
 
           <div className="rounded-xl border border-border/60 bg-card/50 p-4">
 
@@ -834,6 +790,8 @@ export default function ExpertDashboard() {
             </div>
 
           </div>
+
+          {/* PROFILE */}
 
           <div className="rounded-xl border border-border/60 bg-card/50 p-4">
 
@@ -868,66 +826,66 @@ export default function ExpertDashboard() {
             VERIFICATION MESSAGE
             ================================================== */}
 
-        {!TESTING_MODE &&
-          isPending && (
-            <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-6">
+        {isPending && (
+          <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-6">
 
-              <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4">
 
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
 
-                  <Clock3 className="h-5 w-5 text-amber-500" />
-
-                </div>
-
-                <div>
-
-                  <h3 className="font-semibold">
-                    Verification in progress
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Our team is reviewing your credentials.
-                    Project applications will become available
-                    once your expert account has been approved.
-                  </p>
-
-                </div>
+                <Clock3 className="h-5 w-5 text-amber-500" />
 
               </div>
 
-            </section>
-          )}
+              <div>
 
-        {!TESTING_MODE &&
-          isDeclined && (
-            <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.04] p-6">
+                <h3 className="font-semibold">
+                  Verification in progress
+                </h3>
 
-              <div className="flex items-start gap-4">
-
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
-
-                  <XCircle className="h-5 w-5 text-destructive" />
-
-                </div>
-
-                <div>
-
-                  <h3 className="font-semibold">
-                    Verification was declined
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    Your account is currently not eligible
-                    for project applications.
-                  </p>
-
-                </div>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Our team is reviewing your credentials.
+                  Complete your evaluation if you have not
+                  already done so. Project applications will
+                  become available once your expert account
+                  has been approved.
+                </p>
 
               </div>
 
-            </section>
-          )}
+            </div>
+
+          </section>
+        )}
+
+        {isDeclined && (
+          <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.04] p-6">
+
+            <div className="flex items-start gap-4">
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10">
+
+                <XCircle className="h-5 w-5 text-destructive" />
+
+              </div>
+
+              <div>
+
+                <h3 className="font-semibold">
+                  Verification was declined
+                </h3>
+
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Your account is currently not eligible
+                  for project applications.
+                </p>
+
+              </div>
+
+            </div>
+
+          </section>
+        )}
 
         {/* ==================================================
             PROJECT BOARD
