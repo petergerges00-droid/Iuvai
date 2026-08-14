@@ -173,18 +173,39 @@ export default function AutomationRequest() {
 
 alert('STEP 1: About to invoke notification function');
 
-const {
-  data: notificationData,
-  error: notificationError,
-} =
-  await supabase.functions.invoke(
-    'notify-automation-request',
-    {
-      body: {
-        requestId: data.id,
-      },
-    }
-  );
+const sessionResult = await supabase.auth.getSession();
+
+const accessToken =
+  sessionResult.data.session?.access_token;
+
+if (!accessToken) {
+  alert('STEP 2 ERROR: No access token');
+  return;
+}
+
+const functionResponse = await fetch(
+  'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({
+      requestId: data.id,
+    }),
+  }
+);
+
+const functionText =
+  await functionResponse.text();
+
+alert(
+  `STEP 3: Function response\n\n` +
+  `Status: ${functionResponse.status}\n\n` +
+  `Response:\n${functionText}`
+);
 
 alert(
   `STEP 2: Function returned\n\nData: ${JSON.stringify(
