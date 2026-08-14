@@ -10,7 +10,6 @@ import {
   Sparkles,
   Users,
   Workflow,
-  Activity,
   Menu,
   X,
 } from 'lucide-react';
@@ -27,13 +26,9 @@ export default function Landing() {
         {/* =====================================================
             GLOBAL GRID / FUTURISTIC BACKGROUND
         ====================================================== */}
-
         <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-
           <div className="absolute -left-48 top-20 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-[140px]" />
-
           <div className="absolute -right-48 top-[45%] h-[600px] w-[600px] rounded-full bg-primary/[0.05] blur-[140px]" />
-
           <div className="absolute bottom-[-250px] left-[35%] h-[500px] w-[500px] rounded-full bg-primary/[0.04] blur-[140px]" />
 
           <div
@@ -44,33 +39,29 @@ export default function Landing() {
               backgroundSize: '56px 56px',
             }}
           />
-
         </div>
 
         {/* =====================================================
             NAVIGATION
         ====================================================== */}
-
         <header className="sticky top-0 z-50 border-b border-border/60 bg-background/75 backdrop-blur-2xl">
-
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
 
             <IUVAILogo href="/" />
 
             <nav className="hidden items-center gap-8 md:flex">
+              <a
+                href="#experts"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Experts
+              </a>
 
               <a
                 href="#companies"
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Companies
-              </a>
-
-              <a
-                href="#experts"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Experts
               </a>
 
               <a
@@ -86,11 +77,9 @@ export default function Landing() {
               >
                 About
               </a>
-
             </nav>
 
             <div className="hidden items-center gap-3 md:flex">
-
               <Link
                 href="/login"
                 className="rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -104,7 +93,6 @@ export default function Landing() {
               >
                 Join IUVAI
               </Link>
-
             </div>
 
             <button
@@ -118,21 +106,11 @@ export default function Landing() {
                 <Menu className="h-5 w-5" />
               )}
             </button>
-
           </div>
 
           {mobileMenuOpen && (
             <div className="border-t border-border/60 bg-background/95 px-5 py-5 backdrop-blur-2xl md:hidden">
-
               <nav className="flex flex-col gap-1">
-
-                <a
-                  href="#companies"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                >
-                  Companies
-                </a>
 
                 <a
                   href="#experts"
@@ -140,6 +118,14 @@ export default function Landing() {
                   className="rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 >
                   Experts
+                </a>
+
+                <a
+                  href="#companies"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                >
+                  Companies
                 </a>
 
                 <a
@@ -177,82 +163,67 @@ export default function Landing() {
                 </Link>
 
               </nav>
-
             </div>
           )}
-
         </header>
 
         {/* =====================================================
             HERO
         ====================================================== */}
-
         <section className="relative min-h-[calc(100vh-68px)] overflow-hidden">
-
           <div className="mx-auto flex min-h-[calc(100vh-68px)] max-w-7xl items-center px-6 py-20 sm:px-8 lg:px-8 lg:py-24">
 
             <div className="grid w-full items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
 
-              {/* HERO COPY */}
-
+              {/* Hero text */}
               <div className="relative z-10">
 
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
-
                   <Sparkles className="h-3.5 w-3.5" />
-
                   Human intelligence infrastructure
-
                 </div>
 
                 <h1 className="text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
 
                   <span className="block">
-                    Build AI.
+                    Bridging the gap
                   </span>
 
                   <span className="block">
-                    Keep it
+                    between
                   </span>
 
                   <span className="block text-primary">
-                    intelligent.
+                    humanity
+                  </span>
+
+                  <span className="block">
+                    and <span className="text-primary">AI</span>
                   </span>
 
                 </h1>
 
                 <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-
-                  IUVAI helps companies build AI-powered workflows and
-                  continuously improve them through human-led testing,
-                  evaluation and expert intelligence.
-
+                  IUVAI combines AI automation with human intelligence —
+                  helping companies transform workflows, deploy intelligent
+                  systems, and continuously evaluate their performance,
+                  safety and reliability.
                 </p>
 
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
 
                   <Link href="/signup">
-
                     <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
-
-                      Automate with IUVAI
-
+                      Join as an Expert
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-
                     </button>
-
                   </Link>
 
                   <Link href="/signup">
-
                     <button className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-7 py-4 font-medium backdrop-blur transition-colors hover:bg-muted sm:w-auto">
-
-                      Become an Expert
-
-                      <Users className="h-4 w-4" />
-
+                      Work with IUVAI
+                      <Building2 className="h-4 w-4" />
                     </button>
-
                   </Link>
 
                 </div>
@@ -261,25 +232,26 @@ export default function Landing() {
 
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    AI automation
+                    Human-led
                   </div>
 
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    Continuous testing
+                    AI-powered
                   </div>
 
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    Human expertise
+                    Continuously evaluated
                   </div>
 
                 </div>
 
               </div>
 
-              {/* HERO VISUAL */}
-
+              {/* =================================================
+                  FUTURISTIC HUMAN / AI CONNECTION
+              ================================================== */}
               <div className="relative mx-auto hidden h-[470px] w-[470px] lg:block">
 
                 <div className="absolute inset-[15%] rounded-full bg-primary/[0.08] blur-[70px]" />
@@ -291,31 +263,21 @@ export default function Landing() {
 
                 <div className="absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rotate-[25deg] rounded-full border border-dashed border-primary/20" />
 
-                {/* HUMAN */}
-
                 <div className="absolute left-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
 
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
-
                     <Users className="h-8 w-8 text-primary" />
-
                   </div>
 
                 </div>
-
-                {/* AI */}
 
                 <div className="absolute right-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
 
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
-
                     <Brain className="h-8 w-8 text-primary" />
-
                   </div>
 
                 </div>
-
-                {/* IUVAI CORE */}
 
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
 
@@ -330,30 +292,23 @@ export default function Landing() {
                 </div>
 
                 <div className="absolute left-[26%] top-[27%] h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
-
                 <div className="absolute right-[25%] top-[30%] h-1.5 w-1.5 rounded-full bg-primary/70" />
-
                 <div className="absolute bottom-[25%] left-[31%] h-1.5 w-1.5 rounded-full bg-primary/70" />
-
                 <div className="absolute bottom-[28%] right-[30%] h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
 
               </div>
 
             </div>
-
           </div>
-
         </section>
 
         {/* =====================================================
-            INTRO
+            INTRO / ABOUT
         ====================================================== */}
-
         <section
           id="about"
           className="relative border-t border-border/70 py-24 lg:py-32"
         >
-
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
 
             <div className="max-w-3xl">
@@ -364,53 +319,47 @@ export default function Landing() {
 
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
 
-                Building an AI system
+                AI is becoming infrastructure.
                 <br />
 
                 <span className="text-muted-foreground">
-                  is only the beginning.
+                  Human intelligence keeps it grounded.
                 </span>
 
               </h2>
 
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-
-                AI can automate complex work, but deploying an AI system
-                is not the same as knowing that it will perform reliably
-                in the real world.
-
+                Businesses are rapidly integrating AI into the way they
+                operate. But deploying an AI system is only the beginning.
+                Reliable systems need to be designed around real workflows,
+                evaluated against real-world conditions and continuously
+                improved.
               </p>
 
               <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-
-                IUVAI combines AI automation with continuous human
-                intelligence. We build systems that automate workflows,
-                then use qualified experts to test, evaluate and challenge
-                those systems as they evolve.
-
+                IUVAI brings these capabilities together — combining
+                AI-powered automation with a global network of human
+                experts who provide the judgment, domain knowledge and
+                adversarial thinking that AI systems still cannot reliably
+                provide on their own.
               </p>
 
             </div>
-
           </div>
-
         </section>
 
         {/* =====================================================
-            COMPANY / EXPERT MODEL
+            EXPERTS / COMPANIES
         ====================================================== */}
-
         <section
-          id="companies"
+          id="experts"
           className="border-t border-border/70"
         >
-
           <div className="grid lg:grid-cols-2">
 
             {/* =================================================
-                COMPANIES
+                EXPERTS
             ================================================== */}
-
             <div className="relative overflow-hidden border-b border-border/70 p-8 sm:p-12 lg:border-b-0 lg:border-r lg:p-20">
 
               <div className="pointer-events-none absolute inset-0 bg-primary/[0.025]" />
@@ -418,92 +367,7 @@ export default function Landing() {
               <div className="relative max-w-xl">
 
                 <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-
-                  <Building2 className="h-6 w-6 text-primary" />
-
-                </div>
-
-                <p className="mb-4 text-xs uppercase tracking-[0.25em] text-primary">
-                  For companies
-                </p>
-
-                <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Build AI that works.
-                </h3>
-
-                <p className="mt-4 text-xl font-medium text-foreground">
-                  Automate your workflows. Then keep improving them.
-                </p>
-
-                <p className="mt-5 leading-relaxed text-muted-foreground">
-
-                  IUVAI helps companies identify opportunities for AI
-                  automation, design and build AI-powered workflows,
-                  integrate them into existing operations and continuously
-                  evaluate their performance.
-
-                </p>
-
-                <ul className="mt-8 space-y-4">
-
-                  {[
-                    'AI workflow design and automation',
-                    'AI agents and intelligent process automation',
-                    'Integration with existing business systems',
-                    'Continuous AI testing and evaluation',
-                    'Human-led adversarial and domain-specific testing',
-                    'Identify failures, risks and opportunities for improvement',
-                  ].map((item) => (
-
-                    <li
-                      key={item}
-                      className="flex items-start gap-3"
-                    >
-
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-
-                      <span className="text-sm text-muted-foreground">
-                        {item}
-                      </span>
-
-                    </li>
-
-                  ))}
-
-                </ul>
-
-                <Link
-                  href="/signup"
-                  className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
-                >
-
-                  Build with IUVAI
-
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-
-                </Link>
-
-              </div>
-
-            </div>
-
-            {/* =================================================
-                EXPERTS
-            ================================================== */}
-
-            <div
-              id="experts"
-              className="relative overflow-hidden p-8 sm:p-12 lg:p-20"
-            >
-
-              <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
-
-              <div className="relative max-w-xl">
-
-                <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-
                   <Users className="h-6 w-6 text-primary" />
-
                 </div>
 
                 <p className="mb-4 text-xs uppercase tracking-[0.25em] text-primary">
@@ -515,42 +379,37 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-4 text-xl font-medium text-foreground">
-                  Get paid to make AI better.
+                  Get paid to put your expertise to work with AI.
                 </p>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-
-                  Your expertise can shape how AI systems work in the
-                  real world. IUVAI connects domain experts with
-                  opportunities to evaluate, test, challenge and improve
-                  AI systems across industries.
-
+                  AI is being integrated into every industry, creating
+                  demand for people who understand the real world behind
+                  the data. IUVAI gives domain experts the opportunity to
+                  contribute their knowledge to the systems shaping the
+                  future.
                 </p>
 
                 <ul className="mt-8 space-y-4">
 
                   {[
                     'Work on projects matched to your expertise',
-                    'Get paid to evaluate and improve AI systems',
-                    'Contribute to AI testing and adversarial evaluation',
-                    'Apply your real-world domain knowledge',
+                    'Get paid to train and evaluate AI systems',
+                    'Contribute to AI automation and implementation projects',
+                    'Participate in red teaming and adversarial testing',
                     'Build a professional expert profile',
                     'Access opportunities from anywhere',
                   ].map((item) => (
-
                     <li
                       key={item}
                       className="flex items-start gap-3"
                     >
-
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
 
                       <span className="text-sm text-muted-foreground">
                         {item}
                       </span>
-
                     </li>
-
                   ))}
 
                 </ul>
@@ -559,144 +418,95 @@ export default function Landing() {
                   href="/signup"
                   className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
                 >
-
                   Become an expert
-
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-
                 </Link>
 
               </div>
+            </div>
 
+            {/* =================================================
+                COMPANIES
+            ================================================== */}
+            <div
+              id="companies"
+              className="relative overflow-hidden p-8 sm:p-12 lg:p-20"
+            >
+
+              <div className="pointer-events-none absolute inset-0 bg-muted/[0.12]" />
+
+              <div className="relative max-w-xl">
+
+                <div className="mb-8 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                  <Building2 className="h-6 w-6 text-primary" />
+                </div>
+
+                <p className="mb-4 text-xs uppercase tracking-[0.25em] text-primary">
+                  For companies
+                </p>
+
+                <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Deploy AI with confidence.
+                </h3>
+
+                <p className="mt-5 leading-relaxed text-muted-foreground">
+                  IUVAI helps companies identify high-value opportunities
+                  for AI automation, design and implement intelligent
+                  workflows, and continuously evaluate the systems that
+                  power them.
+                </p>
+
+                <p className="mt-5 leading-relaxed text-muted-foreground">
+                  Every system can be tested against real-world conditions
+                  by qualified human experts, creating a continuous feedback
+                  loop between automation and human intelligence.
+                </p>
+
+                <ul className="mt-8 space-y-4">
+
+                  {[
+                    'Identify and automate high-value workflows',
+                    'Design and implement AI-powered systems',
+                    'Integrate AI into existing business operations',
+                    'Continuously evaluate system performance and reliability',
+                    'Human-led testing, red teaming and adversarial evaluation',
+                    'Identify failure modes and opportunities for improvement',
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+
+                      <span className="text-sm text-muted-foreground">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+
+                </ul>
+
+                <Link
+                  href="/signup"
+                  className="group mt-10 inline-flex items-center gap-2 font-medium text-primary"
+                >
+                  Work with IUVAI
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+
+              </div>
             </div>
 
           </div>
-
-        </section>
-
-        {/* =====================================================
-            CONTINUOUS INTELLIGENCE
-        ====================================================== */}
-
-        <section className="border-t border-border/70 py-24 lg:py-32">
-
-          <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
-
-            <div className="grid items-center gap-16 lg:grid-cols-2">
-
-              <div>
-
-                <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
-                  Beyond automation
-                </p>
-
-                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-
-                  AI should not be
-                  <br />
-
-                  <span className="text-muted-foreground">
-                    set and forgotten.
-                  </span>
-
-                </h2>
-
-                <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-
-                  Models change. Workflows change. Users change.
-                  New failure modes appear.
-
-                </p>
-
-                <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-
-                  IUVAI creates a continuous feedback loop between
-                  automation and human intelligence — allowing AI systems
-                  to be tested, challenged and improved over time.
-
-                </p>
-
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-
-                <div className="rounded-2xl border border-border bg-card/40 p-7">
-
-                  <Workflow className="mb-5 h-7 w-7 text-primary" />
-
-                  <h3 className="text-lg font-semibold">
-                    Build
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Design and deploy AI-powered workflows around real
-                    business processes.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card/40 p-7">
-
-                  <Activity className="mb-5 h-7 w-7 text-primary" />
-
-                  <h3 className="text-lg font-semibold">
-                    Monitor
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Continuously observe how AI systems perform in
-                    real-world environments.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card/40 p-7">
-
-                  <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
-
-                  <h3 className="text-lg font-semibold">
-                    Challenge
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Human experts deliberately search for failures,
-                    vulnerabilities and unexpected behavior.
-                  </p>
-
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card/40 p-7">
-
-                  <Brain className="mb-5 h-7 w-7 text-primary" />
-
-                  <h3 className="text-lg font-semibold">
-                    Improve
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    Turn human findings into actionable improvements
-                    for the system.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
         </section>
 
         {/* =====================================================
             HOW IT WORKS
         ====================================================== */}
-
         <section
           id="how-it-works"
           className="border-t border-border/70 py-24 lg:py-32"
         >
-
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
 
             <div className="mb-16 max-w-2xl">
@@ -707,47 +517,40 @@ export default function Landing() {
 
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
 
-                From automation
+                From opportunity
                 <span className="text-muted-foreground">
-                  {' '}to continuous intelligence.
+                  {' '}to intelligent operation.
                 </span>
 
               </h2>
 
             </div>
 
-            <div className="grid overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-4">
+            <div className="grid overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
 
               {[
                 {
                   number: '01',
                   title: 'Discover',
                   description:
-                    'Identify the workflows where AI can create meaningful operational value.',
+                    'Companies identify workflows, processes and decisions where AI can create meaningful operational value.',
                 },
                 {
                   number: '02',
                   title: 'Build',
                   description:
-                    'Design, integrate and deploy an AI-powered workflow around the business process.',
+                    'IUVAI designs and implements AI-powered automation tailored to the company’s workflow, tools and objectives.',
                 },
                 {
                   number: '03',
-                  title: 'Challenge',
+                  title: 'Evaluate',
                   description:
-                    'Human experts continuously test the system for failures, vulnerabilities and domain-specific problems.',
-                },
-                {
-                  number: '04',
-                  title: 'Improve',
-                  description:
-                    'Turn real-world findings into improvements that make the system more reliable.',
+                    'Human experts continuously test the system, identify failures and provide real-world feedback that informs improvement.',
                 },
               ].map((step) => (
-
                 <div
                   key={step.number}
-                  className="bg-background p-8 sm:p-10 lg:p-10"
+                  className="bg-background p-8 sm:p-10 lg:p-12"
                 >
 
                   <div className="mb-8 font-mono text-sm text-primary">
@@ -763,8 +566,49 @@ export default function Landing() {
                   </p>
 
                 </div>
-
               ))}
+
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================
+            CONTINUOUS INTELLIGENCE
+        ====================================================== */}
+        <section className="border-t border-border/70 py-24 lg:py-32">
+
+          <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
+
+            <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+
+              <div>
+
+                <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
+                  The IUVAI difference
+                </p>
+
+                <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+                  Automation is only the beginning.
+                </h2>
+
+              </div>
+
+              <div className="max-w-2xl">
+
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  Traditional automation stops when a system is deployed.
+                  IUVAI treats deployment as the beginning of an ongoing
+                  process.
+                </p>
+
+                <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                  Human experts can continuously challenge, evaluate and
+                  observe AI systems in the environments where they actually
+                  operate — helping companies understand not only whether
+                  an automation works, but where and why it fails.
+                </p>
+
+              </div>
 
             </div>
 
@@ -775,7 +619,6 @@ export default function Landing() {
         {/* =====================================================
             TRUST
         ====================================================== */}
-
         <section className="border-t border-border/70 py-24">
 
           <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-8">
@@ -787,12 +630,28 @@ export default function Landing() {
                 <Workflow className="mb-5 h-7 w-7 text-primary" />
 
                 <h3 className="text-lg font-semibold">
-                  Built for real workflows
+                  AI-powered operations
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  AI automation designed around how your business
-                  actually operates.
+                  Intelligent automation designed around the way your
+                  business actually operates.
+                </p>
+
+              </div>
+
+              <div>
+
+                <Users className="mb-5 h-7 w-7 text-primary" />
+
+                <h3 className="text-lg font-semibold">
+                  Human intelligence
+                </h3>
+
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Qualified experts provide judgment, domain knowledge
+                  and real-world perspective where automation alone falls
+                  short.
                 </p>
 
               </div>
@@ -802,28 +661,12 @@ export default function Landing() {
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
 
                 <h3 className="text-lg font-semibold">
-                  Human-led evaluation
+                  Continuous evaluation
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Qualified experts bring domain knowledge, creativity
-                  and unpredictable human reasoning to AI testing.
-                </p>
-
-              </div>
-
-              <div>
-
-                <Globe2 className="mb-5 h-7 w-7 text-primary" />
-
-                <h3 className="text-lg font-semibold">
-                  Continuous intelligence
-                </h3>
-
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Your AI system can keep learning from real-world
-                  failures instead of being treated as a finished
-                  deployment.
+                  Systems can be continuously challenged and evaluated to
+                  uncover failures before they become costly problems.
                 </p>
 
               </div>
@@ -837,7 +680,6 @@ export default function Landing() {
         {/* =====================================================
             FINAL CTA
         ====================================================== */}
-
         <section className="relative overflow-hidden border-t border-border/70">
 
           <div className="pointer-events-none absolute inset-0 bg-primary/[0.035]" />
@@ -845,57 +687,35 @@ export default function Landing() {
           <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
 
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
-
               <Sparkles className="h-3.5 w-3.5" />
-
-              Human intelligence infrastructure
-
+              Human intelligence for better AI
             </div>
 
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-
-              Build better AI.
-              <br />
-
-              <span className="text-primary">
-                Keep making it better.
-              </span>
-
+              Help build what comes next.
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-
-              Whether you are looking to automate your business with AI
-              or use your expertise to help improve the systems shaping
-              the future, IUVAI connects automation with human
-              intelligence.
-
+              Whether you are an expert ready to contribute your knowledge
+              or a company looking to deploy and continuously improve
+              intelligent systems, IUVAI connects human intelligence with
+              the future of AI.
             </p>
 
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
 
               <Link href="/signup">
-
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
-
-                  Build with IUVAI
-
+                  Join as an Expert
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-
                 </button>
-
               </Link>
 
               <Link href="/signup">
-
                 <button className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border px-7 py-4 font-medium transition-colors hover:bg-muted sm:w-auto">
-
-                  Become an Expert
-
-                  <Users className="h-4 w-4" />
-
+                  Work with IUVAI
+                  <Building2 className="h-4 w-4" />
                 </button>
-
               </Link>
 
             </div>
@@ -907,7 +727,6 @@ export default function Landing() {
         {/* =====================================================
             FOOTER
         ====================================================== */}
-
         <footer className="border-t border-border/70">
 
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-6 py-10 sm:px-8 lg:flex-row lg:px-8">
