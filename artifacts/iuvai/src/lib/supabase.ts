@@ -23,9 +23,11 @@ export const supabase = createClient(
 // ─────────────────────────────────────────────────────────────
 
 export type AccountType = 'expert' | 'company';
+
 export type ServiceType =
   | 'human_intelligence'
   | 'ai_automation';
+
 export type VerificationStatus =
   | 'pending'
   | 'approved'
@@ -154,6 +156,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
 }
+
 // ─────────────────────────────────────────────────────────────
 // AI AUTOMATION PROJECT
 // ─────────────────────────────────────────────────────────────
@@ -188,6 +191,7 @@ export interface AutomationProject {
   created_at: string;
   updated_at: string;
 }
+
 // ─────────────────────────────────────────────────────────────
 // AI AUTOMATION REQUESTS
 //
@@ -206,6 +210,39 @@ export interface AutomationProject {
 // Peter.gerges00@gmail.com
 //
 // Companies do NOT create automation projects directly.
+// ─────────────────────────────────────────────────────────────
+
+export type AutomationRequestStatus =
+  | 'pending'
+  | 'reviewed'
+  | 'contacted'
+  | 'converted'
+  | 'rejected'
+  | 'cancelled';
+
+export interface AutomationRequest {
+  id: string;
+
+  company_id: string;
+
+  title: string;
+  description: string | null;
+
+  business_goal: string | null;
+
+  industry: string | null;
+
+  budget: string | null;
+  timeline: string | null;
+
+  status: AutomationRequestStatus;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// CREATE AUTOMATION REQUEST
 // ─────────────────────────────────────────────────────────────
 
 export async function createAutomationRequest(
@@ -229,14 +266,15 @@ export async function createAutomationRequest(
     );
   }
 
-  // Make sure the request is being submitted for the
-  // currently authenticated company.
+  // Make sure the request is being submitted for
+  // the currently authenticated company.
   if (request.company_id !== user.id) {
     throw new Error(
       'You are not authorized to submit this automation request.'
     );
   }
 
+  // Create the request in Supabase.
   const {
     data,
     error,
@@ -257,9 +295,7 @@ export async function createAutomationRequest(
 
   const automationRequest =
     data as AutomationRequest;
-alert(
-  `Automation request created: ${automationRequest.id}`
-);
+
   // ───────────────────────────────────────────────────────────
   // EMAIL NOTIFICATION
   //
@@ -270,51 +306,43 @@ alert(
   // ───────────────────────────────────────────────────────────
 
   try {
-  alert('ABOUT TO INVOKE EMAIL FUNCTION');
+    const {
+      error: notificationError,
+    } = await supabase.functions.invoke(
+      'notify-automation-request',
+      {
+        body: {
+          requestId:
+            automationRequest.id,
+        },
+      }
+    );
 
-  const {
-    data: functionData,
-    error: notificationError,
-  } = await supabase.functions.invoke(
-    'notify-automation-request',
-    {
-      body: {
-        requestId:
-          automationRequest.id,
-      },
+    if (notificationError) {
+      console.error(
+        'AUTOMATION REQUEST EMAIL ERROR:',
+        notificationError
+      );
+
+      // The request itself was successfully created.
+      // Do not fail the user's submission because
+      // the notification email failed.
     }
-  );
 
-  alert(
-    `EMAIL FUNCTION RETURNED:\n${
-      notificationError
-        ? notificationError.message
-        : 'NO ERROR'
-    }`
-  );
-
-  if (notificationError) {
+  } catch (notificationError) {
     console.error(
-      'AUTOMATION REQUEST EMAIL ERROR:',
+      'AUTOMATION REQUEST NOTIFICATION ERROR:',
       notificationError
     );
-  }
-} catch (notificationError) {
-  alert(
-    `EMAIL FUNCTION THREW:\n${
-      notificationError instanceof Error
-        ? notificationError.message
-        : String(notificationError)
-    }`
-  );
 
-  console.error(
-    'AUTOMATION REQUEST NOTIFICATION ERROR:',
-    notificationError
-  );
+    // The request itself was successfully created.
+    // Do not fail the user's submission because
+    // the notification function failed.
+  }
+
+  return automationRequest;
 }
 
-return automationRequest;
 // ─────────────────────────────────────────────────────────────
 // GET COMPANY AUTOMATION REQUESTS
 // ─────────────────────────────────────────────────────────────
@@ -467,6 +495,7 @@ export async function updateAutomationRequestStatus(
     }
   );
 }
+
 // ─────────────────────────────────────────────────────────────
 // PROJECT REQUEST
 // ─────────────────────────────────────────────────────────────
@@ -533,6 +562,7 @@ type DatabaseExpertProfile = Omit<
 function normalizeExpertProfile(
   profile: DatabaseExpertProfile
 ): ExpertProfile {
+
   const {
     Resume_path,
     Resume_file_name,
@@ -541,7 +571,8 @@ function normalizeExpertProfile(
 
   return {
     ...rest,
-    resume_path: Resume_path ?? null,
+    resume_path:
+      Resume_path ?? null,
     resume_file_name:
       Resume_file_name ?? null,
   };
@@ -550,6 +581,7 @@ function normalizeExpertProfile(
 function normalizeExpertProfiles(
   profiles: DatabaseExpertProfile[]
 ): ExpertProfile[] {
+
   return profiles.map(
     normalizeExpertProfile
   );
@@ -560,6 +592,7 @@ function toDatabaseExpertProfile(
     id: string;
   }
 ) {
+
   const {
     resume_path,
     resume_file_name,
@@ -571,7 +604,8 @@ function toDatabaseExpertProfile(
 
     ...(resume_path !== undefined
       ? {
-          Resume_path: resume_path,
+          Resume_path:
+            resume_path,
         }
       : {}),
 
@@ -592,6 +626,7 @@ export async function signUp(
   email: string,
   password: string
 ) {
+
   return supabase.auth.signUp({
     email: email.trim(),
     password,
@@ -602,6 +637,7 @@ export async function signIn(
   email: string,
   password: string
 ) {
+
   return supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
@@ -625,6 +661,7 @@ const PASSWORD_RESET_URL =
 export async function resetPassword(
   email: string
 ) {
+
   return supabase.auth.resetPasswordForEmail(
     email.trim(),
     {
@@ -637,6 +674,7 @@ export async function resetPassword(
 export async function updatePassword(
   password: string
 ) {
+
   return supabase.auth.updateUser({
     password,
   });
@@ -649,6 +687,7 @@ export async function updatePassword(
 export async function getProfile(
   userId: string
 ): Promise<Profile | null> {
+
   const {
     data,
     error,
@@ -675,13 +714,17 @@ export async function upsertProfile(
     id: string;
   }
 ) {
+
   const {
     error,
   } = await supabase
     .from('profiles')
-    .upsert(profile, {
-      onConflict: 'id',
-    });
+    .upsert(
+      profile,
+      {
+        onConflict: 'id',
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -697,6 +740,7 @@ export async function upsertProfile(
 export async function getExpertProfile(
   userId: string
 ): Promise<ExpertProfile | null> {
+
   const {
     data,
     error,
@@ -725,17 +769,23 @@ export async function upsertExpertProfile(
     id: string;
   }
 ) {
+
   const databaseProfile =
-    toDatabaseExpertProfile(profile);
+    toDatabaseExpertProfile(
+      profile
+    );
 
   const {
     data,
     error,
   } = await supabase
     .from('expert_profiles')
-    .upsert(databaseProfile, {
-      onConflict: 'id',
-    })
+    .upsert(
+      databaseProfile,
+      {
+        onConflict: 'id',
+      }
+    )
     .select();
 
   console.log(
@@ -766,15 +816,20 @@ export async function updateExpertVerificationStatus(
   expertId: string,
   status: VerificationStatus
 ): Promise<ExpertProfile> {
+
   const {
     data,
     error,
   } = await supabase
     .from('expert_profiles')
     .update({
-      verification_status: status,
+      verification_status:
+        status,
     })
-    .eq('id', expertId)
+    .eq(
+      'id',
+      expertId
+    )
     .select()
     .single();
 
@@ -796,6 +851,7 @@ export async function updateExpertVerificationStatus(
 export async function getCompanyProfile(
   userId: string
 ): Promise<CompanyProfile | null> {
+
   const {
     data,
     error,
@@ -822,13 +878,17 @@ export async function upsertCompanyProfile(
     id: string;
   }
 ) {
+
   const {
     error,
   } = await supabase
     .from('company_profiles')
-    .upsert(profile, {
-      onConflict: 'id',
-    });
+    .upsert(
+      profile,
+      {
+        onConflict: 'id',
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -844,6 +904,7 @@ export async function upsertCompanyProfile(
 async function attachProfilesToExperts(
   expertProfiles: DatabaseExpertProfile[]
 ): Promise<ExpertWithProfile[]> {
+
   if (
     !expertProfiles ||
     expertProfiles.length === 0
@@ -858,7 +919,8 @@ async function attachProfilesToExperts(
 
   const expertIds =
     normalized.map(
-      (expert) => expert.id
+      (expert) =>
+        expert.id
     );
 
   const {
@@ -874,7 +936,10 @@ async function attachProfilesToExperts(
         country,
         created_at
       `)
-      .in('id', expertIds);
+      .in(
+        'id',
+        expertIds
+      );
 
   if (profileError) {
     throw new Error(
@@ -902,6 +967,7 @@ async function attachProfilesToExperts(
     })
   );
 }
+
 // ─────────────────────────────────────────────────────────────
 // AI AUTOMATION PROJECTS
 // ─────────────────────────────────────────────────────────────
@@ -912,6 +978,7 @@ export async function createAutomationProject(
     'id' | 'created_at' | 'updated_at'
   >
 ): Promise<AutomationProject> {
+
   const {
     data,
     error,
@@ -933,16 +1000,23 @@ export async function createAutomationProject(
 export async function getCompanyAutomationProjects(
   companyId: string
 ): Promise<AutomationProject[]> {
+
   const {
     data,
     error,
   } = await supabase
     .from('automation_projects')
     .select('*')
-    .eq('company_id', companyId)
-    .order('created_at', {
-      ascending: false,
-    });
+    .eq(
+      'company_id',
+      companyId
+    )
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -950,19 +1024,25 @@ export async function getCompanyAutomationProjects(
     );
   }
 
-  return (data || []) as AutomationProject[];
+  return (
+    data || []
+  ) as AutomationProject[];
 }
 
 export async function getAutomationProject(
   projectId: string
 ): Promise<AutomationProject | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('automation_projects')
     .select('*')
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .single();
 
   if (error) {
@@ -981,6 +1061,7 @@ export async function updateAutomationProject(
   projectId: string,
   updates: Partial<AutomationProject>
 ): Promise<AutomationProject> {
+
   const {
     data,
     error,
@@ -988,9 +1069,13 @@ export async function updateAutomationProject(
     .from('automation_projects')
     .update({
       ...updates,
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     })
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .select()
     .single();
 
@@ -1007,6 +1092,7 @@ export async function updateAutomationProjectStatus(
   projectId: string,
   status: AutomationProjectStatus
 ): Promise<AutomationProject> {
+
   return updateAutomationProject(
     projectId,
     {
@@ -1014,18 +1100,27 @@ export async function updateAutomationProjectStatus(
     }
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// GET EXPERTS
+// ─────────────────────────────────────────────────────────────
+
 export async function getExperts(): Promise<
   ExpertWithProfile[]
 > {
+
   const {
     data,
     error,
   } = await supabase
     .from('expert_profiles')
     .select('*')
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     console.error(
@@ -1050,6 +1145,7 @@ export async function getExperts(): Promise<
 export async function searchExperts(
   searchTerm: string
 ): Promise<ExpertWithProfile[]> {
+
   const term =
     searchTerm.trim();
 
@@ -1068,9 +1164,12 @@ export async function searchExperts(
       `specialization.ilike.%${term}%,` +
       `previous_ai_experience.ilike.%${term}%`
     )
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -1090,6 +1189,7 @@ export async function searchExperts(
 export async function getExpertsByField(
   primaryField: string
 ): Promise<ExpertWithProfile[]> {
+
   const {
     data,
     error,
@@ -1125,13 +1225,17 @@ export async function getExpertsByField(
 export async function getExpertWithProfile(
   expertId: string
 ): Promise<ExpertWithProfile | null> {
+
   const {
     data: expert,
     error: expertError,
   } = await supabase
     .from('expert_profiles')
     .select('*')
-    .eq('id', expertId)
+    .eq(
+      'id',
+      expertId
+    )
     .single();
 
   if (expertError) {
@@ -1156,7 +1260,10 @@ export async function getExpertWithProfile(
         country,
         created_at
       `)
-      .eq('id', expertId)
+      .eq(
+        'id',
+        expertId
+      )
       .maybeSingle();
 
   const normalized =
@@ -1190,6 +1297,7 @@ export async function createProject(
     'updated_at'
   >
 ): Promise<Project> {
+
   const {
     data,
     error,
@@ -1211,6 +1319,7 @@ export async function createProject(
 export async function getCompanyProjects(
   companyId: string
 ): Promise<Project[]> {
+
   const {
     data,
     error,
@@ -1221,9 +1330,12 @@ export async function getCompanyProjects(
       'company_id',
       companyId
     )
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -1231,19 +1343,25 @@ export async function getCompanyProjects(
     );
   }
 
-  return (data || []) as Project[];
+  return (
+    data || []
+  ) as Project[];
 }
 
 export async function getProject(
   projectId: string
 ): Promise<Project | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('projects')
     .select('*')
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .single();
 
   if (error) {
@@ -1262,13 +1380,17 @@ export async function updateProject(
   projectId: string,
   updates: Partial<Project>
 ): Promise<Project> {
+
   const {
     data,
     error,
   } = await supabase
     .from('projects')
     .update(updates)
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .select()
     .single();
 
@@ -1284,12 +1406,16 @@ export async function updateProject(
 export async function deleteProject(
   projectId: string
 ) {
+
   const {
     error,
   } = await supabase
     .from('projects')
     .delete()
-    .eq('id', projectId);
+    .eq(
+      'id',
+      projectId
+    );
 
   if (error) {
     throw new Error(
@@ -1305,15 +1431,19 @@ export async function deleteProject(
 export async function getAllProjects(): Promise<
   Project[]
 > {
+
   const {
     data,
     error,
   } = await supabase
     .from('projects')
     .select('*')
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -1321,19 +1451,25 @@ export async function getAllProjects(): Promise<
     );
   }
 
-  return (data || []) as Project[];
+  return (
+    data || []
+  ) as Project[];
 }
 
 export async function getAdminProject(
   projectId: string
 ): Promise<Project | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('projects')
     .select('*')
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .single();
 
   if (error) {
@@ -1347,6 +1483,7 @@ export async function updateProjectStatus(
   projectId: string,
   status: ProjectStatus
 ): Promise<Project> {
+
   const {
     data,
     error,
@@ -1357,7 +1494,10 @@ export async function updateProjectStatus(
       updated_at:
         new Date().toISOString(),
     })
-    .eq('id', projectId)
+    .eq(
+      'id',
+      projectId
+    )
     .select()
     .single();
 
@@ -1382,6 +1522,7 @@ export async function createProjectRequest(
     'updated_at'
   >
 ): Promise<ProjectRequest> {
+
   const {
     data,
     error,
@@ -1403,6 +1544,7 @@ export async function createProjectRequest(
 export async function getCompanyProjectRequests(
   companyId: string
 ): Promise<ProjectRequest[]> {
+
   const {
     data,
     error,
@@ -1413,9 +1555,12 @@ export async function getCompanyProjectRequests(
       'company_id',
       companyId
     )
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -1423,12 +1568,15 @@ export async function getCompanyProjectRequests(
     );
   }
 
-  return (data || []) as ProjectRequest[];
+  return (
+    data || []
+  ) as ProjectRequest[];
 }
 
 export async function getExpertProjectRequests(
   expertId: string
 ): Promise<ProjectRequest[]> {
+
   const {
     data,
     error,
@@ -1439,9 +1587,12 @@ export async function getExpertProjectRequests(
       'expert_id',
       expertId
     )
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -1449,19 +1600,25 @@ export async function getExpertProjectRequests(
     );
   }
 
-  return (data || []) as ProjectRequest[];
+  return (
+    data || []
+  ) as ProjectRequest[];
 }
 
 export async function getProjectRequest(
   requestId: string
 ): Promise<ProjectRequest | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('project_requests')
     .select('*')
-    .eq('id', requestId)
+    .eq(
+      'id',
+      requestId
+    )
     .single();
 
   if (error) {
@@ -1475,6 +1632,7 @@ export async function getExpertProjectRequestForProject(
   expertId: string,
   projectId: string
 ): Promise<ProjectRequest | null> {
+
   const {
     data,
     error,
@@ -1505,6 +1663,7 @@ export async function updateProjectRequestStatus(
   requestId: string,
   status: ProjectRequestStatus
 ): Promise<ProjectRequest> {
+
   const {
     data,
     error,
@@ -1540,12 +1699,14 @@ export async function updateProjectRequestStatus(
 //   Resume_file_name
 // ─────────────────────────────────────────────────────────────
 
-const RESUME_BUCKET = 'Resumes';
+const RESUME_BUCKET =
+  'Resumes';
 
 export async function uploadResume(
   userId: string,
   file: File
 ) {
+
   const extension =
     file.name
       .split('.')
@@ -1561,7 +1722,9 @@ export async function uploadResume(
     error: listError,
   } =
     await supabase.storage
-      .from(RESUME_BUCKET)
+      .from(
+        RESUME_BUCKET
+      )
       .list(userId);
 
   if (listError) {
@@ -1575,6 +1738,7 @@ export async function uploadResume(
     existingFiles &&
     existingFiles.length > 0
   ) {
+
     const filesToRemove =
       existingFiles.map(
         (existingFile) =>
@@ -1585,7 +1749,9 @@ export async function uploadResume(
       error: removeError,
     } =
       await supabase.storage
-        .from(RESUME_BUCKET)
+        .from(
+          RESUME_BUCKET
+        )
         .remove(
           filesToRemove
         );
@@ -1602,12 +1768,15 @@ export async function uploadResume(
     error: uploadError,
   } =
     await supabase.storage
-      .from(RESUME_BUCKET)
+      .from(
+        RESUME_BUCKET
+      )
       .upload(
         filePath,
         file,
         {
           upsert: true,
+
           contentType:
             file.type ||
             'application/pdf',
@@ -1622,7 +1791,10 @@ export async function uploadResume(
 
   await upsertExpertProfile({
     id: userId,
-    resume_path: filePath,
+
+    resume_path:
+      filePath,
+
     resume_file_name:
       file.name,
   });
@@ -1633,12 +1805,15 @@ export async function uploadResume(
 export async function deleteResume(
   userId: string
 ) {
+
   const {
     data: files,
     error: listError,
   } =
     await supabase.storage
-      .from(RESUME_BUCKET)
+      .from(
+        RESUME_BUCKET
+      )
       .list(userId);
 
   if (listError) {
@@ -1652,11 +1827,14 @@ export async function deleteResume(
     files &&
     files.length > 0
   ) {
+
     const {
       error,
     } =
       await supabase.storage
-        .from(RESUME_BUCKET)
+        .from(
+          RESUME_BUCKET
+        )
         .remove(
           files.map(
             (file) =>
@@ -1674,8 +1852,12 @@ export async function deleteResume(
 
   await upsertExpertProfile({
     id: userId,
-    resume_path: null,
-    resume_file_name: null,
+
+    resume_path:
+      null,
+
+    resume_file_name:
+      null,
   });
 }
 
@@ -1783,7 +1965,9 @@ export async function uploadMedicalCertificate(
   // Validate MIME type when provided by the browser.
   if (
     file.type &&
-    !ALLOWED_CERTIFICATE_TYPES.includes(file.type)
+    !ALLOWED_CERTIFICATE_TYPES.includes(
+      file.type
+    )
   ) {
     throw new Error(
       'Invalid certificate file type. Please upload a PDF, JPG, PNG, or WebP file.'
@@ -1836,6 +2020,7 @@ export async function uploadMedicalCertificate(
     existingFiles &&
     existingFiles.length > 0
   ) {
+
     const filesToRemove =
       existingFiles
         .filter(
@@ -1851,6 +2036,7 @@ export async function uploadMedicalCertificate(
     if (
       filesToRemove.length > 0
     ) {
+
       const {
         error: removeError,
       } =
@@ -1911,6 +2097,7 @@ export async function uploadMedicalCertificate(
   // ───────────────────────────────────────────────────────────
 
   try {
+
     await upsertExpertProfile({
       id: userId,
 
@@ -1923,11 +2110,13 @@ export async function uploadMedicalCertificate(
       medical_certificate_status:
         'pending',
     });
+
   } catch (databaseError) {
 
     // Avoid leaving an orphaned storage object
     // if the database update fails.
     try {
+
       await supabase.storage
         .from(
           MEDICAL_CERTIFICATE_BUCKET
@@ -1935,7 +2124,9 @@ export async function uploadMedicalCertificate(
         .remove([
           filePath,
         ]);
+
     } catch (cleanupError) {
+
       console.warn(
         'Could not clean up uploaded certificate after database failure:',
         cleanupError
@@ -1951,7 +2142,7 @@ export async function uploadMedicalCertificate(
 // ─────────────────────────────────────────────────────────────
 // GENERIC ONBOARDING CERTIFICATE FUNCTION
 //
-// The onboarding UI should use this function:
+// The onboarding UI should use:
 //
 //   uploadCertificate(userId, file)
 //
@@ -1962,6 +2153,7 @@ export async function uploadCertificate(
   userId: string,
   file: File
 ): Promise<string> {
+
   return uploadMedicalCertificate(
     userId,
     file
@@ -2024,6 +2216,7 @@ export async function deleteMedicalCertificate(
     files &&
     files.length > 0
   ) {
+
     const filesToRemove =
       files
         .filter(
@@ -2039,6 +2232,7 @@ export async function deleteMedicalCertificate(
     if (
       filesToRemove.length > 0
     ) {
+
       const {
         error,
       } =
@@ -2080,6 +2274,7 @@ export async function deleteMedicalCertificate(
 export async function deleteCertificate(
   userId: string
 ): Promise<void> {
+
   return deleteMedicalCertificate(
     userId
   );
@@ -2178,6 +2373,7 @@ export async function getMedicalCertificateUrl(
 export async function getCertificateUrl(
   certificatePath: string
 ): Promise<string> {
+
   return getMedicalCertificateUrl(
     certificatePath
   );
@@ -2190,6 +2386,7 @@ export async function getCertificateUrl(
 export async function getProjectExperts(
   projectId: string
 ): Promise<ExpertWithProfile[]> {
+
   const {
     data: assignments,
     error: assignmentError,
@@ -2248,6 +2445,7 @@ export async function getProjectExperts(
 export async function getProjectAssignments(
   projectId: string
 ): Promise<ProjectExpert[]> {
+
   const {
     data,
     error,
@@ -2271,7 +2469,9 @@ export async function getProjectAssignments(
     );
   }
 
-  return (data || []) as ProjectExpert[];
+  return (
+    data || []
+  ) as ProjectExpert[];
 }
 
 export async function assignExpertToProject(
@@ -2279,6 +2479,7 @@ export async function assignExpertToProject(
   expertId: string,
   notes?: string
 ): Promise<ProjectExpert> {
+
   const {
     data: existing,
     error: existingError,
@@ -2343,6 +2544,7 @@ export async function removeExpertFromProject(
   projectId: string,
   expertId: string
 ) {
+
   const {
     error,
   } =
@@ -2369,6 +2571,7 @@ export async function updateProjectExpertStatus(
   assignmentId: string,
   status: ProjectExpertStatus
 ): Promise<ProjectExpert> {
+
   const {
     data,
     error,
@@ -2398,6 +2601,7 @@ export async function updateProjectExpertNotes(
   assignmentId: string,
   notes: string | null
 ): Promise<ProjectExpert> {
+
   const {
     data,
     error,
@@ -2430,6 +2634,7 @@ export async function updateProjectExpertNotes(
 export async function getExpertProjects(
   expertId: string
 ): Promise<Project[]> {
+
   const {
     data: assignments,
     error: assignmentError,
@@ -2479,12 +2684,15 @@ export async function getExpertProjects(
     );
   }
 
-  return (data || []) as Project[];
+  return (
+    data || []
+  ) as Project[];
 }
 
 export async function getExpertAssignments(
   expertId: string
 ): Promise<ProjectExpert[]> {
+
   const {
     data,
     error,
@@ -2509,7 +2717,9 @@ export async function getExpertAssignments(
     );
   }
 
-  return (data || []) as ProjectExpert[];
+  return (
+    data || []
+  ) as ProjectExpert[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2519,12 +2729,15 @@ export async function getExpertAssignments(
 export async function getResumeUrl(
   resumePath: string
 ): Promise<string> {
+
   const {
     data,
     error,
   } =
     await supabase.storage
-      .from(RESUME_BUCKET)
+      .from(
+        RESUME_BUCKET
+      )
       .createSignedUrl(
         resumePath,
         60 * 10
@@ -2563,6 +2776,7 @@ export type EvaluationSubmissionStatus =
 
 export interface Evaluation {
   id: string;
+
   title: string;
   description: string | null;
 
@@ -2581,6 +2795,7 @@ export interface Evaluation {
 
 export interface EvaluationQuestion {
   id: string;
+
   evaluation_id: string;
 
   question_order: number;
@@ -2588,7 +2803,9 @@ export interface EvaluationQuestion {
   prompt: string;
   context: string | null;
 
-  response_type: 'text' | 'long_text';
+  response_type:
+    | 'text'
+    | 'long_text';
 
   created_at: string;
 }
@@ -2599,7 +2816,8 @@ export interface EvaluationSubmission {
   evaluation_id: string;
   expert_id: string;
 
-  status: EvaluationSubmissionStatus;
+  status:
+    EvaluationSubmissionStatus;
 
   started_at: string;
   submitted_at: string | null;
@@ -2624,17 +2842,26 @@ export interface EvaluationAnswer {
 // GET OPEN EVALUATIONS
 // ─────────────────────────────────────────────────────────────
 
-export async function getOpenEvaluations(): Promise<Evaluation[]> {
+export async function getOpenEvaluations(): Promise<
+  Evaluation[]
+> {
+
   const {
     data,
     error,
   } = await supabase
     .from('evaluations')
     .select('*')
-    .eq('status', 'open')
-    .order('created_at', {
-      ascending: false,
-    });
+    .eq(
+      'status',
+      'open'
+    )
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -2642,7 +2869,9 @@ export async function getOpenEvaluations(): Promise<Evaluation[]> {
     );
   }
 
-  return (data || []) as Evaluation[];
+  return (
+    data || []
+  ) as Evaluation[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2652,13 +2881,17 @@ export async function getOpenEvaluations(): Promise<Evaluation[]> {
 export async function getEvaluation(
   evaluationId: string
 ): Promise<Evaluation | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('evaluations')
     .select('*')
-    .eq('id', evaluationId)
+    .eq(
+      'id',
+      evaluationId
+    )
     .single();
 
   if (error) {
@@ -2680,6 +2913,7 @@ export async function getEvaluation(
 export async function getEvaluationQuestions(
   evaluationId: string
 ): Promise<EvaluationQuestion[]> {
+
   const {
     data,
     error,
@@ -2690,9 +2924,12 @@ export async function getEvaluationQuestions(
       'evaluation_id',
       evaluationId
     )
-    .order('question_order', {
-      ascending: true,
-    });
+    .order(
+      'question_order',
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -2700,7 +2937,9 @@ export async function getEvaluationQuestions(
     );
   }
 
-  return (data || []) as EvaluationQuestion[];
+  return (
+    data || []
+  ) as EvaluationQuestion[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2711,6 +2950,7 @@ export async function getEvaluationSubmission(
   evaluationId: string,
   expertId: string
 ): Promise<EvaluationSubmission | null> {
+
   const {
     data,
     error,
@@ -2789,6 +3029,7 @@ export async function startEvaluation(
 export async function getEvaluationAnswers(
   submissionId: string
 ): Promise<EvaluationAnswer[]> {
+
   const {
     data,
     error,
@@ -2806,7 +3047,9 @@ export async function getEvaluationAnswers(
     );
   }
 
-  return (data || []) as EvaluationAnswer[];
+  return (
+    data || []
+  ) as EvaluationAnswer[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2864,6 +3107,12 @@ export async function submitEvaluation(
 ): Promise<EvaluationSubmission> {
 
   const {
+    data: {
+      user,
+    },
+  } = await supabase.auth.getUser();
+
+  const {
     data,
     error,
   } = await supabase
@@ -2884,7 +3133,7 @@ export async function submitEvaluation(
     )
     .eq(
       'expert_id',
-      (await supabase.auth.getUser()).data.user?.id
+      user?.id
     )
     .select()
     .single();
@@ -2898,16 +3147,26 @@ export async function submitEvaluation(
   return data as EvaluationSubmission;
 }
 
-export async function getAllEvaluations(): Promise<Evaluation[]> {
+// ─────────────────────────────────────────────────────────────
+// GET ALL EVALUATIONS
+// ─────────────────────────────────────────────────────────────
+
+export async function getAllEvaluations(): Promise<
+  Evaluation[]
+> {
+
   const {
     data,
     error,
   } = await supabase
     .from('evaluations')
     .select('*')
-    .order('created_at', {
-      ascending: false,
-    });
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -2915,7 +3174,9 @@ export async function getAllEvaluations(): Promise<Evaluation[]> {
     );
   }
 
-  return (data || []) as Evaluation[];
+  return (
+    data || []
+  ) as Evaluation[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2934,7 +3195,8 @@ export interface EvaluationReview {
   submission_id: string;
   reviewer_id: string;
 
-  status: EvaluationReviewStatus;
+  status:
+    EvaluationReviewStatus;
 
   overall_score: number | null;
 
@@ -2965,13 +3227,17 @@ export interface EvaluationQuestionReview {
 export async function getEvaluationReview(
   submissionId: string
 ): Promise<EvaluationReview | null> {
+
   const {
     data,
     error,
   } = await supabase
     .from('evaluation_reviews')
     .select('*')
-    .eq('submission_id', submissionId)
+    .eq(
+      'submission_id',
+      submissionId
+    )
     .maybeSingle();
 
   if (error) {
@@ -2987,6 +3253,7 @@ export async function createEvaluationReview(
   submissionId: string,
   reviewerId: string
 ): Promise<EvaluationReview> {
+
   const existing =
     await getEvaluationReview(
       submissionId
@@ -3030,6 +3297,7 @@ export async function createEvaluationReview(
 export async function getEvaluationQuestionReviews(
   reviewId: string
 ): Promise<EvaluationQuestionReview[]> {
+
   const {
     data,
     error,
@@ -3064,6 +3332,7 @@ export async function saveEvaluationQuestionReview(
   score: number | null,
   feedback: string | null
 ): Promise<EvaluationQuestionReview> {
+
   const {
     data,
     error,
@@ -3118,6 +3387,7 @@ export async function updateEvaluationReview(
     >
   >
 ): Promise<EvaluationReview> {
+
   const {
     data,
     error,
@@ -3152,6 +3422,7 @@ export async function updateEvaluationReview(
 // ─────────────────────────────────────────────────────────────
 
 export async function getSubmittedEvaluations() {
+
   const {
     data,
     error,
@@ -3196,6 +3467,7 @@ export async function updateEvaluation(
   evaluationId: string,
   updates: Partial<Evaluation>
 ): Promise<Evaluation> {
+
   const {
     data,
     error,
@@ -3203,9 +3475,13 @@ export async function updateEvaluation(
     .from('evaluations')
     .update({
       ...updates,
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     })
-    .eq('id', evaluationId)
+    .eq(
+      'id',
+      evaluationId
+    )
     .select()
     .single();
 
@@ -3221,9 +3497,12 @@ export async function updateEvaluation(
 export async function createEvaluation(
   evaluation: Omit<
     Evaluation,
-    'id' | 'created_at' | 'updated_at'
+    'id' |
+    'created_at' |
+    'updated_at'
   >
 ): Promise<Evaluation> {
+
   const {
     data,
     error,
@@ -3245,9 +3524,11 @@ export async function createEvaluation(
 export async function createEvaluationQuestion(
   question: Omit<
     EvaluationQuestion,
-    'id' | 'created_at'
+    'id' |
+    'created_at'
   >
 ): Promise<EvaluationQuestion> {
+
   const {
     data,
     error,
@@ -3270,13 +3551,17 @@ export async function updateEvaluationQuestion(
   questionId: string,
   updates: Partial<EvaluationQuestion>
 ): Promise<EvaluationQuestion> {
+
   const {
     data,
     error,
   } = await supabase
     .from('evaluation_questions')
     .update(updates)
-    .eq('id', questionId)
+    .eq(
+      'id',
+      questionId
+    )
     .select()
     .single();
 
@@ -3292,12 +3577,16 @@ export async function updateEvaluationQuestion(
 export async function deleteEvaluationQuestion(
   questionId: string
 ): Promise<void> {
+
   const {
     error,
   } = await supabase
     .from('evaluation_questions')
     .delete()
-    .eq('id', questionId);
+    .eq(
+      'id',
+      questionId
+    );
 
   if (error) {
     throw new Error(
@@ -3310,8 +3599,11 @@ export async function setEvaluationStatus(
   evaluationId: string,
   status: EvaluationStatus
 ): Promise<Evaluation> {
+
   return updateEvaluation(
     evaluationId,
-    { status }
+    {
+      status,
+    }
   );
 }
