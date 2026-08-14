@@ -58,46 +58,65 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      // Generate the request ID ourselves.
-      // This allows us to use the same ID when
-      // calling the notification Edge Function.
-      const requestId = crypto.randomUUID();
+      /*
+       * The automation_requests table does not have
+       * "title" or "description" columns.
+       *
+       * We map the form fields to the actual database schema:
+       *
+       * title       -> automation_goal
+       * description -> current_process
+       * businessGoal -> business_goal
+       */
 
-      // Create the automation request.
-      //
-      // IMPORTANT:
-      // We intentionally do NOT use .select() here.
-      // The previous version returned:
-      // "Success. No rows returned"
-      // because RLS was preventing the inserted row
-      // from being returned by SELECT.
-      const { error: insertError } = await supabase
+      const companyName =
+        user.user_metadata?.company_name ||
+        user.user_metadata?.companyName ||
+        user.user_metadata?.name ||
+        user.email?.split('@')[0] ||
+        'Company';
+
+      const contactEmail = user.email;
+
+      if (!contactEmail) {
+        setError(
+          'Your account does not have an email address. Please update your account before submitting a request.'
+        );
+        return;
+      }
+
+      const {
+        data,
+        error: insertError,
+      } = await supabase
         .from('automation_requests')
         .insert({
-          id: requestId,
           company_id: user.id,
 
-          /*
-           * Your database uses automation_goal,
-           * not title/description.
-           *
-           * We combine the project title and workflow
-           * description into the automation_goal field.
-           */
-          automation_goal: `${title.trim()}\n\n${description.trim()}`,
+          company_name: companyName,
+
+          contact_email: contactEmail,
+
+          industry: industry.trim() || null,
+
+          automation_goal: title.trim(),
+
+          current_process: description.trim(),
+
+          desired_outcome:
+            businessGoal.trim() || null,
+
+          timeline: timeline.trim() || null,
+
+          budget: budget.trim() || null,
 
           business_goal:
             businessGoal.trim() || null,
 
-          industry:
-            industry.trim() || null,
-
-          budget:
-            budget.trim() || null,
-
-          timeline:
-            timeline.trim() || null,
-        });
+          status: 'pending',
+        })
+        .select('id')
+        .single();
 
       if (insertError) {
         console.error(
@@ -113,20 +132,41 @@ export default function AutomationRequest() {
         return;
       }
 
-      // The request was successfully saved.
-      //
-      // Now notify IUVAI through the Edge Function.
+      if (!data?.id) {
+        setError(
+          'The request was submitted, but we could not confirm it.'
+        );
+        return;
+      }
+
+      /*
+       * Notify IUVAI through the Edge Function.
+       *
+       * The Edge Function is responsible for retrieving
+       * the request and sending the email through Resend.
+       */
+
       const {
         data: notificationData,
         error: notificationError,
-      } = await supabase.functions.invoke(
-        'notify-automation-request',
-        {
-          body: {
-            requestId,
-          },
-        }
-      );
+      } =
+        await supabase.functions.invoke(
+          'notify-automation-request',
+          {
+            body: {
+              requestId: data.id,
+            },
+          }
+        );
+
+      /*
+       * IMPORTANT:
+       *
+       * Even if the email fails, the automation request
+       * itself was successfully saved.
+       *
+       * Therefore we don't block the company from continuing.
+       */
 
       if (notificationError) {
         console.error(
@@ -134,14 +174,6 @@ export default function AutomationRequest() {
           notificationError
         );
 
-        /*
-         * The request itself was successfully saved.
-         *
-         * Therefore we do NOT show the company an error
-         * saying that the request failed.
-         *
-         * The notification can be retried separately.
-         */
         console.warn(
           'Automation request was saved, but the admin email notification failed.'
         );
@@ -157,7 +189,10 @@ export default function AutomationRequest() {
         );
       }
 
-      // Request successfully submitted.
+      /*
+       * SUCCESS
+       */
+
       setLocation('/company-dashboard');
 
     } catch (err) {
