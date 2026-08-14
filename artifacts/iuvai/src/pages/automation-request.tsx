@@ -210,40 +210,36 @@ export default function AutomationRequest() {
 
       const requestId = data.id;
 
-      // =======================================================
-      // STEP 4 — EDGE FUNCTION
-      // =======================================================
+     // =======================================================
+// STEP 4 — SIMPLE EDGE FUNCTION CONNECTION TEST
+// =======================================================
 
-      debug(
-        `STEP 4\n\nAbout to call Edge Function.\n\nRequest ID:\n${requestId}`
-      );
+alert('STEP 4: Testing Edge Function connection');
 
-      const functionResponse =
-        await fetch(
-          'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
-          {
-            method: 'POST',
+const testResponse = await fetch(
+  'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      test: true,
+    }),
+  }
+);
 
-            headers: {
-              'Content-Type':
-                'application/json',
+const testText = await testResponse.text();
 
-              'Authorization':
-                `Bearer ${accessToken}`,
+alert(
+  `STEP 5: Edge Function connection result\n\n` +
+  `HTTP STATUS: ${testResponse.status}\n\n` +
+  `RESPONSE:\n${testText}`
+);
 
-              'apikey':
-                import.meta.env.VITE_SUPABASE_ANON_KEY,
-            },
-
-            body: JSON.stringify({
-              requestId,
-            }),
-          }
-        );
-
-      const functionText =
-        await functionResponse.text();
-
+// Stop here.
+// Do NOT redirect yet.
+return;
       // =======================================================
       // STEP 5 — EDGE FUNCTION RESPONSE
       // =======================================================
