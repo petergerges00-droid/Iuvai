@@ -171,7 +171,7 @@ export default function AutomationRequest() {
       // SEND ADMIN EMAIL
       // -------------------------------------------------------
 
-      const {alert('STEP 1: About to invoke notification function');
+alert('STEP 1: About to invoke notification function');
 
 const {
   data: notificationData,
