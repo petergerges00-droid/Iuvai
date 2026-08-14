@@ -6,7 +6,6 @@ import {
   Building2,
   CheckCircle2,
   FileText,
-  Search,
   Sparkles,
   Users,
   Activity,
@@ -135,8 +134,7 @@ export default function CompanyDashboard() {
           );
 
           setAutomationProjects(
-            (automationData ||
-              []) as AutomationProject[]
+            (automationData || []) as AutomationProject[]
           );
         }
       } catch (error) {
@@ -425,7 +423,7 @@ export default function CompanyDashboard() {
               {/* AI AUTOMATION */}
 
               <Link
-                href="/company-dashboard/automation/new"
+                href="/company-dashboard/automation/request"
                 className="group"
               >
                 <div className="rounded-xl border border-border/60 bg-card/40 p-4 transition-all hover:border-primary/30 hover:bg-primary/[0.025]">
@@ -614,7 +612,7 @@ export default function CompanyDashboard() {
               {/* AI AUTOMATION */}
 
               <Link
-                href="/company-dashboard/automation/new"
+                href="/company-dashboard/automation/request"
                 className="group block"
               >
 
@@ -791,7 +789,7 @@ export default function CompanyDashboard() {
                 size="sm"
                 asChild
               >
-                <Link href="/company-dashboard/automation/new">
+                <Link href="/company-dashboard/automation/request">
                   <Plus className="mr-2 h-3.5 w-3.5" />
                   New project
                 </Link>
@@ -843,7 +841,7 @@ export default function CompanyDashboard() {
                 className="mt-5"
                 asChild
               >
-                <Link href="/company-dashboard/automation/new">
+                <Link href="/company-dashboard/automation/request">
                   <Plus className="mr-2 h-4 w-4" />
                   Create your first automation
                 </Link>
@@ -983,7 +981,7 @@ export default function CompanyDashboard() {
             {/* STEP 1 */}
 
             <Link
-              href="/company-dashboard/automation/new"
+              href="/company-dashboard/automation/request"
               className="group block"
             >
 
@@ -1158,7 +1156,7 @@ export default function CompanyDashboard() {
                 className="mt-5"
                 asChild
               >
-                <Link href="/company-dashboard/automation/new">
+                <Link href="/company-dashboard/automation/request">
                   <Plus className="mr-2 h-4 w-4" />
                   Create your first project
                 </Link>
