@@ -6,11 +6,12 @@ import {
   Building2,
   CheckCircle2,
   Globe2,
+  Menu,
   ShieldCheck,
   Sparkles,
+  Stethoscope,
   Users,
   Workflow,
-  Menu,
   X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -179,8 +180,8 @@ export default function Landing() {
               <div className="relative z-10">
 
                 <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Human intelligence infrastructure
+                  <Stethoscope className="h-3.5 w-3.5" />
+                  Medical AI infrastructure
                 </div>
 
                 <h1 className="text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl xl:text-[82px]">
@@ -204,17 +205,17 @@ export default function Landing() {
                 </h1>
 
                 <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                  IUVAI combines AI automation with human intelligence —
-                  helping companies transform workflows, deploy intelligent
-                  systems, and continuously evaluate their performance,
-                  safety and reliability.
+                  IUVAI builds and evaluates medical AI systems with
+                  human intelligence at the center — combining AI
+                  solutions with qualified medical experts to understand
+                  how models perform in real-world clinical environments.
                 </p>
 
                 <div className="mt-10 flex flex-col gap-4 sm:flex-row">
 
                   <Link href="/signup">
                     <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
-                      Join as an Expert
+                      Join as a Medical Expert
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </button>
                   </Link>
@@ -232,17 +233,17 @@ export default function Landing() {
 
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
+                    Clinically grounded
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                     Human-led
                   </div>
 
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                     AI-powered
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    Continuously evaluated
                   </div>
 
                 </div>
@@ -263,6 +264,7 @@ export default function Landing() {
 
                 <div className="absolute left-1/2 top-1/2 h-[76%] w-[76%] -translate-x-1/2 -translate-y-1/2 rotate-[25deg] rounded-full border border-dashed border-primary/20" />
 
+                {/* Medical expert */}
                 <div className="absolute left-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
 
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
@@ -271,6 +273,7 @@ export default function Landing() {
 
                 </div>
 
+                {/* AI */}
                 <div className="absolute right-[8%] top-1/2 flex -translate-y-1/2 items-center justify-center">
 
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border border-primary/30 bg-background/80 shadow-[0_0_35px_rgba(99,102,241,0.15)] backdrop-blur-xl">
@@ -279,13 +282,14 @@ export default function Landing() {
 
                 </div>
 
+                {/* IUVAI / clinical intelligence layer */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
 
                   <div className="relative flex h-32 w-32 items-center justify-center rounded-[2rem] border border-primary/40 bg-primary/[0.08] shadow-[0_0_60px_rgba(99,102,241,0.18)] backdrop-blur-xl">
 
                     <div className="absolute inset-3 rounded-[1.5rem] border border-primary/15" />
 
-                    <div className="h-5 w-5 rounded-full bg-primary shadow-[0_0_25px_rgba(99,102,241,0.9)]" />
+                    <Stethoscope className="h-8 w-8 text-primary" />
 
                   </div>
 
@@ -319,29 +323,36 @@ export default function Landing() {
 
               <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
 
-                AI is becoming infrastructure.
+                Medical AI is becoming
                 <br />
 
                 <span className="text-muted-foreground">
-                  Human intelligence keeps it grounded.
+                  part of clinical reality.
                 </span>
 
               </h2>
 
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-                Businesses are rapidly integrating AI into the way they
-                operate. But deploying an AI system is only the beginning.
-                Reliable systems need to be designed around real workflows,
-                evaluated against real-world conditions and continuously
-                improved.
+                AI is rapidly moving from research environments into
+                healthcare, where models are expected to reason about
+                complex clinical information, support medical decisions
+                and interact with real-world workflows.
               </p>
 
               <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-                IUVAI brings these capabilities together — combining
-                AI-powered automation with a global network of human
-                experts who provide the judgment, domain knowledge and
-                adversarial thinking that AI systems still cannot reliably
-                provide on their own.
+                Performance in a benchmark is not enough. Medical AI
+                systems need to be understood in the context of realistic
+                clinical scenarios, edge cases, safety risks and the
+                unpredictable conditions in which they may actually be
+                used.
+              </p>
+
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                IUVAI brings qualified medical expertise into the
+                development and evaluation of AI systems — helping
+                organizations build useful medical AI, identify failure
+                modes and understand how their systems perform beyond
+                controlled testing environments.
               </p>
 
             </div>
@@ -379,24 +390,26 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-4 text-xl font-medium text-foreground">
-                  Get paid to put your expertise to work with AI.
+                  Get paid to put your medical expertise to work with AI.
                 </p>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  AI is being integrated into every industry, creating
-                  demand for people who understand the real world behind
-                  the data. IUVAI gives domain experts the opportunity to
-                  contribute their knowledge to the systems shaping the
-                  future.
+                  Medical AI needs more than data. It needs people who
+                  understand patients, clinical reasoning, healthcare
+                  workflows and the realities of medicine. IUVAI gives
+                  medical professionals the opportunity to contribute
+                  their expertise to the systems shaping the future of
+                  healthcare.
                 </p>
 
                 <ul className="mt-8 space-y-4">
 
                   {[
-                    'Work on projects matched to your expertise',
-                    'Get paid to train and evaluate AI systems',
-                    'Contribute to AI automation and implementation projects',
-                    'Participate in red teaming and adversarial testing',
+                    'Work on projects matched to your medical expertise',
+                    'Get paid to evaluate and improve medical AI systems',
+                    'Contribute to realistic clinical scenario testing',
+                    'Participate in medical AI red teaming and adversarial testing',
+                    'Help identify clinical failure modes and safety risks',
                     'Build a professional expert profile',
                     'Access opportunities from anywhere',
                   ].map((item) => (
@@ -450,27 +463,28 @@ export default function Landing() {
                 </h3>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  IUVAI helps companies identify high-value opportunities
-                  for AI automation, design and implement intelligent
-                  workflows, and continuously evaluate the systems that
-                  power them.
+                  Build and integrate medical AI solutions, evaluate them
+                  with qualified medical experts against realistic clinical
+                  scenarios, edge cases, safety risks, and failure modes.
                 </p>
 
                 <p className="mt-5 leading-relaxed text-muted-foreground">
-                  Every system can be tested against real-world conditions
-                  by qualified human experts, creating a continuous feedback
-                  loop between automation and human intelligence.
+                  IUVAI brings together AI implementation and human-led
+                  evaluation to help organizations understand how medical
+                  AI systems perform beyond controlled benchmarks and
+                  predefined test cases.
                 </p>
 
                 <ul className="mt-8 space-y-4">
 
                   {[
-                    'Identify and automate high-value workflows',
-                    'Design and implement AI-powered systems',
-                    'Integrate AI into existing business operations',
-                    'Continuously evaluate system performance and reliability',
-                    'Human-led testing, red teaming and adversarial evaluation',
-                    'Identify failure modes and opportunities for improvement',
+                    'Build and integrate medical AI solutions',
+                    'Evaluate AI models against realistic clinical scenarios',
+                    'Test edge cases and difficult clinical situations',
+                    'Identify safety risks and clinically significant failure modes',
+                    'Medical expert-led red teaming and adversarial evaluation',
+                    'Assess model performance in real-world clinical contexts',
+                    'Generate human feedback to improve AI systems',
                   ].map((item) => (
                     <li
                       key={item}
@@ -517,12 +531,18 @@ export default function Landing() {
 
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
 
-                From opportunity
+                From medical AI
                 <span className="text-muted-foreground">
-                  {' '}to intelligent operation.
+                  {' '}to clinical confidence.
                 </span>
 
               </h2>
+
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                IUVAI connects medical AI development with the human
+                expertise required to understand how these systems behave
+                in real-world clinical environments.
+              </p>
 
             </div>
 
@@ -531,21 +551,21 @@ export default function Landing() {
               {[
                 {
                   number: '01',
-                  title: 'Discover',
+                  title: 'Build',
                   description:
-                    'Companies identify workflows, processes and decisions where AI can create meaningful operational value.',
+                    'Design and integrate medical AI solutions around real clinical workflows, operational needs and healthcare use cases.',
                 },
                 {
                   number: '02',
-                  title: 'Build',
+                  title: 'Evaluate',
                   description:
-                    'IUVAI designs and implements AI-powered automation tailored to the company’s workflow, tools and objectives.',
+                    'Qualified medical experts assess AI systems against realistic clinical scenarios, edge cases and domain-specific challenges.',
                 },
                 {
                   number: '03',
-                  title: 'Evaluate',
+                  title: 'Red-team',
                   description:
-                    'Human experts continuously test the system, identify failures and provide real-world feedback that informs improvement.',
+                    'Human experts actively challenge systems to uncover unsafe behavior, clinical failure modes, vulnerabilities and unexpected weaknesses.',
                 },
               ].map((step) => (
                 <div
@@ -573,7 +593,7 @@ export default function Landing() {
         </section>
 
         {/* =====================================================
-            CONTINUOUS INTELLIGENCE
+            CLINICAL EVALUATION
         ====================================================== */}
         <section className="border-t border-border/70 py-24 lg:py-32">
 
@@ -584,11 +604,14 @@ export default function Landing() {
               <div>
 
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.25em] text-primary">
-                  The IUVAI difference
+                  Beyond benchmarks
                 </p>
 
                 <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                  Automation is only the beginning.
+                  Clinical reality is the
+                  <span className="text-muted-foreground">
+                    {' '}real test.
+                  </span>
                 </h2>
 
               </div>
@@ -596,16 +619,24 @@ export default function Landing() {
               <div className="max-w-2xl">
 
                 <p className="text-lg leading-relaxed text-muted-foreground">
-                  Traditional automation stops when a system is deployed.
-                  IUVAI treats deployment as the beginning of an ongoing
-                  process.
+                  Medical AI models can perform impressively on standardized
+                  benchmarks while still failing in the situations that
+                  matter most.
                 </p>
 
                 <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-                  Human experts can continuously challenge, evaluate and
-                  observe AI systems in the environments where they actually
-                  operate — helping companies understand not only whether
-                  an automation works, but where and why it fails.
+                  IUVAI enables organizations to evaluate systems through
+                  realistic clinical scenarios designed and assessed by
+                  qualified medical professionals — including ambiguous
+                  cases, edge cases, unexpected inputs and situations where
+                  safety and clinical judgment matter.
+                </p>
+
+                <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                  The goal is not simply to determine whether an AI system
+                  produces an answer. It is to understand whether that
+                  system behaves reliably when confronted with the complexity
+                  of real-world medicine.
                 </p>
 
               </div>
@@ -617,7 +648,7 @@ export default function Landing() {
         </section>
 
         {/* =====================================================
-            TRUST
+            RED TEAMING
         ====================================================== */}
         <section className="border-t border-border/70 py-24">
 
@@ -627,31 +658,16 @@ export default function Landing() {
 
               <div>
 
-                <Workflow className="mb-5 h-7 w-7 text-primary" />
+                <Stethoscope className="mb-5 h-7 w-7 text-primary" />
 
                 <h3 className="text-lg font-semibold">
-                  AI-powered operations
+                  Clinical intelligence
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Intelligent automation designed around the way your
-                  business actually operates.
-                </p>
-
-              </div>
-
-              <div>
-
-                <Users className="mb-5 h-7 w-7 text-primary" />
-
-                <h3 className="text-lg font-semibold">
-                  Human intelligence
-                </h3>
-
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Qualified experts provide judgment, domain knowledge
-                  and real-world perspective where automation alone falls
-                  short.
+                  Medical professionals bring clinical reasoning,
+                  domain knowledge and real-world healthcare experience
+                  into AI development and evaluation.
                 </p>
 
               </div>
@@ -661,12 +677,29 @@ export default function Landing() {
                 <ShieldCheck className="mb-5 h-7 w-7 text-primary" />
 
                 <h3 className="text-lg font-semibold">
-                  Continuous evaluation
+                  Medical AI red teaming
                 </h3>
 
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Systems can be continuously challenged and evaluated to
-                  uncover failures before they become costly problems.
+                  AI systems are deliberately challenged to uncover
+                  unsafe behavior, vulnerabilities, unexpected outputs
+                  and clinically meaningful failure modes.
+                </p>
+
+              </div>
+
+              <div>
+
+                <Globe2 className="mb-5 h-7 w-7 text-primary" />
+
+                <h3 className="text-lg font-semibold">
+                  Real-world evaluation
+                </h3>
+
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Models are evaluated against realistic scenarios that
+                  reflect the complexity, ambiguity and edge cases of
+                  actual clinical environments.
                 </p>
 
               </div>
@@ -688,25 +721,29 @@ export default function Landing() {
 
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.15em] text-primary">
               <Sparkles className="h-3.5 w-3.5" />
-              Human intelligence for better AI
+              Human intelligence for medical AI
             </div>
 
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Help build what comes next.
+              Build better medical AI.
+              <br />
+              <span className="text-muted-foreground">
+                Deploy it with confidence.
+              </span>
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Whether you are an expert ready to contribute your knowledge
-              or a company looking to deploy and continuously improve
-              intelligent systems, IUVAI connects human intelligence with
-              the future of AI.
+              Whether you are a medical expert ready to contribute your
+              knowledge or an organization building and evaluating medical
+              AI, IUVAI connects clinical intelligence with the systems
+              shaping the future of healthcare.
             </p>
 
             <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
 
               <Link href="/signup">
                 <button className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-7 py-4 font-medium text-primary-foreground transition-all hover:shadow-xl hover:shadow-primary/20 sm:w-auto">
-                  Join as an Expert
+                  Join as a Medical Expert
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </Link>
