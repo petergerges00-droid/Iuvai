@@ -189,6 +189,273 @@ export interface AutomationProject {
   updated_at: string;
 }
 // ─────────────────────────────────────────────────────────────
+// AI AUTOMATION REQUESTS
+//
+// V1 workflow:
+//
+// Company
+//    ↓
+// submits automation request
+//    ↓
+// Supabase automation_requests
+//    ↓
+// Supabase Edge Function
+//    ↓
+// Resend
+//    ↓
+// Peter.gerges00@gmail.com
+//
+// Companies do NOT create automation projects directly.
+// ─────────────────────────────────────────────────────────────
+
+export async function createAutomationRequest(
+  request: Omit<
+    AutomationRequest,
+    'id' | 'created_at' | 'updated_at'
+  >
+): Promise<AutomationRequest> {
+
+  // Verify that the user is authenticated.
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to submit an automation request.'
+    );
+  }
+
+  // Make sure the request is being submitted for the
+  // currently authenticated company.
+  if (request.company_id !== user.id) {
+    throw new Error(
+      'You are not authorized to submit this automation request.'
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_requests')
+    .insert({
+      ...request,
+      status: 'pending',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to submit automation request: ${error.message}`
+    );
+  }
+
+  const automationRequest =
+    data as AutomationRequest;
+
+  // ───────────────────────────────────────────────────────────
+  // EMAIL NOTIFICATION
+  //
+  // The Resend API key is NOT used here.
+  //
+  // The Supabase Edge Function owns the Resend API key and
+  // sends the actual email.
+  // ───────────────────────────────────────────────────────────
+
+  try {
+    const {
+      error: notificationError,
+    } = await supabase.functions.invoke(
+      'notify-automation-request',
+      {
+        body: {
+          requestId:
+            automationRequest.id,
+        },
+      }
+    );
+
+    if (notificationError) {
+      // Do not fail the company's request just because
+      // the email notification failed.
+      //
+      // The request is already safely stored in Supabase.
+      console.error(
+        'AUTOMATION REQUEST EMAIL ERROR:',
+        notificationError
+      );
+    }
+  } catch (notificationError) {
+    // Same principle: the database request succeeded,
+    // therefore we don't tell the company that their
+    // request failed merely because notification failed.
+    console.error(
+      'AUTOMATION REQUEST NOTIFICATION ERROR:',
+      notificationError
+    );
+  }
+
+  return automationRequest;
+}
+
+// ─────────────────────────────────────────────────────────────
+// GET COMPANY AUTOMATION REQUESTS
+// ─────────────────────────────────────────────────────────────
+
+export async function getCompanyAutomationRequests(
+  companyId: string
+): Promise<AutomationRequest[]> {
+
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to view automation requests.'
+    );
+  }
+
+  if (user.id !== companyId) {
+    throw new Error(
+      'You are not authorized to view these automation requests.'
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_requests')
+    .select('*')
+    .eq(
+      'company_id',
+      companyId
+    )
+    .order(
+      'created_at',
+      {
+        ascending: false,
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      `Failed to load automation requests: ${error.message}`
+    );
+  }
+
+  return (
+    data || []
+  ) as AutomationRequest[];
+}
+
+// ─────────────────────────────────────────────────────────────
+// GET SINGLE AUTOMATION REQUEST
+// ─────────────────────────────────────────────────────────────
+
+export async function getAutomationRequest(
+  requestId: string
+): Promise<AutomationRequest | null> {
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_requests')
+    .select('*')
+    .eq(
+      'id',
+      requestId
+    )
+    .single();
+
+  if (error) {
+    console.error(
+      'GET AUTOMATION REQUEST ERROR:',
+      error
+    );
+
+    return null;
+  }
+
+  return data as AutomationRequest;
+}
+
+// ─────────────────────────────────────────────────────────────
+// UPDATE AUTOMATION REQUEST
+//
+// Primarily intended for admin workflows.
+// ─────────────────────────────────────────────────────────────
+
+export async function updateAutomationRequest(
+  requestId: string,
+  updates: Partial<
+    Pick<
+      AutomationRequest,
+      | 'title'
+      | 'description'
+      | 'business_goal'
+      | 'industry'
+      | 'budget'
+      | 'timeline'
+      | 'status'
+    >
+  >
+): Promise<AutomationRequest> {
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_requests')
+    .update({
+      ...updates,
+
+      updated_at:
+        new Date().toISOString(),
+    })
+    .eq(
+      'id',
+      requestId
+    )
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update automation request: ${error.message}`
+    );
+  }
+
+  return data as AutomationRequest;
+}
+
+// ─────────────────────────────────────────────────────────────
+// UPDATE AUTOMATION REQUEST STATUS
+// ─────────────────────────────────────────────────────────────
+
+export async function updateAutomationRequestStatus(
+  requestId: string,
+  status: AutomationRequestStatus
+): Promise<AutomationRequest> {
+
+  return updateAutomationRequest(
+    requestId,
+    {
+      status,
+    }
+  );
+}
+// ─────────────────────────────────────────────────────────────
 // PROJECT REQUEST
 // ─────────────────────────────────────────────────────────────
 
