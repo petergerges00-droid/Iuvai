@@ -270,41 +270,51 @@ alert(
   // ───────────────────────────────────────────────────────────
 
   try {
-    const {
-      error: notificationError,
-    } = await supabase.functions.invoke(
-      'notify-automation-request',
-      {
-        body: {
-          requestId:
-            automationRequest.id,
-        },
-      }
-    );
+  alert('ABOUT TO INVOKE EMAIL FUNCTION');
 
-    if (notificationError) {
-      // Do not fail the company's request just because
-      // the email notification failed.
-      //
-      // The request is already safely stored in Supabase.
-      console.error(
-        'AUTOMATION REQUEST EMAIL ERROR:',
-        notificationError
-      );
+  const {
+    data: functionData,
+    error: notificationError,
+  } = await supabase.functions.invoke(
+    'notify-automation-request',
+    {
+      body: {
+        requestId:
+          automationRequest.id,
+      },
     }
-  } catch (notificationError) {
-    // Same principle: the database request succeeded,
-    // therefore we don't tell the company that their
-    // request failed merely because notification failed.
+  );
+
+  alert(
+    `EMAIL FUNCTION RETURNED:\n${
+      notificationError
+        ? notificationError.message
+        : 'NO ERROR'
+    }`
+  );
+
+  if (notificationError) {
     console.error(
-      'AUTOMATION REQUEST NOTIFICATION ERROR:',
+      'AUTOMATION REQUEST EMAIL ERROR:',
       notificationError
     );
   }
+} catch (notificationError) {
+  alert(
+    `EMAIL FUNCTION THREW:\n${
+      notificationError instanceof Error
+        ? notificationError.message
+        : String(notificationError)
+    }`
+  );
 
-  return automationRequest;
+  console.error(
+    'AUTOMATION REQUEST NOTIFICATION ERROR:',
+    notificationError
+  );
 }
 
+return automationRequest;
 // ─────────────────────────────────────────────────────────────
 // GET COMPANY AUTOMATION REQUESTS
 // ─────────────────────────────────────────────────────────────
