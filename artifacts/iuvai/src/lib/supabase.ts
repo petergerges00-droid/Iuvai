@@ -23,7 +23,9 @@ export const supabase = createClient(
 // ─────────────────────────────────────────────────────────────
 
 export type AccountType = 'expert' | 'company';
-
+export type ServiceType =
+  | 'human_intelligence'
+  | 'ai_automation';
 export type VerificationStatus =
   | 'pending'
   | 'approved'
