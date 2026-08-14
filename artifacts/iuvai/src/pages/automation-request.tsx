@@ -30,6 +30,10 @@ export default function AutomationRequest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const debug = (message: string) => {
+    alert(message);
+  };
+
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
@@ -58,9 +62,45 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      // -------------------------------------------------------
-      // LOAD COMPANY PROFILE
-      // -------------------------------------------------------
+      // =======================================================
+      // STEP 1 — SESSION
+      // =======================================================
+
+      debug(
+        `STEP 1\n\nUser ID:\n${user.id}\n\nEmail:\n${user.email || 'none'}`
+      );
+
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw new Error(
+          `SESSION ERROR:\n${JSON.stringify(
+            sessionError,
+            null,
+            2
+          )}`
+        );
+      }
+
+      const accessToken =
+        sessionData.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error(
+          'SESSION ERROR:\nNo access token was found.'
+        );
+      }
+
+      // =======================================================
+      // STEP 2 — COMPANY PROFILE
+      // =======================================================
+
+      debug(
+        'STEP 2\n\nLoading company profile...'
+      );
 
       const {
         data: companyProfile,
@@ -76,9 +116,12 @@ export default function AutomationRequest() {
         .maybeSingle();
 
       if (companyProfileError) {
-        console.error(
-          'COMPANY PROFILE ERROR:',
-          companyProfileError
+        throw new Error(
+          `COMPANY PROFILE ERROR:\n${JSON.stringify(
+            companyProfileError,
+            null,
+            2
+          )}`
         );
       }
 
@@ -90,9 +133,13 @@ export default function AutomationRequest() {
       const contactEmail =
         user.email || '';
 
-      // -------------------------------------------------------
-      // CREATE AUTOMATION REQUEST
-      // -------------------------------------------------------
+      // =======================================================
+      // STEP 3 — INSERT AUTOMATION REQUEST
+      // =======================================================
+
+      debug(
+        `STEP 3\n\nCreating automation request...\n\nCompany: ${companyName}`
+      );
 
       const {
         data,
@@ -121,19 +168,23 @@ export default function AutomationRequest() {
             null,
 
           desired_outcome:
-            businessGoal.trim() || null,
+            businessGoal.trim() ||
+            null,
 
           timeline:
-            timeline.trim() || null,
+            timeline.trim() ||
+            null,
 
           budget:
-            budget.trim() || null,
+            budget.trim() ||
+            null,
 
           additional_information:
             null,
 
           business_goal:
-            businessGoal.trim() || null,
+            businessGoal.trim() ||
+            null,
 
           status:
             'submitted',
@@ -142,67 +193,30 @@ export default function AutomationRequest() {
         .single();
 
       if (insertError) {
-        console.error(
-          'AUTOMATION REQUEST CREATION ERROR:',
-          insertError
+        throw new Error(
+          `AUTOMATION REQUEST INSERT ERROR:\n${JSON.stringify(
+            insertError,
+            null,
+            2
+          )}`
         );
-
-        setError(
-          insertError.message ||
-            'Unable to submit the automation request.'
-        );
-
-        return;
       }
 
       if (!data?.id) {
-        setError(
-          'The request was submitted, but we could not confirm it.'
+        throw new Error(
+          'AUTOMATION REQUEST ERROR:\nInsert succeeded but no request ID was returned.'
         );
-
-        return;
       }
 
-      // -------------------------------------------------------
-      // SEND ADMIN EMAIL
-      // -------------------------------------------------------
+      const requestId = data.id;
 
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession();
+      // =======================================================
+      // STEP 4 — EDGE FUNCTION
+      // =======================================================
 
-      if (sessionError) {
-        console.error(
-          'SESSION ERROR:',
-          sessionError
-        );
-
-        setError(
-          'Your session could not be verified. Please sign in again.'
-        );
-
-        return;
-      }
-
-      const accessToken =
-        sessionData.session?.access_token;
-
-      if (!accessToken) {
-        setError(
-          'Your session has expired. Please sign in again.'
-        );
-
-        return;
-      }
-
-      // -------------------------------------------------------
-      // DIRECT EDGE FUNCTION REQUEST
-      //
-      // We are temporarily using fetch instead of
-      // supabase.functions.invoke() so we can see the
-      // exact HTTP response from the Edge Function.
-      // -------------------------------------------------------
+      debug(
+        `STEP 4\n\nAbout to call Edge Function.\n\nRequest ID:\n${requestId}`
+      );
 
       const functionResponse =
         await fetch(
@@ -216,10 +230,13 @@ export default function AutomationRequest() {
 
               'Authorization':
                 `Bearer ${accessToken}`,
+
+              'apikey':
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
             },
 
             body: JSON.stringify({
-              requestId: data.id,
+              requestId,
             }),
           }
         );
@@ -227,40 +244,27 @@ export default function AutomationRequest() {
       const functionText =
         await functionResponse.text();
 
-      // -------------------------------------------------------
-      // TEMPORARY DEBUG RESULT
-      // -------------------------------------------------------
+      // =======================================================
+      // STEP 5 — EDGE FUNCTION RESPONSE
+      // =======================================================
 
-      alert(
-        `EDGE FUNCTION RESULT\n\n` +
-        `HTTP STATUS: ${functionResponse.status}\n\n` +
-        `RESPONSE:\n${functionText}`
+      debug(
+        `STEP 5\n\nEdge Function returned.\n\nHTTP STATUS:\n${functionResponse.status}\n\nRESPONSE:\n${functionText}`
       );
 
-      // -------------------------------------------------------
-      // HANDLE EDGE FUNCTION ERROR
-      // -------------------------------------------------------
-
       if (!functionResponse.ok) {
-        console.error(
-          'AUTOMATION REQUEST EMAIL ERROR:',
-          functionText
-        );
-
-        /*
-         * The automation request itself was already saved.
-         * Therefore we don't report the entire submission
-         * as failed.
-         */
-
-        console.warn(
-          'Automation request was saved, but the admin email notification failed.'
+        throw new Error(
+          `EDGE FUNCTION ERROR\n\nHTTP ${functionResponse.status}\n\n${functionText}`
         );
       }
 
-      // -------------------------------------------------------
-      // SUCCESS
-      // -------------------------------------------------------
+      // =======================================================
+      // STEP 6 — SUCCESS
+      // =======================================================
+
+      debug(
+        'STEP 6\n\nEverything succeeded.\n\nRedirecting to dashboard.'
+      );
 
       setLocation(
         '/company-dashboard'
@@ -272,8 +276,17 @@ export default function AutomationRequest() {
         err
       );
 
+      const message =
+        err instanceof Error
+          ? err.message
+          : JSON.stringify(err);
+
+      alert(
+        `FINAL ERROR\n\n${message}`
+      );
+
       setError(
-        'Something went wrong while submitting your request. Please try again.'
+        message
       );
 
     } finally {
@@ -285,8 +298,6 @@ export default function AutomationRequest() {
     <AppLayout title="Automation Request">
 
       <div className="mx-auto max-w-3xl space-y-8">
-
-        {/* BACK */}
 
         <button
           type="button"
@@ -301,8 +312,6 @@ export default function AutomationRequest() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </button>
-
-        {/* HEADER */}
 
         <section>
 
@@ -327,14 +336,10 @@ export default function AutomationRequest() {
 
         </section>
 
-        {/* FORM */}
-
         <form
           onSubmit={handleSubmit}
           className="space-y-6"
         >
-
-          {/* PROJECT INFORMATION */}
 
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
@@ -358,8 +363,6 @@ export default function AutomationRequest() {
 
             <div className="space-y-5">
 
-              {/* TITLE */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="title">
@@ -379,8 +382,6 @@ export default function AutomationRequest() {
                 />
 
               </div>
-
-              {/* DESCRIPTION */}
 
               <div className="space-y-2">
 
@@ -408,8 +409,6 @@ export default function AutomationRequest() {
 
               </div>
 
-              {/* BUSINESS GOAL */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="business-goal">
@@ -435,8 +434,6 @@ export default function AutomationRequest() {
 
           </section>
 
-          {/* PROJECT CONTEXT */}
-
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
             <div className="mb-6">
@@ -458,8 +455,6 @@ export default function AutomationRequest() {
 
             <div className="grid gap-5 sm:grid-cols-2">
 
-              {/* INDUSTRY */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="industry">
@@ -480,8 +475,6 @@ export default function AutomationRequest() {
 
               </div>
 
-              {/* BUDGET */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="budget">
@@ -501,8 +494,6 @@ export default function AutomationRequest() {
                 />
 
               </div>
-
-              {/* TIMELINE */}
 
               <div className="space-y-2 sm:col-span-2">
 
@@ -528,19 +519,15 @@ export default function AutomationRequest() {
 
           </section>
 
-          {/* ERROR */}
-
           {error && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
 
-              <p className="text-sm text-red-500">
+              <p className="whitespace-pre-wrap text-sm text-red-500">
                 {error}
               </p>
 
             </div>
           )}
-
-          {/* SUBMIT */}
 
           <section className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-6 sm:p-8">
 
