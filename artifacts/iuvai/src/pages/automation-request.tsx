@@ -92,10 +92,6 @@ export default function AutomationRequest() {
 
       // -------------------------------------------------------
       // CREATE AUTOMATION REQUEST
-      //
-      // IMPORTANT:
-      // These names match the actual columns in
-      // automation_requests.
       // -------------------------------------------------------
 
       const {
@@ -171,73 +167,94 @@ export default function AutomationRequest() {
       // SEND ADMIN EMAIL
       // -------------------------------------------------------
 
-alert('STEP 1: About to invoke notification function');
+      const {
+        data: sessionData,
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-const sessionResult = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error(
+          'SESSION ERROR:',
+          sessionError
+        );
 
-const accessToken =
-  sessionResult.data.session?.access_token;
+        setError(
+          'Your session could not be verified. Please sign in again.'
+        );
 
-if (!accessToken) {
-  alert('STEP 2 ERROR: No access token');
-  return;
-}
+        return;
+      }
 
-const functionResponse = await fetch(
-  'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
-      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify({
-      requestId: data.id,
-    }),
-  }
-);
+      const accessToken =
+        sessionData.session?.access_token;
 
-const functionText =
-  await functionResponse.text();
+      if (!accessToken) {
+        setError(
+          'Your session has expired. Please sign in again.'
+        );
 
-alert(
-  `STEP 3: Function response\n\n` +
-  `Status: ${functionResponse.status}\n\n` +
-  `Response:\n${functionText}`
-);
+        return;
+      }
 
-alert(
-  `STEP 2: Function returned\n\nData: ${JSON.stringify(
-    notificationData
-  )}\n\nError: ${JSON.stringify(
-    notificationError
-  )}`
-);
+      // -------------------------------------------------------
+      // DIRECT EDGE FUNCTION REQUEST
+      //
+      // We are temporarily using fetch instead of
+      // supabase.functions.invoke() so we can see the
+      // exact HTTP response from the Edge Function.
+      // -------------------------------------------------------
 
-      if (notificationError) {
+      const functionResponse =
+        await fetch(
+          'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+
+              'Authorization':
+                `Bearer ${accessToken}`,
+            },
+
+            body: JSON.stringify({
+              requestId: data.id,
+            }),
+          }
+        );
+
+      const functionText =
+        await functionResponse.text();
+
+      // -------------------------------------------------------
+      // TEMPORARY DEBUG RESULT
+      // -------------------------------------------------------
+
+      alert(
+        `EDGE FUNCTION RESULT\n\n` +
+        `HTTP STATUS: ${functionResponse.status}\n\n` +
+        `RESPONSE:\n${functionText}`
+      );
+
+      // -------------------------------------------------------
+      // HANDLE EDGE FUNCTION ERROR
+      // -------------------------------------------------------
+
+      if (!functionResponse.ok) {
         console.error(
           'AUTOMATION REQUEST EMAIL ERROR:',
-          notificationError
+          functionText
         );
 
         /*
-         * The request itself was successfully saved.
-         * Therefore we don't tell the company that the
-         * submission failed.
+         * The automation request itself was already saved.
+         * Therefore we don't report the entire submission
+         * as failed.
          */
+
         console.warn(
           'Automation request was saved, but the admin email notification failed.'
-        );
-      }
-
-      if (
-        notificationData &&
-        notificationData.success === false
-      ) {
-        console.warn(
-          'Automation request notification returned an error:',
-          notificationData.error
         );
       }
 
@@ -245,7 +262,9 @@ alert(
       // SUCCESS
       // -------------------------------------------------------
 
-      setLocation('/company-dashboard');
+      setLocation(
+        '/company-dashboard'
+      );
 
     } catch (err) {
       console.error(
@@ -256,6 +275,7 @@ alert(
       setError(
         'Something went wrong while submitting your request. Please try again.'
       );
+
     } finally {
       setIsSubmitting(false);
     }
@@ -263,6 +283,7 @@ alert(
 
   return (
     <AppLayout title="Automation Request">
+
       <div className="mx-auto max-w-3xl space-y-8">
 
         {/* BACK */}
@@ -270,7 +291,9 @@ alert(
         <button
           type="button"
           onClick={() =>
-            setLocation('/company-dashboard')
+            setLocation(
+              '/company-dashboard'
+            )
           }
           className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
           disabled={isSubmitting}
@@ -282,6 +305,7 @@ alert(
         {/* HEADER */}
 
         <section>
+
           <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
             <Workflow className="h-5 w-5 text-primary" />
           </div>
@@ -300,6 +324,7 @@ alert(
             AI-powered system can be designed, built, tested,
             and deployed.
           </p>
+
         </section>
 
         {/* FORM */}
@@ -314,6 +339,7 @@ alert(
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
             <div className="mb-6">
+
               <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40">
                 Project information
               </p>
@@ -327,6 +353,7 @@ alert(
                 technology. You don't need to know exactly how
                 the automation should be built.
               </p>
+
             </div>
 
             <div className="space-y-5">
@@ -334,6 +361,7 @@ alert(
               {/* TITLE */}
 
               <div className="space-y-2">
+
                 <Label htmlFor="title">
                   Project title
                 </Label>
@@ -342,16 +370,20 @@ alert(
                   id="title"
                   value={title}
                   onChange={(event) =>
-                    setTitle(event.target.value)
+                    setTitle(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. Automate customer support triage"
                   disabled={isSubmitting}
                 />
+
               </div>
 
               {/* DESCRIPTION */}
 
               <div className="space-y-2">
+
                 <Label htmlFor="description">
                   Describe the workflow
                 </Label>
@@ -360,7 +392,9 @@ alert(
                   id="description"
                   value={description}
                   onChange={(event) =>
-                    setDescription(event.target.value)
+                    setDescription(
+                      event.target.value
+                    )
                   }
                   placeholder="Describe what currently happens, who is involved, what tools are used, and what you would like the system to handle."
                   className="min-h-[140px] resize-y"
@@ -371,11 +405,13 @@ alert(
                   Don't worry about technical details. Explain
                   the workflow in your own words.
                 </p>
+
               </div>
 
               {/* BUSINESS GOAL */}
 
               <div className="space-y-2">
+
                 <Label htmlFor="business-goal">
                   What is the main business goal?
                 </Label>
@@ -384,15 +420,19 @@ alert(
                   id="business-goal"
                   value={businessGoal}
                   onChange={(event) =>
-                    setBusinessGoal(event.target.value)
+                    setBusinessGoal(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. Reduce manual processing time and allow our team to focus on higher-value work."
                   className="min-h-[100px] resize-y"
                   disabled={isSubmitting}
                 />
+
               </div>
 
             </div>
+
           </section>
 
           {/* PROJECT CONTEXT */}
@@ -400,6 +440,7 @@ alert(
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
             <div className="mb-6">
+
               <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40">
                 Project context
               </p>
@@ -412,6 +453,7 @@ alert(
                 These details are optional, but they help us
                 understand the scope of your request.
               </p>
+
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
@@ -419,6 +461,7 @@ alert(
               {/* INDUSTRY */}
 
               <div className="space-y-2">
+
                 <Label htmlFor="industry">
                   Industry
                 </Label>
@@ -427,16 +470,20 @@ alert(
                   id="industry"
                   value={industry}
                   onChange={(event) =>
-                    setIndustry(event.target.value)
+                    setIndustry(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. Healthcare"
                   disabled={isSubmitting}
                 />
+
               </div>
 
               {/* BUDGET */}
 
               <div className="space-y-2">
+
                 <Label htmlFor="budget">
                   Budget
                 </Label>
@@ -445,16 +492,20 @@ alert(
                   id="budget"
                   value={budget}
                   onChange={(event) =>
-                    setBudget(event.target.value)
+                    setBudget(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. $1,000–$3,000"
                   disabled={isSubmitting}
                 />
+
               </div>
 
               {/* TIMELINE */}
 
               <div className="space-y-2 sm:col-span-2">
+
                 <Label htmlFor="timeline">
                   Desired timeline
                 </Label>
@@ -463,23 +514,29 @@ alert(
                   id="timeline"
                   value={timeline}
                   onChange={(event) =>
-                    setTimeline(event.target.value)
+                    setTimeline(
+                      event.target.value
+                    )
                   }
                   placeholder="e.g. Within 4–6 weeks"
                   disabled={isSubmitting}
                 />
+
               </div>
 
             </div>
+
           </section>
 
           {/* ERROR */}
 
           {error && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+
               <p className="text-sm text-red-500">
                 {error}
               </p>
+
             </div>
           )}
 
@@ -496,6 +553,7 @@ alert(
                 </div>
 
                 <div>
+
                   <p className="text-sm font-medium">
                     Ready to submit?
                   </p>
@@ -504,6 +562,7 @@ alert(
                     IUVAI will review your request and contact
                     you about the next steps.
                   </p>
+
                 </div>
 
               </div>
@@ -513,6 +572,7 @@ alert(
                 disabled={isSubmitting}
                 className="shrink-0"
               >
+
                 {isSubmitting
                   ? 'Submitting request...'
                   : 'Submit automation request'}
@@ -520,6 +580,7 @@ alert(
                 {!isSubmitting && (
                   <ArrowRight className="ml-2 h-4 w-4" />
                 )}
+
               </Button>
 
             </div>
@@ -529,6 +590,7 @@ alert(
         </form>
 
       </div>
+
     </AppLayout>
   );
 }
