@@ -63,11 +63,13 @@ export default function AutomationRequest() {
 
     try {
       // =======================================================
-      // STEP 1 — SESSION
+      // STEP 1 — GET CURRENT SESSION
       // =======================================================
 
       debug(
-        `STEP 1\n\nUser ID:\n${user.id}\n\nEmail:\n${user.email || 'none'}`
+        `STEP 1 — SESSION\n\nUser ID:\n${user.id}\n\nEmail:\n${
+          user.email || 'none'
+        }`
       );
 
       const {
@@ -94,12 +96,16 @@ export default function AutomationRequest() {
         );
       }
 
+      debug(
+        'STEP 1 COMPLETE\n\nAuthenticated session found.'
+      );
+
       // =======================================================
-      // STEP 2 — COMPANY PROFILE
+      // STEP 2 — LOAD COMPANY PROFILE
       // =======================================================
 
       debug(
-        'STEP 2\n\nLoading company profile...'
+        'STEP 2 — Loading company profile...'
       );
 
       const {
@@ -133,12 +139,16 @@ export default function AutomationRequest() {
       const contactEmail =
         user.email || '';
 
+      debug(
+        `STEP 2 COMPLETE\n\nCompany:\n${companyName}\n\nEmail:\n${contactEmail}`
+      );
+
       // =======================================================
-      // STEP 3 — INSERT AUTOMATION REQUEST
+      // STEP 3 — CREATE AUTOMATION REQUEST
       // =======================================================
 
       debug(
-        `STEP 3\n\nCreating automation request...\n\nCompany: ${companyName}`
+        'STEP 3 — Creating automation request...'
       );
 
       const {
@@ -210,56 +220,123 @@ export default function AutomationRequest() {
 
       const requestId = data.id;
 
-     // =======================================================
-// STEP 4 — SIMPLE EDGE FUNCTION CONNECTION TEST
-// =======================================================
+      debug(
+        `STEP 3 COMPLETE\n\nRequest ID:\n${requestId}`
+      );
 
-alert('STEP 4: Testing Edge Function connection');
-
-const testResponse = await fetch(
-  'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      test: true,
-    }),
-  }
-);
-
-const testText = await testResponse.text();
-
-alert(
-  `STEP 5: Edge Function connection result\n\n` +
-  `HTTP STATUS: ${testResponse.status}\n\n` +
-  `RESPONSE:\n${testText}`
-);
-
-// Stop here.
-// Do NOT redirect yet.
-return;
       // =======================================================
-      // STEP 5 — EDGE FUNCTION RESPONSE
+      // STEP 4 — CALL SUPABASE EDGE FUNCTION
       // =======================================================
 
       debug(
-        `STEP 5\n\nEdge Function returned.\n\nHTTP STATUS:\n${functionResponse.status}\n\nRESPONSE:\n${functionText}`
+        'STEP 4 — About to call notify-automation-request...'
       );
 
-      if (!functionResponse.ok) {
+      const supabaseAnonKey =
+        import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseAnonKey) {
         throw new Error(
-          `EDGE FUNCTION ERROR\n\nHTTP ${functionResponse.status}\n\n${functionText}`
+          'CONFIGURATION ERROR:\nVITE_SUPABASE_ANON_KEY is missing from the frontend environment.'
+        );
+      }
+
+      const functionUrl =
+        'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request';
+
+      let functionResponse: Response;
+
+      try {
+        functionResponse =
+          await fetch(
+            functionUrl,
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${accessToken}`,
+
+                apikey:
+                  supabaseAnonKey,
+              },
+
+              body: JSON.stringify({
+                requestId,
+              }),
+            }
+          );
+      } catch (fetchError) {
+        throw new Error(
+          `EDGE FUNCTION NETWORK ERROR:\n${
+            fetchError instanceof Error
+              ? fetchError.message
+              : JSON.stringify(fetchError)
+          }\n\nURL:\n${functionUrl}`
         );
       }
 
       // =======================================================
-      // STEP 6 — SUCCESS
+      // STEP 5 — READ EDGE FUNCTION RESPONSE
+      // =======================================================
+
+      const functionText =
+        await functionResponse.text();
+
+      debug(
+        `STEP 5 — Edge Function responded\n\n` +
+        `HTTP STATUS:\n${functionResponse.status}\n\n` +
+        `OK:\n${functionResponse.ok}\n\n` +
+        `RESPONSE:\n${functionText}`
+      );
+
+      if (!functionResponse.ok) {
+        throw new Error(
+          `EDGE FUNCTION ERROR\n\n` +
+          `HTTP STATUS: ${functionResponse.status}\n\n` +
+          `RESPONSE:\n${functionText}`
+        );
+      }
+
+      // =======================================================
+      // STEP 6 — PARSE RESPONSE
+      // =======================================================
+
+      let functionData: any = null;
+
+      try {
+        functionData =
+          JSON.parse(functionText);
+      } catch {
+        // Response was not JSON.
+        // Keep the raw response for debugging.
+      }
+
+      if (
+        functionData &&
+        functionData.success === false
+      ) {
+        throw new Error(
+          `EDGE FUNCTION RETURNED AN ERROR:\n${
+            functionData.error ||
+            functionText
+          }`
+        );
+      }
+
+      // =======================================================
+      // STEP 7 — SUCCESS
       // =======================================================
 
       debug(
-        'STEP 6\n\nEverything succeeded.\n\nRedirecting to dashboard.'
+        `STEP 6 — SUCCESS\n\n` +
+        `Automation request created successfully.\n\n` +
+        `Request ID:\n${requestId}\n\n` +
+        `Edge Function response:\n${functionText}\n\n` +
+        `Redirecting to dashboard...`
       );
 
       setLocation(
@@ -295,6 +372,8 @@ return;
 
       <div className="mx-auto max-w-3xl space-y-8">
 
+        {/* BACK */}
+
         <button
           type="button"
           onClick={() =>
@@ -308,6 +387,8 @@ return;
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
         </button>
+
+        {/* HEADER */}
 
         <section>
 
@@ -332,10 +413,14 @@ return;
 
         </section>
 
+        {/* FORM */}
+
         <form
           onSubmit={handleSubmit}
           className="space-y-6"
         >
+
+          {/* PROJECT INFORMATION */}
 
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
@@ -359,6 +444,8 @@ return;
 
             <div className="space-y-5">
 
+              {/* TITLE */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="title">
@@ -378,6 +465,8 @@ return;
                 />
 
               </div>
+
+              {/* DESCRIPTION */}
 
               <div className="space-y-2">
 
@@ -405,6 +494,8 @@ return;
 
               </div>
 
+              {/* BUSINESS GOAL */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="business-goal">
@@ -430,6 +521,8 @@ return;
 
           </section>
 
+          {/* PROJECT CONTEXT */}
+
           <section className="rounded-2xl border border-border/60 bg-card/40 p-6 sm:p-8">
 
             <div className="mb-6">
@@ -451,6 +544,8 @@ return;
 
             <div className="grid gap-5 sm:grid-cols-2">
 
+              {/* INDUSTRY */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="industry">
@@ -471,6 +566,8 @@ return;
 
               </div>
 
+              {/* BUDGET */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="budget">
@@ -490,6 +587,8 @@ return;
                 />
 
               </div>
+
+              {/* TIMELINE */}
 
               <div className="space-y-2 sm:col-span-2">
 
@@ -515,6 +614,8 @@ return;
 
           </section>
 
+          {/* ERROR */}
+
           {error && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
 
@@ -524,6 +625,8 @@ return;
 
             </div>
           )}
+
+          {/* SUBMIT */}
 
           <section className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-6 sm:p-8">
 
