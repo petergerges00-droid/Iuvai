@@ -58,32 +58,45 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      /*
-       * The automation_requests table does not have
-       * "title" or "description" columns.
-       *
-       * We map the form fields to the actual database schema:
-       *
-       * title       -> automation_goal
-       * description -> current_process
-       * businessGoal -> business_goal
-       */
+      // -------------------------------------------------------
+      // LOAD COMPANY PROFILE
+      // -------------------------------------------------------
+
+      const {
+        data: companyProfile,
+        error: companyProfileError,
+      } = await supabase
+        .from('company_profiles')
+        .select(`
+          company_name,
+          website,
+          industry
+        `)
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (companyProfileError) {
+        console.error(
+          'COMPANY PROFILE ERROR:',
+          companyProfileError
+        );
+      }
 
       const companyName =
+        companyProfile?.company_name ||
         user.user_metadata?.company_name ||
-        user.user_metadata?.companyName ||
-        user.user_metadata?.name ||
-        user.email?.split('@')[0] ||
-        'Company';
+        'Unknown company';
 
-      const contactEmail = user.email;
+      const contactEmail =
+        user.email || '';
 
-      if (!contactEmail) {
-        setError(
-          'Your account does not have an email address. Please update your account before submitting a request.'
-        );
-        return;
-      }
+      // -------------------------------------------------------
+      // CREATE AUTOMATION REQUEST
+      //
+      // IMPORTANT:
+      // These names match the actual columns in
+      // automation_requests.
+      // -------------------------------------------------------
 
       const {
         data,
@@ -97,23 +110,37 @@ export default function AutomationRequest() {
 
           contact_email: contactEmail,
 
-          industry: industry.trim() || null,
+          industry:
+            industry.trim() ||
+            companyProfile?.industry ||
+            null,
 
-          automation_goal: title.trim(),
+          automation_goal:
+            title.trim(),
 
-          current_process: description.trim(),
+          current_process:
+            description.trim(),
+
+          tools_used:
+            null,
 
           desired_outcome:
             businessGoal.trim() || null,
 
-          timeline: timeline.trim() || null,
+          timeline:
+            timeline.trim() || null,
 
-          budget: budget.trim() || null,
+          budget:
+            budget.trim() || null,
+
+          additional_information:
+            null,
 
           business_goal:
             businessGoal.trim() || null,
 
-          status: 'pending',
+          status:
+            'submitted',
         })
         .select('id')
         .single();
@@ -136,15 +163,13 @@ export default function AutomationRequest() {
         setError(
           'The request was submitted, but we could not confirm it.'
         );
+
         return;
       }
 
-      /*
-       * Notify IUVAI through the Edge Function.
-       *
-       * The Edge Function is responsible for retrieving
-       * the request and sending the email through Resend.
-       */
+      // -------------------------------------------------------
+      // SEND ADMIN EMAIL
+      // -------------------------------------------------------
 
       const {
         data: notificationData,
@@ -159,21 +184,17 @@ export default function AutomationRequest() {
           }
         );
 
-      /*
-       * IMPORTANT:
-       *
-       * Even if the email fails, the automation request
-       * itself was successfully saved.
-       *
-       * Therefore we don't block the company from continuing.
-       */
-
       if (notificationError) {
         console.error(
           'AUTOMATION REQUEST EMAIL ERROR:',
           notificationError
         );
 
+        /*
+         * The request itself was successfully saved.
+         * Therefore we don't tell the company that the
+         * submission failed.
+         */
         console.warn(
           'Automation request was saved, but the admin email notification failed.'
         );
@@ -189,9 +210,9 @@ export default function AutomationRequest() {
         );
       }
 
-      /*
-       * SUCCESS
-       */
+      // -------------------------------------------------------
+      // SUCCESS
+      // -------------------------------------------------------
 
       setLocation('/company-dashboard');
 
