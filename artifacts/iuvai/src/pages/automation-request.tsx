@@ -171,18 +171,28 @@ export default function AutomationRequest() {
       // SEND ADMIN EMAIL
       // -------------------------------------------------------
 
-      const {
-        data: notificationData,
-        error: notificationError,
-      } =
-        await supabase.functions.invoke(
-          'notify-automation-request',
-          {
-            body: {
-              requestId: data.id,
-            },
-          }
-        );
+      const {alert('STEP 1: About to invoke notification function');
+
+const {
+  data: notificationData,
+  error: notificationError,
+} =
+  await supabase.functions.invoke(
+    'notify-automation-request',
+    {
+      body: {
+        requestId: data.id,
+      },
+    }
+  );
+
+alert(
+  `STEP 2: Function returned\n\nData: ${JSON.stringify(
+    notificationData
+  )}\n\nError: ${JSON.stringify(
+    notificationError
+  )}`
+);
 
       if (notificationError) {
         console.error(
