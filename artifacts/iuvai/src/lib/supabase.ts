@@ -257,7 +257,9 @@ export async function createAutomationRequest(
 
   const automationRequest =
     data as AutomationRequest;
-
+alert(
+  `Automation request created: ${automationRequest.id}`
+);
   // ───────────────────────────────────────────────────────────
   // EMAIL NOTIFICATION
   //
