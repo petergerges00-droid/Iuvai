@@ -154,7 +154,40 @@ export interface Project {
   created_at: string;
   updated_at: string;
 }
+// ─────────────────────────────────────────────────────────────
+// AI AUTOMATION PROJECT
+// ─────────────────────────────────────────────────────────────
 
+export type AutomationProjectStatus =
+  | 'draft'
+  | 'discovery'
+  | 'design'
+  | 'development'
+  | 'testing'
+  | 'deployed'
+  | 'completed'
+  | 'cancelled';
+
+export interface AutomationProject {
+  id: string;
+
+  company_id: string;
+
+  title: string;
+  description: string | null;
+
+  business_goal: string | null;
+
+  industry: string | null;
+
+  status: AutomationProjectStatus;
+
+  budget: string | null;
+  timeline: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
 // ─────────────────────────────────────────────────────────────
 // PROJECT REQUEST
 // ─────────────────────────────────────────────────────────────
@@ -590,7 +623,118 @@ async function attachProfilesToExperts(
     })
   );
 }
+// ─────────────────────────────────────────────────────────────
+// AI AUTOMATION PROJECTS
+// ─────────────────────────────────────────────────────────────
 
+export async function createAutomationProject(
+  project: Omit<
+    AutomationProject,
+    'id' | 'created_at' | 'updated_at'
+  >
+): Promise<AutomationProject> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_projects')
+    .insert(project)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to create automation project: ${error.message}`
+    );
+  }
+
+  return data as AutomationProject;
+}
+
+export async function getCompanyAutomationProjects(
+  companyId: string
+): Promise<AutomationProject[]> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_projects')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('created_at', {
+      ascending: false,
+    });
+
+  if (error) {
+    throw new Error(
+      `Failed to load automation projects: ${error.message}`
+    );
+  }
+
+  return (data || []) as AutomationProject[];
+}
+
+export async function getAutomationProject(
+  projectId: string
+): Promise<AutomationProject | null> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_projects')
+    .select('*')
+    .eq('id', projectId)
+    .single();
+
+  if (error) {
+    console.error(
+      'GET AUTOMATION PROJECT ERROR:',
+      error
+    );
+
+    return null;
+  }
+
+  return data as AutomationProject;
+}
+
+export async function updateAutomationProject(
+  projectId: string,
+  updates: Partial<AutomationProject>
+): Promise<AutomationProject> {
+  const {
+    data,
+    error,
+  } = await supabase
+    .from('automation_projects')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', projectId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to update automation project: ${error.message}`
+    );
+  }
+
+  return data as AutomationProject;
+}
+
+export async function updateAutomationProjectStatus(
+  projectId: string,
+  status: AutomationProjectStatus
+): Promise<AutomationProject> {
+  return updateAutomationProject(
+    projectId,
+    {
+      status,
+    }
+  );
+}
 export async function getExperts(): Promise<
   ExpertWithProfile[]
 > {
