@@ -59,10 +59,63 @@ export default function AutomationRequest() {
 
     try {
       // ───────────────────────────────────────────────────────
+      // GET COMPANY PROFILE
+      // ───────────────────────────────────────────────────────
+
+      const {
+        data: companyProfile,
+        error: companyProfileError,
+      } = await supabase
+        .from('company_profiles')
+        .select('company_name')
+        .eq('id', user.id)
+        .single();
+
+      if (companyProfileError) {
+        console.error(
+          'COMPANY PROFILE ERROR:',
+          companyProfileError
+        );
+
+        throw new Error(
+          'Could not load your company information.'
+        );
+      }
+
+      // ───────────────────────────────────────────────────────
+      // GET AUTHENTICATED USER EMAIL
+      // ───────────────────────────────────────────────────────
+
+      const {
+        data: {
+          user: authenticatedUser,
+        },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !authenticatedUser) {
+        throw new Error(
+          'Could not verify your account.'
+        );
+      }
+
+      const contactEmail =
+        authenticatedUser.email;
+
+      if (!contactEmail) {
+        throw new Error(
+          'Could not determine your contact email.'
+        );
+      }
+
+      // ───────────────────────────────────────────────────────
       // CREATE AUTOMATION REQUEST
       //
-      // This creates a request for IUVAI to review.
+      // IMPORTANT:
+      // This creates an entry in automation_requests.
+      //
       // It does NOT create an automation project.
+      // IUVAI will review the request manually.
       // ───────────────────────────────────────────────────────
 
       const {
@@ -73,22 +126,46 @@ export default function AutomationRequest() {
         .insert({
           company_id: user.id,
 
-          title: title.trim(),
+          company_name:
+            companyProfile?.company_name ||
+            'Unknown company',
 
-          description:
-            description.trim(),
-
-          business_goal:
-            businessGoal.trim() || null,
+          contact_email:
+            contactEmail,
 
           industry:
             industry.trim() || null,
 
-          budget:
-            budget.trim() || null,
+          // Project title → automation_goal
+          automation_goal:
+            title.trim(),
+
+          // Workflow description → current_process
+          current_process:
+            description.trim(),
+
+          // Business goal → desired_outcome
+          desired_outcome:
+            businessGoal.trim() || null,
 
           timeline:
             timeline.trim() || null,
+
+          budget:
+            budget.trim() || null,
+
+          // Not currently collected separately.
+          tools_used: null,
+
+          additional_information: null,
+
+          // V1 request status
+          status: 'pending',
+
+          // Kept nullable in the database.
+          // We use desired_outcome for the form's
+          // business-goal information.
+          business_goal: null,
         })
         .select('id')
         .single();
@@ -111,6 +188,7 @@ export default function AutomationRequest() {
         setError(
           'The request was submitted, but we could not confirm it.'
         );
+
         return;
       }
 
@@ -119,6 +197,8 @@ export default function AutomationRequest() {
       //
       // The Edge Function retrieves the request and sends
       // the notification through Resend.
+      //
+      // If the email fails, the request remains saved.
       // ───────────────────────────────────────────────────────
 
       const {
@@ -140,15 +220,6 @@ export default function AutomationRequest() {
           notificationError
         );
 
-        /*
-         * Important:
-         *
-         * The request itself was successfully saved.
-         * Therefore we do NOT tell the company that the
-         * request failed.
-         *
-         * The email can be retried separately.
-         */
         console.warn(
           'Automation request was saved, but the admin email notification failed.'
         );
@@ -179,7 +250,9 @@ export default function AutomationRequest() {
       );
 
       setError(
-        'Something went wrong while submitting your request. Please try again.'
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong while submitting your request. Please try again.'
       );
     } finally {
       setIsSubmitting(false);
@@ -197,8 +270,8 @@ export default function AutomationRequest() {
           onClick={() =>
             setLocation('/company-dashboard')
           }
-          className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
           disabled={isSubmitting}
+          className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
