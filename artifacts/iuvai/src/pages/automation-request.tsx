@@ -36,7 +36,9 @@ export default function AutomationRequest() {
     event.preventDefault();
 
     if (!user?.id) {
-      setError('You must be signed in to create an automation project.');
+      setError(
+        'You must be signed in to submit an automation request.'
+      );
       return;
     }
 
@@ -46,7 +48,9 @@ export default function AutomationRequest() {
     }
 
     if (!description.trim()) {
-      setError('Please describe the workflow you want to automate.');
+      setError(
+        'Please describe the workflow you want to automate.'
+      );
       return;
     }
 
@@ -54,30 +58,50 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      const { data, error: insertError } = await supabase
-        .from('automation_projects')
+      // ───────────────────────────────────────────────────────
+      // CREATE AUTOMATION REQUEST
+      //
+      // This creates a request for IUVAI to review.
+      // It does NOT create an automation project.
+      // ───────────────────────────────────────────────────────
+
+      const {
+        data,
+        error: insertError,
+      } = await supabase
+        .from('automation_requests')
         .insert({
           company_id: user.id,
+
           title: title.trim(),
-          description: description.trim(),
-          business_goal: businessGoal.trim() || null,
-          industry: industry.trim() || null,
-          budget: budget.trim() || null,
-          timeline: timeline.trim() || null,
-          status: 'pending',
+
+          description:
+            description.trim(),
+
+          business_goal:
+            businessGoal.trim() || null,
+
+          industry:
+            industry.trim() || null,
+
+          budget:
+            budget.trim() || null,
+
+          timeline:
+            timeline.trim() || null,
         })
         .select('id')
         .single();
 
       if (insertError) {
         console.error(
-          'AUTOMATION PROJECT CREATION ERROR:',
+          'AUTOMATION REQUEST CREATION ERROR:',
           insertError
         );
 
         setError(
           insertError.message ||
-            'Unable to create the automation project.'
+            'Unable to submit the automation request.'
         );
 
         return;
@@ -85,22 +109,77 @@ export default function AutomationRequest() {
 
       if (!data?.id) {
         setError(
-          'The project was created, but we could not open it.'
+          'The request was submitted, but we could not confirm it.'
         );
         return;
       }
 
+      // ───────────────────────────────────────────────────────
+      // SEND ADMIN EMAIL
+      //
+      // The Edge Function retrieves the request and sends
+      // the notification through Resend.
+      // ───────────────────────────────────────────────────────
+
+      const {
+        data: notificationData,
+        error: notificationError,
+      } =
+        await supabase.functions.invoke(
+          'notify-automation-request',
+          {
+            body: {
+              requestId: data.id,
+            },
+          }
+        );
+
+      if (notificationError) {
+        console.error(
+          'AUTOMATION REQUEST EMAIL ERROR:',
+          notificationError
+        );
+
+        /*
+         * Important:
+         *
+         * The request itself was successfully saved.
+         * Therefore we do NOT tell the company that the
+         * request failed.
+         *
+         * The email can be retried separately.
+         */
+        console.warn(
+          'Automation request was saved, but the admin email notification failed.'
+        );
+      }
+
+      if (
+        notificationData &&
+        notificationData.success === false
+      ) {
+        console.warn(
+          'Automation request notification returned an error:',
+          notificationData.error
+        );
+      }
+
+      // ───────────────────────────────────────────────────────
+      // SUCCESS
+      // ───────────────────────────────────────────────────────
+
       setLocation(
-        `/company-dashboard/automation/${data.id}`
+        '/company-dashboard'
       );
+
     } catch (err) {
       console.error(
-        'AUTOMATION PROJECT CREATION ERROR:',
+        'AUTOMATION REQUEST ERROR:',
         err
       );
 
       setError(
-        'Something went wrong while creating your project. Please try again.'
+        'Something went wrong while submitting your request. Please try again.'
       );
     } finally {
       setIsSubmitting(false);
@@ -119,6 +198,7 @@ export default function AutomationRequest() {
             setLocation('/company-dashboard')
           }
           className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+          disabled={isSubmitting}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
@@ -346,8 +426,8 @@ export default function AutomationRequest() {
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Your project will be added to your workspace
-                    for review.
+                    IUVAI will review your request and contact
+                    you about the next steps.
                   </p>
                 </div>
 
@@ -359,8 +439,8 @@ export default function AutomationRequest() {
                 className="shrink-0"
               >
                 {isSubmitting
-                  ? 'Creating project...'
-                  : 'Create automation project'}
+                  ? 'Submitting request...'
+                  : 'Submit automation request'}
 
                 {!isSubmitting && (
                   <ArrowRight className="ml-2 h-4 w-4" />
