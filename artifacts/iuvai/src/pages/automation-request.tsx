@@ -30,14 +30,12 @@ export default function AutomationRequest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const debug = (message: string) => {
-    alert(message);
-  };
-
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+
+    setError(null);
 
     // =====================================================
     // VALIDATION
@@ -63,47 +61,11 @@ export default function AutomationRequest() {
     }
 
     setIsSubmitting(true);
-    setError(null);
 
     try {
       // =====================================================
-      // STEP 1 — VERIFY SESSION
+      // STEP 1 — GET COMPANY PROFILE
       // =====================================================
-
-      debug(
-        `STEP 1 — SESSION\n\nUser ID:\n${user.id}\n\nEmail:\n${
-          user.email || 'none'
-        }`
-      );
-
-      const {
-        data: sessionData,
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw new Error(
-          `SESSION ERROR:\n${JSON.stringify(
-            sessionError,
-            null,
-            2
-          )}`
-        );
-      }
-
-      if (!sessionData.session) {
-        throw new Error(
-          'SESSION ERROR:\nNo active session was found.'
-        );
-      }
-
-      // =====================================================
-      // STEP 2 — LOAD COMPANY PROFILE
-      // =====================================================
-
-      debug(
-        'STEP 2 — Loading company profile...'
-      );
 
       const {
         data: companyProfile,
@@ -119,12 +81,14 @@ export default function AutomationRequest() {
         .maybeSingle();
 
       if (companyProfileError) {
+        console.error(
+          'COMPANY PROFILE ERROR:',
+          companyProfileError
+        );
+
         throw new Error(
-          `COMPANY PROFILE ERROR:\n${JSON.stringify(
-            companyProfileError,
-            null,
-            2
-          )}`
+          companyProfileError.message ||
+            'Unable to load company information.'
         );
       }
 
@@ -133,16 +97,11 @@ export default function AutomationRequest() {
         user.user_metadata?.company_name ||
         'Unknown company';
 
-      const contactEmail =
-        user.email || '';
+      const contactEmail = user.email || '';
 
       // =====================================================
-      // STEP 3 — CREATE AUTOMATION REQUEST
+      // STEP 2 — CREATE AUTOMATION REQUEST
       // =====================================================
-
-      debug(
-        'STEP 3 — Creating automation request...'
-      );
 
       const {
         data: request,
@@ -167,115 +126,66 @@ export default function AutomationRequest() {
           current_process:
             description.trim(),
 
-          tools_used:
-            null,
+          tools_used: null,
 
           desired_outcome:
-            businessGoal.trim() ||
-            null,
+            businessGoal.trim() || null,
 
           timeline:
-            timeline.trim() ||
-            null,
+            timeline.trim() || null,
 
           budget:
-            budget.trim() ||
-            null,
+            budget.trim() || null,
 
-          additional_information:
-            null,
+          additional_information: null,
 
           business_goal:
-            businessGoal.trim() ||
-            null,
+            businessGoal.trim() || null,
 
-          status:
-            'submitted',
+          status: 'submitted',
         })
         .select('id')
         .single();
 
       if (insertError) {
+        console.error(
+          'AUTOMATION REQUEST INSERT ERROR:',
+          insertError
+        );
+
         throw new Error(
-          `AUTOMATION REQUEST INSERT ERROR:\n${JSON.stringify(
-            insertError,
-            null,
-            2
-          )}`
+          insertError.message ||
+            'Unable to submit the automation request.'
         );
       }
 
       if (!request?.id) {
         throw new Error(
-          'AUTOMATION REQUEST ERROR:\nThe request was inserted but no ID was returned.'
+          'The request was saved but no request ID was returned.'
         );
       }
 
       // =====================================================
-      // STEP 4 — SEND ADMIN EMAIL
+      // IMPORTANT
+      //
+      // DO NOT CALL THE EDGE FUNCTION HERE.
+      //
+      // The database insertion is the only client-side
+      // operation required.
+      //
+      // The admin notification will be handled server-side.
       // =====================================================
 
-      debug(
-        `STEP 4 — Sending admin notification\n\nRequest ID:\n${request.id}`
-      );
-
-      const {
-        data: notificationData,
-        error: notificationError,
-      } = await supabase.functions.invoke(
-        'notify-automation-request',
-        {
-          body: {
-            requestId: request.id,
-          },
-        }
+      console.log(
+        'AUTOMATION REQUEST CREATED:',
+        request.id
       );
 
       // =====================================================
-      // STEP 5 — CHECK EDGE FUNCTION RESULT
+      // SUCCESS
       // =====================================================
 
-      if (notificationError) {
-        throw new Error(
-          `ADMIN EMAIL ERROR:\n${JSON.stringify(
-            notificationError,
-            null,
-            2
-          )}`
-        );
-      }
-
-      debug(
-        `STEP 5 — Notification function response\n\n${JSON.stringify(
-          notificationData,
-          null,
-          2
-        )}`
-      );
-
-      if (
-        !notificationData ||
-        notificationData.success !== true
-      ) {
-        throw new Error(
-          `ADMIN EMAIL ERROR:\n${
-            notificationData?.error ||
-            'The notification function did not report success.'
-          }`
-        );
-      }
-
-      // =====================================================
-      // STEP 6 — SUCCESS
-      // =====================================================
-
-      debug(
-        'STEP 6 — SUCCESS\n\nAutomation request submitted and admin email sent.'
-      );
-
-      setLocation(
-        '/company-dashboard'
-      );
+      setLocation('/company-dashboard');
 
     } catch (err) {
       console.error(
@@ -286,11 +196,7 @@ export default function AutomationRequest() {
       const message =
         err instanceof Error
           ? err.message
-          : String(err);
-
-      alert(
-        `FINAL ERROR\n\n${message}`
-      );
+          : 'Something went wrong while submitting your request.';
 
       setError(message);
 
@@ -309,9 +215,7 @@ export default function AutomationRequest() {
         <button
           type="button"
           onClick={() =>
-            setLocation(
-              '/company-dashboard'
-            )
+            setLocation('/company-dashboard')
           }
           className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
           disabled={isSubmitting}
@@ -388,9 +292,7 @@ export default function AutomationRequest() {
                   id="title"
                   value={title}
                   onChange={(event) =>
-                    setTitle(
-                      event.target.value
-                    )
+                    setTitle(event.target.value)
                   }
                   placeholder="e.g. Automate customer support triage"
                   disabled={isSubmitting}
@@ -410,9 +312,7 @@ export default function AutomationRequest() {
                   id="description"
                   value={description}
                   onChange={(event) =>
-                    setDescription(
-                      event.target.value
-                    )
+                    setDescription(event.target.value)
                   }
                   placeholder="Describe what currently happens, who is involved, what tools are used, and what you would like the system to handle."
                   className="min-h-[140px] resize-y"
@@ -438,9 +338,7 @@ export default function AutomationRequest() {
                   id="business-goal"
                   value={businessGoal}
                   onChange={(event) =>
-                    setBusinessGoal(
-                      event.target.value
-                    )
+                    setBusinessGoal(event.target.value)
                   }
                   placeholder="e.g. Reduce manual processing time and allow our team to focus on higher-value work."
                   className="min-h-[100px] resize-y"
@@ -488,9 +386,7 @@ export default function AutomationRequest() {
                   id="industry"
                   value={industry}
                   onChange={(event) =>
-                    setIndustry(
-                      event.target.value
-                    )
+                    setIndustry(event.target.value)
                   }
                   placeholder="e.g. Healthcare"
                   disabled={isSubmitting}
@@ -510,9 +406,7 @@ export default function AutomationRequest() {
                   id="budget"
                   value={budget}
                   onChange={(event) =>
-                    setBudget(
-                      event.target.value
-                    )
+                    setBudget(event.target.value)
                   }
                   placeholder="e.g. $1,000–$3,000"
                   disabled={isSubmitting}
@@ -532,9 +426,7 @@ export default function AutomationRequest() {
                   id="timeline"
                   value={timeline}
                   onChange={(event) =>
-                    setTimeline(
-                      event.target.value
-                    )
+                    setTimeline(event.target.value)
                   }
                   placeholder="e.g. Within 4–6 weeks"
                   disabled={isSubmitting}
