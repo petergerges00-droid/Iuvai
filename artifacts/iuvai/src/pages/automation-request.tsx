@@ -58,117 +58,46 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      // ───────────────────────────────────────────────────────
-      // GET COMPANY PROFILE
-      // ───────────────────────────────────────────────────────
+      // Generate the request ID ourselves.
+      // This allows us to use the same ID when
+      // calling the notification Edge Function.
+      const requestId = crypto.randomUUID();
 
-      const {
-        data: companyProfile,
-        error: companyProfileError,
-      } = await supabase
-        .from('company_profiles')
-        .select('company_name')
-        .eq('id', user.id)
-        .single();
-
-      if (companyProfileError) {
-        console.error(
-          'COMPANY PROFILE ERROR:',
-          companyProfileError
-        );
-
-        throw new Error(
-          'Could not load your company information.'
-        );
-      }
-
-      // ───────────────────────────────────────────────────────
-      // GET AUTHENTICATED USER EMAIL
-      // ───────────────────────────────────────────────────────
-
-      const {
-        data: {
-          user: authenticatedUser,
-        },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !authenticatedUser) {
-        throw new Error(
-          'Could not verify your account.'
-        );
-      }
-
-      const contactEmail =
-        authenticatedUser.email;
-
-      if (!contactEmail) {
-        throw new Error(
-          'Could not determine your contact email.'
-        );
-      }
-
-      // ───────────────────────────────────────────────────────
-      // CREATE AUTOMATION REQUEST
+      // Create the automation request.
       //
       // IMPORTANT:
-      // This creates an entry in automation_requests.
-      //
-      // It does NOT create an automation project.
-      // IUVAI will review the request manually.
-      // ───────────────────────────────────────────────────────
-
-      const {
-        data,
-        error: insertError,
-      } = await supabase
+      // We intentionally do NOT use .select() here.
+      // The previous version returned:
+      // "Success. No rows returned"
+      // because RLS was preventing the inserted row
+      // from being returned by SELECT.
+      const { error: insertError } = await supabase
         .from('automation_requests')
         .insert({
+          id: requestId,
           company_id: user.id,
 
-          company_name:
-            companyProfile?.company_name ||
-            'Unknown company',
+          /*
+           * Your database uses automation_goal,
+           * not title/description.
+           *
+           * We combine the project title and workflow
+           * description into the automation_goal field.
+           */
+          automation_goal: `${title.trim()}\n\n${description.trim()}`,
 
-          contact_email:
-            contactEmail,
+          business_goal:
+            businessGoal.trim() || null,
 
           industry:
             industry.trim() || null,
 
-          // Project title → automation_goal
-          automation_goal:
-            title.trim(),
-
-          // Workflow description → current_process
-          current_process:
-            description.trim(),
-
-          // Business goal → desired_outcome
-          desired_outcome:
-            businessGoal.trim() || null,
-
-          timeline:
-            timeline.trim() || null,
-
           budget:
             budget.trim() || null,
 
-          // Not currently collected separately.
-          tools_used: null,
-
-          additional_information: null,
-
-          // V1 request status
-          status: 'pending',
-
-          // Kept nullable in the database.
-          // We use desired_outcome for the form's
-          // business-goal information.
-          business_goal: null,
-        })
-        .select('id')
-        .single();
+          timeline:
+            timeline.trim() || null,
+        });
 
       if (insertError) {
         console.error(
@@ -184,35 +113,20 @@ export default function AutomationRequest() {
         return;
       }
 
-      if (!data?.id) {
-        setError(
-          'The request was submitted, but we could not confirm it.'
-        );
-
-        return;
-      }
-
-      // ───────────────────────────────────────────────────────
-      // SEND ADMIN EMAIL
+      // The request was successfully saved.
       //
-      // The Edge Function retrieves the request and sends
-      // the notification through Resend.
-      //
-      // If the email fails, the request remains saved.
-      // ───────────────────────────────────────────────────────
-
+      // Now notify IUVAI through the Edge Function.
       const {
         data: notificationData,
         error: notificationError,
-      } =
-        await supabase.functions.invoke(
-          'notify-automation-request',
-          {
-            body: {
-              requestId: data.id,
-            },
-          }
-        );
+      } = await supabase.functions.invoke(
+        'notify-automation-request',
+        {
+          body: {
+            requestId,
+          },
+        }
+      );
 
       if (notificationError) {
         console.error(
@@ -220,6 +134,14 @@ export default function AutomationRequest() {
           notificationError
         );
 
+        /*
+         * The request itself was successfully saved.
+         *
+         * Therefore we do NOT show the company an error
+         * saying that the request failed.
+         *
+         * The notification can be retried separately.
+         */
         console.warn(
           'Automation request was saved, but the admin email notification failed.'
         );
@@ -235,13 +157,8 @@ export default function AutomationRequest() {
         );
       }
 
-      // ───────────────────────────────────────────────────────
-      // SUCCESS
-      // ───────────────────────────────────────────────────────
-
-      setLocation(
-        '/company-dashboard'
-      );
+      // Request successfully submitted.
+      setLocation('/company-dashboard');
 
     } catch (err) {
       console.error(
@@ -250,9 +167,7 @@ export default function AutomationRequest() {
       );
 
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Something went wrong while submitting your request. Please try again.'
+        'Something went wrong while submitting your request. Please try again.'
       );
     } finally {
       setIsSubmitting(false);
@@ -270,8 +185,8 @@ export default function AutomationRequest() {
           onClick={() =>
             setLocation('/company-dashboard')
           }
+          className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
           disabled={isSubmitting}
-          className="flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Dashboard
