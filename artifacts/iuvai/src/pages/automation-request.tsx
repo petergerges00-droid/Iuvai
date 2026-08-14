@@ -62,9 +62,9 @@ export default function AutomationRequest() {
     setError(null);
 
     try {
-      // =======================================================
-      // STEP 1 — GET CURRENT SESSION
-      // =======================================================
+      // =====================================================
+      // STEP 1 — VERIFY SESSION
+      // =====================================================
 
       debug(
         `STEP 1 — SESSION\n\nUser ID:\n${user.id}\n\nEmail:\n${
@@ -96,13 +96,9 @@ export default function AutomationRequest() {
         );
       }
 
-      debug(
-        'STEP 1 COMPLETE\n\nAuthenticated session found.'
-      );
-
-      // =======================================================
+      // =====================================================
       // STEP 2 — LOAD COMPANY PROFILE
-      // =======================================================
+      // =====================================================
 
       debug(
         'STEP 2 — Loading company profile...'
@@ -139,20 +135,16 @@ export default function AutomationRequest() {
       const contactEmail =
         user.email || '';
 
-      debug(
-        `STEP 2 COMPLETE\n\nCompany:\n${companyName}\n\nEmail:\n${contactEmail}`
-      );
-
-      // =======================================================
+      // =====================================================
       // STEP 3 — CREATE AUTOMATION REQUEST
-      // =======================================================
+      // =====================================================
 
       debug(
         'STEP 3 — Creating automation request...'
       );
 
       const {
-        data,
+        data: request,
         error: insertError,
       } = await supabase
         .from('automation_requests')
@@ -212,34 +204,19 @@ export default function AutomationRequest() {
         );
       }
 
-      if (!data?.id) {
+      if (!request?.id) {
         throw new Error(
-          'AUTOMATION REQUEST ERROR:\nInsert succeeded but no request ID was returned.'
+          'AUTOMATION REQUEST ERROR:\nThe request was inserted but no ID was returned.'
         );
       }
 
-      const requestId = data.id;
+      // =====================================================
+      // STEP 4 — INVOKE EDGE FUNCTION
+      // =====================================================
 
       debug(
-        `STEP 3 COMPLETE\n\nRequest ID:\n${requestId}`
+        `STEP 4 — Calling notification function\n\nRequest ID:\n${request.id}`
       );
-
-      // =======================================================
-      // STEP 4 — CALL SUPABASE EDGE FUNCTION
-      // =======================================================
-
-      debug(
-        'STEP 4 — About to call notify-automation-request...'
-      );
-
-      const supabaseAnonKey =
-        import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!supabaseAnonKey) {
-        throw new Error(
-          'CONFIGURATION ERROR:\nVITE_SUPABASE_ANON_KEY is missing from the frontend environment.'
-        );
-      }
 
       const functionUrl =
         'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request';
@@ -247,96 +224,88 @@ export default function AutomationRequest() {
       let functionResponse: Response;
 
       try {
-        functionResponse =
-          await fetch(
-            functionUrl,
-            {
-              method: 'POST',
+        functionResponse = await fetch(
+          functionUrl,
+          {
+            method: 'POST',
 
-              headers: {
-                'Content-Type':
-                  'application/json',
+            headers: {
+              'Content-Type': 'application/json',
 
-                Authorization:
-                  `Bearer ${accessToken}`,
+              Authorization:
+                `Bearer ${accessToken}`,
 
-                apikey:
-                  supabaseAnonKey,
-              },
+              apikey:
+                import.meta.env
+                  .VITE_SUPABASE_ANON_KEY,
+            },
 
-              body: JSON.stringify({
-                requestId,
-              }),
-            }
-          );
-      } catch (fetchError) {
+            body: JSON.stringify({
+              requestId: request.id,
+            }),
+          }
+        );
+      } catch (networkError) {
         throw new Error(
           `EDGE FUNCTION NETWORK ERROR:\n${
-            fetchError instanceof Error
-              ? fetchError.message
-              : JSON.stringify(fetchError)
+            networkError instanceof Error
+              ? networkError.message
+              : String(networkError)
           }\n\nURL:\n${functionUrl}`
         );
       }
 
-      // =======================================================
-      // STEP 5 — READ EDGE FUNCTION RESPONSE
-      // =======================================================
+      // =====================================================
+      // STEP 5 — READ FUNCTION RESPONSE
+      // =====================================================
 
       const functionText =
         await functionResponse.text();
 
       debug(
-        `STEP 5 — Edge Function responded\n\n` +
-        `HTTP STATUS:\n${functionResponse.status}\n\n` +
-        `OK:\n${functionResponse.ok}\n\n` +
-        `RESPONSE:\n${functionText}`
+        `STEP 5 — Edge Function response\n\nHTTP STATUS:\n${functionResponse.status}\n\nRESPONSE:\n${functionText}`
       );
 
       if (!functionResponse.ok) {
         throw new Error(
-          `EDGE FUNCTION ERROR\n\n` +
-          `HTTP STATUS: ${functionResponse.status}\n\n` +
-          `RESPONSE:\n${functionText}`
+          `EDGE FUNCTION ERROR\n\nHTTP ${functionResponse.status}\n\n${functionText}`
         );
       }
 
-      // =======================================================
+      // =====================================================
       // STEP 6 — PARSE RESPONSE
-      // =======================================================
+      // =====================================================
 
       let functionData: any = null;
 
       try {
         functionData =
-          JSON.parse(functionText);
+          functionText
+            ? JSON.parse(functionText)
+            : null;
       } catch {
-        // Response was not JSON.
-        // Keep the raw response for debugging.
+        throw new Error(
+          `EDGE FUNCTION RESPONSE ERROR:\nThe function returned invalid JSON.\n\n${functionText}`
+        );
       }
 
       if (
-        functionData &&
-        functionData.success === false
+        functionData?.success === false
       ) {
         throw new Error(
-          `EDGE FUNCTION RETURNED AN ERROR:\n${
+          `NOTIFICATION ERROR:\n${
             functionData.error ||
-            functionText
+            'The notification function reported an error.'
           }`
         );
       }
 
-      // =======================================================
+      // =====================================================
       // STEP 7 — SUCCESS
-      // =======================================================
+      // =====================================================
 
       debug(
-        `STEP 6 — SUCCESS\n\n` +
-        `Automation request created successfully.\n\n` +
-        `Request ID:\n${requestId}\n\n` +
-        `Edge Function response:\n${functionText}\n\n` +
-        `Redirecting to dashboard...`
+        'STEP 6 — SUCCESS\n\nAutomation request submitted and notification function completed.'
       );
 
       setLocation(
@@ -352,15 +321,13 @@ export default function AutomationRequest() {
       const message =
         err instanceof Error
           ? err.message
-          : JSON.stringify(err);
+          : String(err);
 
       alert(
         `FINAL ERROR\n\n${message}`
       );
 
-      setError(
-        message
-      );
+      setError(message);
 
     } finally {
       setIsSubmitting(false);
@@ -444,8 +411,6 @@ export default function AutomationRequest() {
 
             <div className="space-y-5">
 
-              {/* TITLE */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="title">
@@ -465,8 +430,6 @@ export default function AutomationRequest() {
                 />
 
               </div>
-
-              {/* DESCRIPTION */}
 
               <div className="space-y-2">
 
@@ -493,8 +456,6 @@ export default function AutomationRequest() {
                 </p>
 
               </div>
-
-              {/* BUSINESS GOAL */}
 
               <div className="space-y-2">
 
@@ -544,8 +505,6 @@ export default function AutomationRequest() {
 
             <div className="grid gap-5 sm:grid-cols-2">
 
-              {/* INDUSTRY */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="industry">
@@ -566,8 +525,6 @@ export default function AutomationRequest() {
 
               </div>
 
-              {/* BUDGET */}
-
               <div className="space-y-2">
 
                 <Label htmlFor="budget">
@@ -587,8 +544,6 @@ export default function AutomationRequest() {
                 />
 
               </div>
-
-              {/* TIMELINE */}
 
               <div className="space-y-2 sm:col-span-2">
 
