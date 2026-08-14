@@ -383,7 +383,7 @@ export default function Landing() {
                     'Evaluate models against realistic clinical scenarios',
                     'Participate in medical AI red teaming',
                     'Help identify clinical errors and unsafe behavior',
-                    'Build a professional expert profile',
+                    
                   ].map((item) => (
                     <li
                       key={item}
