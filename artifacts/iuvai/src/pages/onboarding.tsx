@@ -86,7 +86,7 @@ const expertSchema = z.object({
 
   primary_field: z
     .string()
-    .min(2, 'Primary field is required'),
+    .min(2, 'Medical field is required'),
 
   specialization: z
     .string()
@@ -101,14 +101,14 @@ const expertSchema = z.object({
     .string()
     .min(
       1,
-      'Please select your highest qualification'
+      'Please select your highest medical qualification'
     ),
 
   skills: z
     .string()
     .min(
       1,
-      'Enter at least one skill'
+      'Enter at least one clinical or professional skill'
     ),
 
   languages: z
@@ -139,7 +139,7 @@ const companySchema = z.object({
     .string()
     .min(
       2,
-      'Company name is required'
+      'Organization name is required'
     ),
 
   website: z
@@ -152,7 +152,7 @@ const companySchema = z.object({
     .string()
     .min(
       2,
-      'Industry is required'
+      'Healthcare or medical AI sector is required'
     ),
 
   company_description: z
@@ -166,7 +166,7 @@ const companySchema = z.object({
     .string()
     .min(
       1,
-      'Please select company size'
+      'Please select organization size'
     ),
 });
 
@@ -266,7 +266,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // EXPERT FORM
+  // MEDICAL EXPERT FORM
   // ==========================================================
 
   const expertForm =
@@ -287,7 +287,7 @@ export default function Onboarding() {
 
         country: '',
 
-        primary_field: '',
+        primary_field: 'Medicine',
 
         specialization: '',
 
@@ -309,7 +309,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // COMPANY FORM
+  // MEDICAL AI COMPANY FORM
   // ==========================================================
 
   const companyForm =
@@ -410,7 +410,7 @@ export default function Onboarding() {
       setCertificateFile(null);
 
       setCertificateError(
-        'Certificate file must be smaller than 10 MB.'
+        'Medical credential document must be smaller than 10 MB.'
       );
 
       event.target.value = '';
@@ -437,7 +437,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // UPLOAD CERTIFICATE
+  // UPLOAD MEDICAL CREDENTIAL
   // ==========================================================
 
   const uploadCertificate =
@@ -447,16 +447,6 @@ export default function Onboarding() {
         return null;
       }
 
-      /*
-       * Each expert gets their own folder.
-       *
-       * Example:
-       *
-       * certificates/
-       *   USER_ID/
-       *     timestamp-certificate.pdf
-       */
-
       const extension =
         certificateFile.name
           .split('.')
@@ -464,7 +454,7 @@ export default function Onboarding() {
           ?.toLowerCase() || 'pdf';
 
       const filePath =
-        `${user.id}/${Date.now()}-certificate.${extension}`;
+        `${user.id}/${Date.now()}-medical-credential.${extension}`;
 
 
       const {
@@ -511,7 +501,7 @@ export default function Onboarding() {
         );
 
       console.log(
-        'IUVAI ONBOARDING VERIFIED PROFILE:',
+        'IUVAI MEDICAL ONBOARDING VERIFIED PROFILE:',
         savedProfile
       );
 
@@ -539,7 +529,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // EXPERT SUBMISSION
+  // MEDICAL EXPERT SUBMISSION
   // ==========================================================
 
   const onExpertSubmit =
@@ -549,14 +539,10 @@ export default function Onboarding() {
       >
     ) => {
 
-      /*
-       * Certificate is required for expert onboarding.
-       */
-
       if (!certificateFile) {
 
         setCertificateError(
-          'Please upload a certificate or qualification document.'
+          'Please upload a medical degree, license, board certification, or other qualification document.'
         );
 
         toast({
@@ -565,10 +551,10 @@ export default function Onboarding() {
             'destructive',
 
           title:
-            'Certificate required',
+            'Medical credential required',
 
           description:
-            'Please upload your qualification certificate before completing your profile.',
+            'Please upload a document verifying your medical qualification before completing your profile.',
 
         });
 
@@ -601,7 +587,7 @@ export default function Onboarding() {
 
 
         // ------------------------------------------------------
-        // EXPERT PROFILE
+        // MEDICAL EXPERT PROFILE
         // ------------------------------------------------------
 
         await upsertExpertProfile({
@@ -609,7 +595,7 @@ export default function Onboarding() {
           id: user.id,
 
           primary_field:
-            values.primary_field,
+            'Medicine',
 
           specialization:
             values.specialization,
@@ -649,7 +635,7 @@ export default function Onboarding() {
 
 
         // ------------------------------------------------------
-        // CERTIFICATE
+        // MEDICAL CREDENTIAL
         // ------------------------------------------------------
 
         const uploadedCertificatePath =
@@ -661,18 +647,11 @@ export default function Onboarding() {
 
 
         /*
-         * IMPORTANT:
+         * The certificate path is stored in Supabase Storage.
          *
-         * The certificate path is now stored in Supabase
-         * Storage.
-         *
-         * To make the certificate permanently associated
-         * with the expert profile, your Supabase database
-         * should also contain a certificate_path column
-         * in the expert_profiles table.
-         *
-         * That column should then be added to
-         * upsertExpertProfile().
+         * Your expert_profiles table should contain a
+         * certificate_path column if you want the credential
+         * permanently associated with the expert profile.
          */
 
 
@@ -690,7 +669,7 @@ export default function Onboarding() {
         // ------------------------------------------------------
 
         console.log(
-          'IUVAI: EXPERT ONBOARDING COMPLETE'
+          'IUVAI: MEDICAL EXPERT ONBOARDING COMPLETE'
         );
 
         setLocation(
@@ -702,7 +681,7 @@ export default function Onboarding() {
       ) {
 
         console.error(
-          'IUVAI EXPERT ONBOARDING ERROR:',
+          'IUVAI MEDICAL EXPERT ONBOARDING ERROR:',
           error
         );
 
@@ -730,7 +709,7 @@ export default function Onboarding() {
 
 
   // ==========================================================
-  // COMPANY SUBMISSION
+  // MEDICAL AI COMPANY SUBMISSION
   // ==========================================================
 
   const onCompanySubmit =
@@ -801,7 +780,7 @@ export default function Onboarding() {
         // ------------------------------------------------------
 
         console.log(
-          'IUVAI: COMPANY ONBOARDING COMPLETE'
+          'IUVAI: MEDICAL AI COMPANY ONBOARDING COMPLETE'
         );
 
         setLocation(
@@ -813,7 +792,7 @@ export default function Onboarding() {
       ) {
 
         console.error(
-          'IUVAI COMPANY ONBOARDING ERROR:',
+          'IUVAI MEDICAL AI COMPANY ONBOARDING ERROR:',
           error
         );
 
@@ -891,7 +870,7 @@ export default function Onboarding() {
             <ShieldCheck className="h-3.5 w-3.5 text-primary" />
 
             <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-              Secure onboarding
+              Secure medical onboarding
             </span>
 
           </div>
@@ -921,24 +900,24 @@ export default function Onboarding() {
           </div>
 
           <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-primary">
-            IUVAI NETWORK / INITIALIZATION
+            IUVAI / MEDICAL INTELLIGENCE NETWORK
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
 
             {step === 1
-              ? 'Enter the network.'
-              : 'Build your profile.'}
+              ? 'Join the medical intelligence network.'
+              : 'Build your medical profile.'}
 
           </h1>
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
 
             {step === 1
-              ? 'Tell us how you plan to participate in the human intelligence infrastructure powering next-generation AI.'
+              ? 'Connect medical expertise with the development, evaluation, and validation of next-generation AI systems.'
               : accountType === 'expert'
-                ? 'Tell us about your expertise so we can connect you with relevant AI projects.'
-                : 'Tell us about your organization so we can connect you with the right experts.'}
+                ? 'Tell us about your medical expertise so we can match you with relevant medical AI projects.'
+                : 'Tell us about your organization so we can connect you with qualified medical experts.'}
 
           </p>
 
@@ -969,11 +948,11 @@ export default function Onboarding() {
           <div className="mt-3 flex justify-between text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
 
             <span>
-              01 / Account
+              01 / Participation
             </span>
 
             <span>
-              02 / Profile
+              02 / Medical Profile
             </span>
 
           </div>
@@ -1020,7 +999,7 @@ export default function Onboarding() {
             >
 
 
-              {/* EXPERT */}
+              {/* MEDICAL EXPERT */}
 
               <button
                 type="button"
@@ -1051,23 +1030,23 @@ export default function Onboarding() {
                     </div>
 
                     <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-primary">
-                      HUMAN EXPERT
+                      MEDICAL EXPERT
                     </div>
 
                     <h2 className="text-2xl font-semibold tracking-tight">
-                      I am an Expert
+                      I am a Medical Expert
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Contribute your professional knowledge to evaluate, train, test, and improve AI systems.
+                      Contribute your clinical knowledge to evaluate, validate, and improve medical AI systems.
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
 
                       {[
-                        'Apply your domain expertise',
-                        'Access relevant AI projects',
-                        'Build your expert profile',
+                        'Apply your clinical expertise',
+                        'Work on medical AI projects',
+                        'Help improve AI in healthcare',
                       ].map(
                         (item) => (
 
@@ -1089,7 +1068,7 @@ export default function Onboarding() {
 
                     <div className="mt-7 text-sm font-medium text-primary">
 
-                      Continue as Expert
+                      Continue as Medical Expert
 
                       <ArrowRight className="ml-2 inline h-4 w-4 transition-transform group-hover:translate-x-1" />
 
@@ -1102,7 +1081,7 @@ export default function Onboarding() {
               </button>
 
 
-              {/* COMPANY */}
+              {/* MEDICAL AI ORGANIZATION */}
 
               <button
                 type="button"
@@ -1133,23 +1112,23 @@ export default function Onboarding() {
                     </div>
 
                     <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-primary">
-                      ORGANIZATION
+                      MEDICAL AI ORGANIZATION
                     </div>
 
                     <h2 className="text-2xl font-semibold tracking-tight">
-                      I am a Company
+                      I represent an Organization
                     </h2>
 
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      Connect with verified human experts to build, evaluate, and improve AI systems.
+                      Connect with qualified medical experts to evaluate, validate, and improve healthcare AI.
                     </p>
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
 
                       {[
-                        'Find specialized experts',
-                        'Build expert-powered projects',
-                        'Scale AI development',
+                        'Access specialized medical expertise',
+                        'Build expert-powered evaluations',
+                        'Improve clinical AI systems',
                       ].map(
                         (item) => (
 
@@ -1171,7 +1150,7 @@ export default function Onboarding() {
 
                     <div className="mt-7 text-sm font-medium text-primary">
 
-                      Continue as Company
+                      Continue as Organization
 
                       <ArrowRight className="ml-2 inline h-4 w-4 transition-transform group-hover:translate-x-1" />
 
@@ -1189,7 +1168,7 @@ export default function Onboarding() {
 
 
           {/* =================================================
-              EXPERT FORM
+              MEDICAL EXPERT FORM
           ================================================== */}
 
           {step === 2 &&
@@ -1238,11 +1217,11 @@ export default function Onboarding() {
                       <div>
 
                         <div className="text-sm font-semibold">
-                          Expert profile
+                          Medical expert profile
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          Professional information
+                          Clinical and professional credentials
                         </div>
 
                       </div>
@@ -1266,7 +1245,7 @@ export default function Onboarding() {
                       >
 
 
-                        {/* PERSONAL */}
+                        {/* PERSONAL INFORMATION */}
 
                         <section>
 
@@ -1277,7 +1256,7 @@ export default function Onboarding() {
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Basic information used to create your expert profile.
+                              Basic information used to create your medical expert profile.
                             </p>
 
                           </div>
@@ -1356,23 +1335,25 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* PROFESSIONAL EXPERTISE */}
+                        {/* MEDICAL EXPERTISE */}
 
                         <section>
 
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              Professional expertise
+                              Medical expertise
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Tell us where your professional knowledge is strongest. IUVAI supports experts across disciplines.
+                              Tell us about your clinical specialty and professional experience.
                             </p>
 
                           </div>
 
                           <div className="grid gap-5 sm:grid-cols-2">
+
+                            {/* PRIMARY FIELD */}
 
                             <FormField
                               control={
@@ -1386,21 +1367,21 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Primary Field
+                                    Medical Field
                                   </FormLabel>
 
                                   <FormControl>
 
                                     <Input
-                                      placeholder="Medicine, Law, Finance, Engineering, Linguistics..."
-                                      {...field}
-                                      className="h-11"
+                                      value="Medicine"
+                                      readOnly
+                                      className="h-11 bg-muted/30"
                                     />
 
                                   </FormControl>
 
                                   <p className="text-[11px] text-muted-foreground">
-                                    Your main professional or academic domain.
+                                    IUVAI currently focuses on medical expertise.
                                   </p>
 
                                   <FormMessage />
@@ -1410,6 +1391,8 @@ export default function Onboarding() {
                               )}
                             />
 
+
+                            {/* SPECIALIZATION */}
 
                             <FormField
                               control={
@@ -1423,13 +1406,13 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Specialization
+                                    Medical Specialty
                                   </FormLabel>
 
                                   <FormControl>
 
                                     <Input
-                                      placeholder="Neurosurgery, Cybersecurity, Economics, Robotics..."
+                                      placeholder="Neurosurgery, Cardiology, Radiology, Oncology..."
                                       {...field}
                                       className="h-11"
                                     />
@@ -1437,7 +1420,7 @@ export default function Onboarding() {
                                   </FormControl>
 
                                   <p className="text-[11px] text-muted-foreground">
-                                    Your specific area of expertise.
+                                    Your primary clinical specialty or subspecialty.
                                   </p>
 
                                   <FormMessage />
@@ -1447,6 +1430,8 @@ export default function Onboarding() {
                               )}
                             />
 
+
+                            {/* QUALIFICATION */}
 
                             <FormField
                               control={
@@ -1460,7 +1445,7 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Highest Qualification
+                                    Highest Medical Qualification
                                   </FormLabel>
 
                                   <Select
@@ -1484,36 +1469,32 @@ export default function Onboarding() {
 
                                     <SelectContent>
 
-                                      <SelectItem value="phd">
-                                        PhD / Doctorate
+                                      <SelectItem value="mbbs">
+                                        MBBS / Medical Degree
                                       </SelectItem>
 
                                       <SelectItem value="md">
-                                        Medical Degree / MD
-                                      </SelectItem>
-
-                                      <SelectItem value="jd">
-                                        JD / Law Degree
-                                      </SelectItem>
-
-                                      <SelectItem value="mba">
-                                        MBA
+                                        MD
                                       </SelectItem>
 
                                       <SelectItem value="masters">
                                         Master's Degree
                                       </SelectItem>
 
-                                      <SelectItem value="bachelors">
-                                        Bachelor's Degree
+                                      <SelectItem value="phd">
+                                        PhD
+                                      </SelectItem>
+
+                                      <SelectItem value="board_certification">
+                                        Board Certification
+                                      </SelectItem>
+
+                                      <SelectItem value="fellowship">
+                                        Fellowship
                                       </SelectItem>
 
                                       <SelectItem value="professional">
-                                        Professional Certification
-                                      </SelectItem>
-
-                                      <SelectItem value="other">
-                                        Other
+                                        Other Medical Qualification
                                       </SelectItem>
 
                                     </SelectContent>
@@ -1528,6 +1509,8 @@ export default function Onboarding() {
                             />
 
 
+                            {/* EXPERIENCE */}
+
                             <FormField
                               control={
                                 expertForm.control
@@ -1540,7 +1523,7 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Years of Experience
+                                    Years of Clinical Experience
                                   </FormLabel>
 
                                   <FormControl>
@@ -1556,7 +1539,7 @@ export default function Onboarding() {
                                   </FormControl>
 
                                   <p className="text-[11px] text-muted-foreground">
-                                    Professional experience in your primary field.
+                                    Clinical or professional experience in medicine.
                                   </p>
 
                                   <FormMessage />
@@ -1574,18 +1557,18 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* CAPABILITIES */}
+                        {/* CLINICAL CAPABILITIES */}
 
                         <section className="space-y-5">
 
                           <div>
 
                             <h3 className="text-sm font-semibold">
-                              Capabilities
+                              Clinical capabilities
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              These attributes help IUVAI match you with relevant projects.
+                              These attributes help IUVAI match you with relevant medical AI projects.
                             </p>
 
                           </div>
@@ -1603,13 +1586,13 @@ export default function Onboarding() {
                               <FormItem>
 
                                 <FormLabel>
-                                  Skills
+                                  Clinical & Professional Skills
                                 </FormLabel>
 
                                 <FormControl>
 
                                   <Input
-                                    placeholder="Research, Programming, Analysis, Technical Writing..."
+                                    placeholder="Clinical reasoning, Diagnosis, Medical research, Imaging..."
                                     {...field}
                                     className="h-11"
                                   />
@@ -1617,7 +1600,7 @@ export default function Onboarding() {
                                 </FormControl>
 
                                 <p className="text-[11px] text-muted-foreground">
-                                  Separate multiple skills with commas.
+                                  List your strongest clinical, research, or professional skills.
                                 </p>
 
                                 <FormMessage />
@@ -1646,7 +1629,7 @@ export default function Onboarding() {
                                 <FormControl>
 
                                   <Input
-                                    placeholder="English, Arabic, Spanish..."
+                                    placeholder="English, Arabic, French..."
                                     {...field}
                                     className="h-11"
                                   />
@@ -1654,7 +1637,7 @@ export default function Onboarding() {
                                 </FormControl>
 
                                 <p className="text-[11px] text-muted-foreground">
-                                  Separate multiple languages with commas.
+                                  Languages you can use professionally for medical work.
                                 </p>
 
                                 <FormMessage />
@@ -1678,7 +1661,7 @@ export default function Onboarding() {
 
                                 <FormLabel>
 
-                                  Previous AI Experience
+                                  Medical AI Experience
 
                                   <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
                                     Optional
@@ -1689,12 +1672,16 @@ export default function Onboarding() {
                                 <FormControl>
 
                                   <Textarea
-                                    placeholder="Describe any previous experience with AI evaluation, data annotation, RLHF, model testing, AI research, prompt evaluation, or related work."
+                                    placeholder="Describe any experience with medical AI, clinical data annotation, AI evaluation, medical NLP, medical imaging AI, model testing, clinical validation, or AI research."
                                     {...field}
                                     className="min-h-[110px] resize-none"
                                   />
 
                                 </FormControl>
+
+                                <p className="text-[11px] text-muted-foreground">
+                                  AI experience is helpful but not required.
+                                </p>
 
                                 <FormMessage />
 
@@ -1732,7 +1719,7 @@ export default function Onboarding() {
                                 </FormControl>
 
                                 <p className="text-[11px] text-muted-foreground">
-                                  Approximate hours available per week for AI-related projects.
+                                  Approximate hours available per week for medical AI projects.
                                 </p>
 
                                 <FormMessage />
@@ -1748,20 +1735,18 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* =================================================
-                            CERTIFICATE
-                        ================================================== */}
+                        {/* MEDICAL CREDENTIAL */}
 
                         <section>
 
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              Qualification verification
+                              Medical credential verification
                             </h3>
 
                             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                              Upload a certificate or qualification document that supports your professional expertise.
+                              Upload a medical degree, professional license, board certification, or other document verifying your medical credentials.
                             </p>
 
                           </div>
@@ -1783,11 +1768,11 @@ export default function Onboarding() {
                                 </div>
 
                                 <div className="text-sm font-medium">
-                                  Upload certificate
+                                  Upload medical credential
                                 </div>
 
                                 <div className="mt-1 text-xs text-muted-foreground">
-                                  PDF, JPG, or PNG · Maximum 10 MB
+                                  Medical degree, license, certification · PDF, JPG, or PNG
                                 </div>
 
                                 <div className="mt-4 rounded-lg border border-border/60 bg-background px-4 py-2 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary">
@@ -1864,7 +1849,7 @@ export default function Onboarding() {
 
                             <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
 
-                            Your document is stored securely and is used only for expert verification.
+                            Your medical credential is stored securely and used only for expert verification.
 
                           </p>
 
@@ -1913,7 +1898,7 @@ export default function Onboarding() {
                             ) : (
 
                               <>
-                                Complete Profile
+                                Complete Medical Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
                               </>
@@ -1938,7 +1923,7 @@ export default function Onboarding() {
 
 
           {/* =================================================
-              COMPANY FORM
+              MEDICAL AI COMPANY FORM
           ================================================== */}
 
           {step === 2 &&
@@ -1987,11 +1972,11 @@ export default function Onboarding() {
                       <div>
 
                         <div className="text-sm font-semibold">
-                          Organization profile
+                          Medical AI organization profile
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          Company information
+                          Healthcare and medical AI information
                         </div>
 
                       </div>
@@ -2069,18 +2054,18 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* COMPANY DETAILS */}
+                        {/* ORGANIZATION DETAILS */}
 
                         <section>
 
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              Company details
+                              Organization details
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Tell us about the organization you represent.
+                              Tell us about the healthcare or medical AI organization you represent.
                             </p>
 
                           </div>
@@ -2101,7 +2086,7 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Company Name
+                                    Organization Name
                                   </FormLabel>
 
                                   <FormControl>
@@ -2166,13 +2151,13 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Industry
+                                    Healthcare / AI Sector
                                   </FormLabel>
 
                                   <FormControl>
 
                                     <Input
-                                      placeholder="AI, Robotics, Fintech, Healthcare, Legal, Enterprise Software..."
+                                      placeholder="Medical AI, Digital Health, Healthcare, MedTech, Clinical Research..."
                                       {...field}
                                       className="h-11"
                                     />
@@ -2180,7 +2165,7 @@ export default function Onboarding() {
                                   </FormControl>
 
                                   <p className="text-[11px] text-muted-foreground">
-                                    Any industry or sector.
+                                    The healthcare or medical AI sector your organization operates in.
                                   </p>
 
                                   <FormMessage />
@@ -2203,7 +2188,7 @@ export default function Onboarding() {
                                 <FormItem>
 
                                   <FormLabel>
-                                    Company Size
+                                    Organization Size
                                   </FormLabel>
 
                                   <Select
@@ -2270,18 +2255,18 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* DESCRIPTION */}
+                        {/* MEDICAL AI NEEDS */}
 
                         <section>
 
                           <div className="mb-5">
 
                             <h3 className="text-sm font-semibold">
-                              About your organization
+                              Medical AI requirements
                             </h3>
 
                             <p className="mt-1 text-xs text-muted-foreground">
-                              A short description helps us understand your organization and expert requirements.
+                              Tell us what medical expertise your organization needs.
                             </p>
 
                           </div>
@@ -2299,18 +2284,22 @@ export default function Onboarding() {
                               <FormItem>
 
                                 <FormLabel>
-                                  Company Description
+                                  Organization & Project Description
                                 </FormLabel>
 
                                 <FormControl>
 
                                   <Textarea
-                                    placeholder="What does your organization build, research, or provide? How does AI fit into your work?"
+                                    placeholder="What medical AI systems, products, research, or clinical applications are you developing? What medical expertise do you need for evaluation, validation, testing, or improvement?"
                                     {...field}
-                                    className="min-h-[130px] resize-none"
+                                    className="min-h-[150px] resize-none"
                                   />
 
                                 </FormControl>
+
+                                <p className="text-[11px] text-muted-foreground">
+                                  This helps IUVAI understand the clinical expertise required for your projects.
+                                </p>
 
                                 <FormMessage />
 
@@ -2367,7 +2356,6 @@ export default function Onboarding() {
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
-
                               </>
 
                             )}
@@ -2401,13 +2389,13 @@ export default function Onboarding() {
 
             <ShieldCheck className="h-3.5 w-3.5" />
 
-            Your information is securely stored
+            Your medical information is securely stored
 
           </div>
 
           <p className="mt-4 text-[10px] leading-5 text-muted-foreground">
 
-            IUVAI connects human expertise with the development of next-generation artificial intelligence.
+            IUVAI connects medical intelligence with the development, evaluation, and validation of next-generation AI.
 
           </p>
 
