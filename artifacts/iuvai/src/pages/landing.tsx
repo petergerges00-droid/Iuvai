@@ -325,9 +325,8 @@ export default function Landing() {
 
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
                 IUVAI helps organizations develop and evaluate medical AI
-                against realistic clinical scenarios, edge cases, safety
-                risks, and failure modes — with qualified medical experts
-                at the center of the process.
+                against realistic clinical scenarios using adversarial and jailbreak testing and red-teaming
+                — with qualified medical experts at the center of the process.
               </p>
 
             </div>
