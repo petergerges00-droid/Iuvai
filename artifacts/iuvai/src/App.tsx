@@ -55,6 +55,7 @@ import AdminExperts from '@/pages/admin-experts';
 import AdminExpertProfile from '@/pages/admin-expert-profile';
 import AdminEvaluations from '@/pages/AdminEvaluations';
 import AdminEvaluationEditor from '@/pages/AdminEvaluationEditor';
+import AutomationRequest from '@/pages/automation-request';
 
 import Settings from '@/pages/settings';
 import Landing from '@/pages/landing';
@@ -789,7 +790,12 @@ function AppRouter() {
           component={Onboarding}
         />
       </Route>
-
+<Route path="/company-dashboard/automation/request">
+  <ProtectedRoute
+    component={AutomationRequest}
+    requireAccountType="company"
+  />
+</Route>
       {/* ======================================================
           ADMIN
           ====================================================== */}
