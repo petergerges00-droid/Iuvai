@@ -274,7 +274,10 @@ export async function createAutomationRequest(
     );
   }
 
-  // Create the request in Supabase.
+  // ───────────────────────────────────────────────────────────
+  // CREATE REQUEST IN SUPABASE
+  // ───────────────────────────────────────────────────────────
+
   const {
     data,
     error,
@@ -297,47 +300,133 @@ export async function createAutomationRequest(
     data as AutomationRequest;
 
   // ───────────────────────────────────────────────────────────
-  // EMAIL NOTIFICATION
+  // SEND EMAIL NOTIFICATION
   //
-  // The Resend API key is NOT used here.
+  // IMPORTANT:
+  // The Resend API key MUST NOT be stored in this frontend file.
   //
-  // The Supabase Edge Function owns the Resend API key and
-  // sends the actual email.
+  // The Supabase Edge Function:
+  //
+  // notify-automation-request
+  //
+  // owns the Resend API key and is responsible for
+  // sending the email.
   // ───────────────────────────────────────────────────────────
 
   try {
+
+    console.log(
+      'AUTOMATION REQUEST CREATED:',
+      automationRequest
+    );
+
+    console.log(
+      'CALLING EMAIL NOTIFICATION FUNCTION:',
+      automationRequest.id
+    );
+
     const {
-      error: notificationError,
+      data: functionData,
+      error: functionError,
     } = await supabase.functions.invoke(
       'notify-automation-request',
       {
         body: {
           requestId:
             automationRequest.id,
+
+          // Pass the complete request as well.
+          // This allows the Edge Function to send the email
+          // without needing another database query if desired.
+          request:
+            automationRequest,
         },
       }
     );
 
-    if (notificationError) {
+    // Supabase Edge Function invocation failed.
+    if (functionError) {
+
       console.error(
-        'AUTOMATION REQUEST EMAIL ERROR:',
-        notificationError
+        'NOTIFY AUTOMATION REQUEST FUNCTION ERROR:',
+        functionError
       );
 
-      // The request itself was successfully created.
-      // Do not fail the user's submission because
-      // the notification email failed.
+      throw new Error(
+        `Automation request was created, but the email notification failed: ${
+          functionError.message ||
+          'Unknown Edge Function error'
+        }`
+      );
     }
 
+    // Log the actual Edge Function response.
+    console.log(
+      'AUTOMATION EMAIL FUNCTION RESPONSE:',
+      functionData
+    );
+
+    // If your Edge Function returns something like:
+    //
+    // { success: false, error: "..." }
+    //
+    // catch that too.
+    if (
+      functionData &&
+      typeof functionData === 'object' &&
+      'success' in functionData &&
+      functionData.success === false
+    ) {
+
+      const functionResponse =
+        functionData as {
+          success?: boolean;
+          error?: string;
+        };
+
+      console.error(
+        'AUTOMATION EMAIL FUNCTION REPORTED FAILURE:',
+        functionResponse
+      );
+
+      throw new Error(
+        `Automation request was created, but the email notification failed: ${
+          functionResponse.error ||
+          'The notification function reported a failure.'
+        }`
+      );
+    }
+
+    console.log(
+      'AUTOMATION REQUEST EMAIL NOTIFICATION SENT SUCCESSFULLY:',
+      automationRequest.id
+    );
+
   } catch (notificationError) {
+
     console.error(
       'AUTOMATION REQUEST NOTIFICATION ERROR:',
       notificationError
     );
 
-    // The request itself was successfully created.
-    // Do not fail the user's submission because
-    // the notification function failed.
+    // IMPORTANT:
+    // The database request already exists.
+    //
+    // We deliberately throw here so the frontend does NOT
+    // pretend that the complete submission succeeded.
+    //
+    // This also makes the actual email/Edge Function problem
+    // visible in the browser console and UI error handling.
+
+    if (
+      notificationError instanceof Error
+    ) {
+      throw notificationError;
+    }
+
+    throw new Error(
+      'Automation request was created, but the email notification failed.'
+    );
   }
 
   return automationRequest;
