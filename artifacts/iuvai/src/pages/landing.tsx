@@ -673,7 +673,7 @@ export default function Landing() {
             </div>
 
             <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Build what comes next.
+              Participate in shaping tomorrow.
             </h2>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
