@@ -39,6 +39,10 @@ export default function AutomationRequest() {
   ) => {
     event.preventDefault();
 
+    // =====================================================
+    // VALIDATION
+    // =====================================================
+
     if (!user?.id) {
       setError(
         'You must be signed in to submit an automation request.'
@@ -87,12 +91,9 @@ export default function AutomationRequest() {
         );
       }
 
-      const accessToken =
-        sessionData.session?.access_token;
-
-      if (!accessToken) {
+      if (!sessionData.session) {
         throw new Error(
-          'SESSION ERROR:\nNo access token was found.'
+          'SESSION ERROR:\nNo active session was found.'
         );
       }
 
@@ -211,101 +212,65 @@ export default function AutomationRequest() {
       }
 
       // =====================================================
-      // STEP 4 — INVOKE EDGE FUNCTION
+      // STEP 4 — SEND ADMIN EMAIL
       // =====================================================
 
       debug(
-        `STEP 4 — Calling notification function\n\nRequest ID:\n${request.id}`
+        `STEP 4 — Sending admin notification\n\nRequest ID:\n${request.id}`
       );
 
-      const functionUrl =
-        'https://psumenatfnjqwsicaihc.supabase.co/functions/v1/notify-automation-request';
+      const {
+        data: notificationData,
+        error: notificationError,
+      } = await supabase.functions.invoke(
+        'notify-automation-request',
+        {
+          body: {
+            requestId: request.id,
+          },
+        }
+      );
 
-      let functionResponse: Response;
+      // =====================================================
+      // STEP 5 — CHECK EDGE FUNCTION RESULT
+      // =====================================================
 
-      try {
-        functionResponse = await fetch(
-          functionUrl,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type': 'application/json',
-
-              Authorization:
-                `Bearer ${accessToken}`,
-
-              apikey:
-                import.meta.env
-                  .VITE_SUPABASE_ANON_KEY,
-            },
-
-            body: JSON.stringify({
-              requestId: request.id,
-            }),
-          }
-        );
-      } catch (networkError) {
+      if (notificationError) {
         throw new Error(
-          `EDGE FUNCTION NETWORK ERROR:\n${
-            networkError instanceof Error
-              ? networkError.message
-              : String(networkError)
-          }\n\nURL:\n${functionUrl}`
+          `ADMIN EMAIL ERROR:\n${JSON.stringify(
+            notificationError,
+            null,
+            2
+          )}`
         );
       }
-
-      // =====================================================
-      // STEP 5 — READ FUNCTION RESPONSE
-      // =====================================================
-
-      const functionText =
-        await functionResponse.text();
 
       debug(
-        `STEP 5 — Edge Function response\n\nHTTP STATUS:\n${functionResponse.status}\n\nRESPONSE:\n${functionText}`
+        `STEP 5 — Notification function response\n\n${JSON.stringify(
+          notificationData,
+          null,
+          2
+        )}`
       );
-
-      if (!functionResponse.ok) {
-        throw new Error(
-          `EDGE FUNCTION ERROR\n\nHTTP ${functionResponse.status}\n\n${functionText}`
-        );
-      }
-
-      // =====================================================
-      // STEP 6 — PARSE RESPONSE
-      // =====================================================
-
-      let functionData: any = null;
-
-      try {
-        functionData =
-          functionText
-            ? JSON.parse(functionText)
-            : null;
-      } catch {
-        throw new Error(
-          `EDGE FUNCTION RESPONSE ERROR:\nThe function returned invalid JSON.\n\n${functionText}`
-        );
-      }
 
       if (
-        functionData?.success === false
+        !notificationData ||
+        notificationData.success !== true
       ) {
         throw new Error(
-          `NOTIFICATION ERROR:\n${
-            functionData.error ||
-            'The notification function reported an error.'
+          `ADMIN EMAIL ERROR:\n${
+            notificationData?.error ||
+            'The notification function did not report success.'
           }`
         );
       }
 
       // =====================================================
-      // STEP 7 — SUCCESS
+      // STEP 6 — SUCCESS
       // =====================================================
 
       debug(
-        'STEP 6 — SUCCESS\n\nAutomation request submitted and notification function completed.'
+        'STEP 6 — SUCCESS\n\nAutomation request submitted and admin email sent.'
       );
 
       setLocation(
@@ -411,6 +376,8 @@ export default function AutomationRequest() {
 
             <div className="space-y-5">
 
+              {/* TITLE */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="title">
@@ -430,6 +397,8 @@ export default function AutomationRequest() {
                 />
 
               </div>
+
+              {/* DESCRIPTION */}
 
               <div className="space-y-2">
 
@@ -456,6 +425,8 @@ export default function AutomationRequest() {
                 </p>
 
               </div>
+
+              {/* BUSINESS GOAL */}
 
               <div className="space-y-2">
 
@@ -505,6 +476,8 @@ export default function AutomationRequest() {
 
             <div className="grid gap-5 sm:grid-cols-2">
 
+              {/* INDUSTRY */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="industry">
@@ -525,6 +498,8 @@ export default function AutomationRequest() {
 
               </div>
 
+              {/* BUDGET */}
+
               <div className="space-y-2">
 
                 <Label htmlFor="budget">
@@ -544,6 +519,8 @@ export default function AutomationRequest() {
                 />
 
               </div>
+
+              {/* TIMELINE */}
 
               <div className="space-y-2 sm:col-span-2">
 
