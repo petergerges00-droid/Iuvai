@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react';
 
 import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  FileText,
+  Loader2,
+  Plus,
+  Save,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
+
+import {
   getEvaluation,
   getEvaluationQuestions,
   updateEvaluation,
@@ -38,6 +54,15 @@ export default function AdminEvaluationEditor({
 
   const [message, setMessage] =
     useState('');
+
+  const [savingQuestionId, setSavingQuestionId] =
+    useState<string | null>(null);
+
+  const [deletingQuestionId, setDeletingQuestionId] =
+    useState<string | null>(null);
+
+  const [changingStatus, setChangingStatus] =
+    useState(false);
 
   useEffect(() => {
     loadEvaluation();
@@ -185,6 +210,10 @@ export default function AdminEvaluationEditor({
     question: EvaluationQuestion
   ) {
     try {
+      setSavingQuestionId(
+        question.id
+      );
+
       setError('');
       setMessage('');
 
@@ -223,6 +252,8 @@ export default function AdminEvaluationEditor({
           ? err.message
           : 'Failed to save question.'
       );
+    } finally {
+      setSavingQuestionId(null);
     }
   }
 
@@ -237,6 +268,10 @@ export default function AdminEvaluationEditor({
     if (!confirmed) return;
 
     try {
+      setDeletingQuestionId(
+        questionId
+      );
+
       setError('');
       setMessage('');
 
@@ -268,6 +303,8 @@ export default function AdminEvaluationEditor({
           ? err.message
           : 'Failed to delete question.'
       );
+    } finally {
+      setDeletingQuestionId(null);
     }
   }
 
@@ -310,6 +347,8 @@ export default function AdminEvaluationEditor({
     if (!confirmed) return;
 
     try {
+      setChangingStatus(true);
+
       setError('');
       setMessage('');
 
@@ -330,33 +369,121 @@ export default function AdminEvaluationEditor({
           ? err.message
           : 'Failed to change evaluation status.'
       );
+    } finally {
+      setChangingStatus(false);
+    }
+  }
+
+  function getStatusLabel(
+    status: Evaluation['status']
+  ) {
+    switch (status) {
+      case 'open':
+        return 'Open';
+
+      case 'closed':
+        return 'Closed';
+
+      case 'draft':
+      default:
+        return 'Draft';
+    }
+  }
+
+  function getStatusClasses(
+    status: Evaluation['status']
+  ) {
+    switch (status) {
+      case 'open':
+        return 'border-primary/30 bg-primary/10 text-primary';
+
+      case 'closed':
+        return 'border-border bg-muted text-muted-foreground';
+
+      case 'draft':
+      default:
+        return 'border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
     }
   }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        Loading evaluation editor...
+      <div className="relative min-h-screen overflow-hidden bg-background">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
+
+          <div className="absolute -bottom-48 -right-48 h-[600px] w-[600px] rounded-full bg-primary/[0.06] blur-3xl" />
+
+          <div
+            className="absolute inset-0 opacity-[0.025]"
+            style={{
+              backgroundImage:
+                'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+              backgroundSize:
+                '48px 48px',
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 flex min-h-screen items-center justify-center">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+
+            Loading evaluation editor...
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error && !evaluation) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
-          {error}
+      <div className="relative min-h-screen overflow-hidden bg-background">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
+
+          <div
+            className="absolute inset-0 opacity-[0.025]"
+            style={{
+              backgroundImage:
+                'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+              backgroundSize:
+                '48px 48px',
+            }}
+          />
         </div>
 
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="mt-4 rounded-lg border px-4 py-2 text-sm"
-          >
-            Back
-          </button>
-        )}
+        <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
+          <div className="rounded-2xl border border-destructive/20 bg-card/80 p-6 shadow-xl backdrop-blur-xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                <FileText className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h2 className="font-semibold">
+                  Unable to load evaluation
+                </h2>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {error}
+                </p>
+              </div>
+            </div>
+
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="mt-6 inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+
+                Back to evaluations
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -365,266 +492,423 @@ export default function AdminEvaluationEditor({
     return null;
   }
 
+  const sortedQuestions =
+    [...questions].sort(
+      (a, b) =>
+        a.question_order -
+        b.question_order
+    );
+
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6">
-      {/* HEADER */}
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* =====================================================
+          BACKGROUND
+      ====================================================== */}
 
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="mb-3 text-sm text-gray-500 hover:text-black"
-          >
-            ← Back to evaluations
-          </button>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-48 -left-48 h-[600px] w-[600px] rounded-full bg-primary/[0.07] blur-3xl" />
 
-          <h1 className="text-2xl font-semibold">
-            Evaluation editor
-          </h1>
+        <div className="absolute -bottom-48 -right-48 h-[600px] w-[600px] rounded-full bg-primary/[0.06] blur-3xl" />
 
-          <div className="mt-2">
-            <span className="rounded-full border px-3 py-1 text-xs font-medium capitalize">
-              {evaluation.status}
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage:
+              'linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)',
+            backgroundSize:
+              '48px 48px',
+          }}
+        />
+      </div>
+
+      {/* =====================================================
+          TOP BAR
+      ====================================================== */}
+
+      <header className="relative z-10 border-b border-border/50 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+
+              <span className="hidden sm:inline">
+                Evaluations
+              </span>
+            </button>
+
+            <div className="h-4 w-px bg-border" />
+
+            <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+              ADMIN / EVALUATION
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-2 sm:flex">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              Secure workspace
             </span>
           </div>
         </div>
+      </header>
 
-        <div className="flex flex-wrap gap-2">
-          {evaluation.status !==
-            'draft' && (
-            <button
-              type="button"
-              onClick={() =>
-                handleStatusChange(
-                  'draft'
-                )
-              }
-              className="rounded-lg border px-4 py-2 text-sm"
-            >
-              Set draft
-            </button>
-          )}
+      {/* =====================================================
+          MAIN
+      ====================================================== */}
 
-          {evaluation.status !==
-            'open' && (
-            <button
-              type="button"
-              onClick={() =>
-                handleStatusChange(
-                  'open'
-                )
-              }
-              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
-            >
-              Open evaluation
-            </button>
-          )}
+      <main className="relative z-10 mx-auto w-full max-w-6xl px-6 py-10 sm:py-12">
+        {/* ===================================================
+            HEADER
+        ==================================================== */}
 
-          {evaluation.status ===
-            'open' && (
-            <button
-              type="button"
-              onClick={() =>
-                handleStatusChange(
-                  'closed'
-                )
-              }
-              className="rounded-lg border px-4 py-2 text-sm"
-            >
-              Close evaluation
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* MESSAGES */}
-
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {message && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-          {message}
-        </div>
-      )}
-
-      {/* BASIC INFORMATION */}
-
-      <section className="rounded-xl border bg-white p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">
-            Evaluation details
-          </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Define what this evaluation measures.
-          </p>
-        </div>
-
-        <div className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Title
-            </label>
-
-            <input
-              value={evaluation.title}
-              onChange={(e) =>
-                updateLocalEvaluation(
-                  'title',
-                  e.target.value
-                )
-              }
-              className="w-full rounded-lg border p-3"
-              placeholder="e.g. AI Expert Evaluation"
-            />
+        <div className="mb-10">
+          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Description
-            </label>
-
-            <textarea
-              value={
-                evaluation.description ||
-                ''
-              }
-              onChange={(e) =>
-                updateLocalEvaluation(
-                  'description',
-                  e.target.value
-                )
-              }
-              className="min-h-24 w-full rounded-lg border p-3"
-              placeholder="Briefly describe what this evaluation measures."
-            />
+          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-primary">
+            IUVAI / EVALUATION BUILDER
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Primary field
-              </label>
+          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div className="max-w-3xl">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {evaluation.title}
+              </h1>
 
-              <input
-                value={
-                  evaluation.primary_field ||
-                  ''
-                }
-                onChange={(e) =>
-                  updateLocalEvaluation(
-                    'primary_field',
-                    e.target.value
-                  )
-                }
-                className="w-full rounded-lg border p-3"
-                placeholder="e.g. Medicine"
-              />
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Configure the evaluation, define
+                its instructions, and build the
+                questions experts will answer.
+              </p>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Specialization
-              </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium ${getStatusClasses(
+                  evaluation.status
+                )}`}
+              >
+                <span className="mr-2 h-1.5 w-1.5 rounded-full bg-current" />
 
-              <input
-                value={
-                  evaluation.specialization ||
-                  ''
-                }
-                onChange={(e) =>
-                  updateLocalEvaluation(
-                    'specialization',
-                    e.target.value
-                  )
-                }
-                className="w-full rounded-lg border p-3"
-                placeholder="e.g. Neurosurgery"
-              />
+                {getStatusLabel(
+                  evaluation.status
+                )}
+              </span>
+
+              {evaluation.status !==
+                'draft' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleStatusChange(
+                      'draft'
+                    )
+                  }
+                  disabled={
+                    changingStatus
+                  }
+                  className="inline-flex items-center rounded-lg border border-border bg-card/60 px-4 py-2.5 text-sm font-medium backdrop-blur transition-colors hover:border-primary/40 hover:text-primary disabled:opacity-50"
+                >
+                  Set draft
+                </button>
+              )}
+
+              {evaluation.status !==
+                'open' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleStatusChange(
+                      'open'
+                    )
+                  }
+                  disabled={
+                    changingStatus
+                  }
+                  className="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-primary/20 disabled:opacity-50"
+                >
+                  {changingStatus ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                  )}
+
+                  Open evaluation
+                </button>
+              )}
+
+              {evaluation.status ===
+                'open' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleStatusChange(
+                      'closed'
+                    )
+                  }
+                  disabled={
+                    changingStatus
+                  }
+                  className="inline-flex items-center rounded-lg border border-border bg-card/60 px-4 py-2.5 text-sm font-medium backdrop-blur transition-colors hover:border-destructive/30 hover:text-destructive disabled:opacity-50"
+                >
+                  Close evaluation
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ===================================================
+            MESSAGES
+        ==================================================== */}
+
+        <div className="mb-8 space-y-3">
+          {error && (
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {message && (
+            <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+
+              {message}
+            </div>
+          )}
+        </div>
+
+        {/* ===================================================
+            EVALUATION DETAILS
+        ==================================================== */}
+
+        <section className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-2xl shadow-primary/[0.03] backdrop-blur-xl">
+          <div className="border-b border-border/60 bg-muted/20 px-6 py-5 sm:px-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Settings2 className="h-4 w-4" />
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold">
+                  Evaluation details
+                </div>
+
+                <div className="text-xs text-muted-foreground">
+                  Define what this evaluation
+                  measures.
+                </div>
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Time limit
-            </label>
+          <div className="p-6 sm:p-8">
+            <div className="space-y-7">
+              {/* TITLE */}
 
-            <input
-              type="number"
-              min="1"
-              value={
-                evaluation.time_limit_minutes ||
-                ''
-              }
-              onChange={(e) =>
-                updateLocalEvaluation(
-                  'time_limit_minutes',
-                  e.target.value
-                    ? Number(
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Title
+                </label>
+
+                <input
+                  value={evaluation.title}
+                  onChange={(e) =>
+                    updateLocalEvaluation(
+                      'title',
+                      e.target.value
+                    )
+                  }
+                  className="h-11 w-full rounded-xl border border-border/70 bg-background/60 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                  placeholder="e.g. AI Expert Evaluation"
+                />
+              </div>
+
+              {/* DESCRIPTION */}
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Description
+                </label>
+
+                <textarea
+                  value={
+                    evaluation.description ||
+                    ''
+                  }
+                  onChange={(e) =>
+                    updateLocalEvaluation(
+                      'description',
+                      e.target.value
+                    )
+                  }
+                  className="min-h-24 w-full resize-none rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                  placeholder="Briefly describe what this evaluation measures."
+                />
+              </div>
+
+              {/* FIELD / SPECIALIZATION */}
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Primary field
+                  </label>
+
+                  <input
+                    value={
+                      evaluation.primary_field ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateLocalEvaluation(
+                        'primary_field',
                         e.target.value
                       )
-                    : null
-                )
-              }
-              className="w-full rounded-lg border p-3 md:max-w-xs"
-              placeholder="Minutes"
-            />
+                    }
+                    className="h-11 w-full rounded-xl border border-border/70 bg-background/60 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                    placeholder="e.g. Medicine"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    Specialization
+                  </label>
+
+                  <input
+                    value={
+                      evaluation.specialization ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateLocalEvaluation(
+                        'specialization',
+                        e.target.value
+                      )
+                    }
+                    className="h-11 w-full rounded-xl border border-border/70 bg-background/60 px-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                    placeholder="e.g. Neurosurgery"
+                  />
+                </div>
+              </div>
+
+              {/* TIME LIMIT */}
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Time limit
+                </label>
+
+                <div className="relative md:max-w-xs">
+                  <Clock3 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+                  <input
+                    type="number"
+                    min="1"
+                    value={
+                      evaluation.time_limit_minutes ||
+                      ''
+                    }
+                    onChange={(e) =>
+                      updateLocalEvaluation(
+                        'time_limit_minutes',
+                        e.target.value
+                          ? Number(
+                              e.target.value
+                            )
+                          : null
+                      )
+                    }
+                    className="h-11 w-full rounded-xl border border-border/70 bg-background/60 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                    placeholder="Minutes"
+                  />
+                </div>
+
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Leave empty if the evaluation
+                  has no time limit.
+                </p>
+              </div>
+
+              {/* INSTRUCTIONS */}
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  Instructions
+                </label>
+
+                <textarea
+                  value={
+                    evaluation.instructions ||
+                    ''
+                  }
+                  onChange={(e) =>
+                    updateLocalEvaluation(
+                      'instructions',
+                      e.target.value
+                    )
+                  }
+                  className="min-h-32 w-full resize-none rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                  placeholder="Instructions shown to the expert before starting the evaluation."
+                />
+              </div>
+            </div>
+
+            {/* SAVE */}
+
+            <div className="mt-8 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+
+                Changes are saved to IUVAI
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  handleSaveEvaluation
+                }
+                disabled={saving}
+                className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-primary/20 disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+
+                {saving
+                  ? 'Saving...'
+                  : 'Save evaluation'}
+              </button>
+            </div>
           </div>
+        </section>
 
+        {/* ===================================================
+            QUESTIONS HEADER
+        ==================================================== */}
+
+        <div className="mb-5 mt-12 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              Instructions
-            </label>
+            <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-primary">
+              EVALUATION STRUCTURE
+            </div>
 
-            <textarea
-              value={
-                evaluation.instructions ||
-                ''
-              }
-              onChange={(e) =>
-                updateLocalEvaluation(
-                  'instructions',
-                  e.target.value
-                )
-              }
-              className="min-h-32 w-full rounded-lg border p-3"
-              placeholder="Instructions shown to the expert before starting the evaluation."
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end border-t pt-5">
-          <button
-            type="button"
-            onClick={
-              handleSaveEvaluation
-            }
-            disabled={saving}
-            className="rounded-lg bg-black px-5 py-3 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {saving
-              ? 'Saving...'
-              : 'Save evaluation'}
-          </button>
-        </div>
-      </section>
-
-      {/* QUESTIONS */}
-
-      <section className="space-y-5">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-2xl font-semibold tracking-tight">
               Questions
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Build the questions experts will answer.
+            <p className="mt-2 text-sm text-muted-foreground">
+              Build the questions experts will
+              answer.
             </p>
           </div>
 
@@ -633,61 +917,111 @@ export default function AdminEvaluationEditor({
             onClick={
               handleAddQuestion
             }
-            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/10 transition-all hover:-translate-y-0.5 hover:shadow-primary/20"
           >
-            + Add question
+            <Plus className="mr-2 h-4 w-4" />
+
+            Add question
           </button>
         </div>
 
+        {/* ===================================================
+            EMPTY QUESTIONS
+        ==================================================== */}
+
         {questions.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-10 text-center">
-            <h3 className="font-medium">
+          <div className="rounded-2xl border border-dashed border-border/80 bg-card/50 p-12 text-center backdrop-blur-xl">
+            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5 text-primary">
+              <FileText className="h-5 w-5" />
+            </div>
+
+            <h3 className="font-semibold">
               No questions yet
             </h3>
 
-            <p className="mt-2 text-sm text-gray-500">
-              Add questions to build the evaluation.
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+              Add questions to build the
+              evaluation that experts will
+              complete.
             </p>
+
+            <button
+              type="button"
+              onClick={
+                handleAddQuestion
+              }
+              className="mt-6 inline-flex items-center rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+
+              Add your first question
+            </button>
           </div>
         ) : (
           <div className="space-y-5">
-            {questions
-              .sort(
-                (a, b) =>
-                  a.question_order -
-                  b.question_order
-              )
-              .map(
-                (
-                  question,
-                  index
-                ) => (
-                  <div
-                    key={
-                      question.id
-                    }
-                    className="rounded-xl border bg-white p-6"
-                  >
-                    <div className="mb-5 flex items-center justify-between">
-                      <h3 className="font-medium">
-                        Question{' '}
-                        {index + 1}
-                      </h3>
+            {sortedQuestions.map(
+              (
+                question,
+                index
+              ) => (
+                <section
+                  key={
+                    question.id
+                  }
+                  className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-xl shadow-primary/[0.02] backdrop-blur-xl"
+                >
+                  {/* QUESTION HEADER */}
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleDeleteQuestion(
-                            question.id
-                          )
-                        }
-                        className="text-sm text-red-600 hover:text-red-700"
-                      >
-                        Delete
-                      </button>
+                  <div className="flex flex-col justify-between gap-4 border-b border-border/60 bg-muted/20 px-6 py-5 sm:flex-row sm:items-center sm:px-8">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 font-mono text-xs font-semibold text-primary">
+                        {String(
+                          index + 1
+                        ).padStart(2, '0')}
+                      </div>
+
+                      <div>
+                        <div className="text-sm font-semibold">
+                          Question{' '}
+                          {index + 1}
+                        </div>
+
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          Evaluation item
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="space-y-5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDeleteQuestion(
+                          question.id
+                        )
+                      }
+                      disabled={
+                        deletingQuestionId ===
+                        question.id
+                      }
+                      className="inline-flex items-center self-start rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50 sm:self-auto"
+                    >
+                      {deletingQuestionId ===
+                      question.id ? (
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      )}
+
+                      Delete
+                    </button>
+                  </div>
+
+                  {/* QUESTION CONTENT */}
+
+                  <div className="p-6 sm:p-8">
+                    <div className="space-y-6">
+                      {/* PROMPT */}
+
                       <div>
                         <label className="mb-2 block text-sm font-medium">
                           Question
@@ -704,16 +1038,19 @@ export default function AdminEvaluationEditor({
                               e.target.value
                             )
                           }
-                          className="min-h-28 w-full rounded-lg border p-3"
+                          className="min-h-28 w-full resize-none rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm leading-6 outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
                           placeholder="Enter the question..."
                         />
                       </div>
 
+                      {/* CONTEXT */}
+
                       <div>
                         <label className="mb-2 block text-sm font-medium">
                           Context
-                          <span className="ml-1 font-normal text-gray-400">
-                            optional
+
+                          <span className="ml-2 text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
+                            Optional
                           </span>
                         </label>
 
@@ -729,10 +1066,12 @@ export default function AdminEvaluationEditor({
                               e.target.value
                             )
                           }
-                          className="min-h-24 w-full rounded-lg border p-3"
+                          className="min-h-24 w-full resize-none rounded-xl border border-border/70 bg-background/60 px-4 py-3 text-sm leading-6 outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
                           placeholder="Additional context shown with the question."
                         />
                       </div>
+
+                      {/* SETTINGS */}
 
                       <div className="grid gap-5 md:grid-cols-2">
                         <div>
@@ -755,7 +1094,7 @@ export default function AdminEvaluationEditor({
                                 )
                               )
                             }
-                            className="w-full rounded-lg border p-3"
+                            className="h-11 w-full rounded-xl border border-border/70 bg-background/60 px-4 text-sm outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
                           />
                         </div>
 
@@ -764,32 +1103,43 @@ export default function AdminEvaluationEditor({
                             Response type
                           </label>
 
-                          <select
-                            value={
-                              question.response_type
-                            }
-                            onChange={(e) =>
-                              updateQuestion(
-                                question.id,
-                                'response_type',
-                                e.target.value
-                              )
-                            }
-                            className="w-full rounded-lg border p-3"
-                          >
-                            <option value="long_text">
-                              Long text
-                            </option>
+                          <div className="relative">
+                            <select
+                              value={
+                                question.response_type
+                              }
+                              onChange={(e) =>
+                                updateQuestion(
+                                  question.id,
+                                  'response_type',
+                                  e.target.value
+                                )
+                              }
+                              className="h-11 w-full appearance-none rounded-xl border border-border/70 bg-background/60 px-4 pr-10 text-sm outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                            >
+                              <option value="long_text">
+                                Long text
+                              </option>
 
-                            <option value="text">
-                              Short text
-                            </option>
-                          </select>
+                              <option value="text">
+                                Short text
+                              </option>
+                            </select>
+
+                            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-5 flex justify-end border-t pt-5">
+                    {/* SAVE QUESTION */}
+
+                    <div className="mt-7 flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        Item {index + 1} /{' '}
+                        {questions.length}
+                      </div>
+
                       <button
                         type="button"
                         onClick={() =>
@@ -797,17 +1147,51 @@ export default function AdminEvaluationEditor({
                             question
                           )
                         }
-                        className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                        disabled={
+                          savingQuestionId ===
+                          question.id
+                        }
+                        className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-all hover:border-primary/40 hover:text-primary disabled:opacity-50"
                       >
-                        Save question
+                        {savingQuestionId ===
+                        question.id ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="mr-2 h-4 w-4" />
+                        )}
+
+                        {savingQuestionId ===
+                        question.id
+                          ? 'Saving...'
+                          : 'Save question'}
                       </button>
                     </div>
                   </div>
-                )
-              )}
+                </section>
+              )
+            )}
           </div>
         )}
-      </section>
+
+        {/* ===================================================
+            FOOTER
+        ==================================================== */}
+
+        <div className="mx-auto mt-12 max-w-xl text-center">
+          <div className="flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
+
+            IUVAI administrative workspace
+          </div>
+
+          <p className="mt-4 text-[10px] leading-5 text-muted-foreground">
+            Evaluations are used to assess
+            domain expertise and strengthen
+            IUVAI's human intelligence
+            infrastructure for AI.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
