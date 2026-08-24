@@ -1512,7 +1512,83 @@ export async function deleteProject(
     );
   }
 }
+// ─────────────────────────────────────────────────────────────
+// ADMIN — DELETE EXPERT
+// ─────────────────────────────────────────────────────────────
 
+export async function deleteExpert(
+  expertId: string
+): Promise<void> {
+
+  if (!expertId) {
+    throw new Error(
+      'Expert ID is required.'
+    );
+  }
+
+  // Verify that the current user is authenticated.
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to delete an expert.'
+    );
+  }
+
+  // The actual admin authorization check happens
+  // inside the Edge Function.
+  //
+  // IMPORTANT:
+  // Never put the Supabase service-role key in this file.
+
+  const {
+    data,
+    error,
+  } = await supabase.functions.invoke(
+    'delete-expert',
+    {
+      body: {
+        expertId,
+      },
+    }
+  );
+
+  if (error) {
+    console.error(
+      'DELETE EXPERT FUNCTION ERROR:',
+      error
+    );
+
+    throw new Error(
+      `Failed to delete expert: ${
+        error.message ||
+        'Unknown Edge Function error'
+      }`
+    );
+  }
+
+  if (
+    data &&
+    typeof data === 'object' &&
+    'success' in data &&
+    data.success === false
+  ) {
+    throw new Error(
+      data.error ||
+      'Failed to delete expert.'
+    );
+  }
+
+  console.log(
+    'EXPERT DELETED SUCCESSFULLY:',
+    expertId
+  );
+}
 // ─────────────────────────────────────────────────────────────
 // ADMIN PROJECT MANAGEMENT
 // ─────────────────────────────────────────────────────────────
