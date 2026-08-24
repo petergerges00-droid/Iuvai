@@ -1589,6 +1589,60 @@ export async function deleteExpert(
     expertId
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// ADMIN — DELETE EVALUATION
+// ─────────────────────────────────────────────────────────────
+
+export async function deleteEvaluation(
+  evaluationId: string
+): Promise<void> {
+
+  if (!evaluationId) {
+    throw new Error(
+      'Evaluation ID is required.'
+    );
+  }
+
+  const {
+    data: {
+      user,
+    },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error(
+      'You must be signed in to delete an evaluation.'
+    );
+  }
+
+  const {
+    error,
+  } = await supabase
+    .from('evaluations')
+    .delete()
+    .eq(
+      'id',
+      evaluationId
+    );
+
+  if (error) {
+    console.error(
+      'DELETE EVALUATION ERROR:',
+      error
+    );
+
+    throw new Error(
+      `Failed to delete evaluation: ${error.message} | Code: ${error.code} | Details: ${error.details} | Hint: ${error.hint}`
+    );
+  }
+
+  console.log(
+    'EVALUATION DELETED SUCCESSFULLY:',
+    evaluationId
+  );
+}
 // ─────────────────────────────────────────────────────────────
 // ADMIN PROJECT MANAGEMENT
 // ─────────────────────────────────────────────────────────────
