@@ -15,6 +15,7 @@ import {
   FileText,
   ExternalLink,
   CheckCircle2,
+  BadgeCheck,
 } from 'lucide-react';
 
 import { AppLayout } from '@/components/layout/app-layout';
@@ -47,6 +48,9 @@ export default function AdminExpertProfile() {
     useState(true);
 
   const [isOpeningResume, setIsOpeningResume] =
+    useState(false);
+
+  const [isOpeningCertificate, setIsOpeningCertificate] =
     useState(false);
 
   const [error, setError] =
@@ -147,6 +151,66 @@ export default function AdminExpertProfile() {
       );
     } finally {
       setIsOpeningResume(false);
+    }
+  }
+
+  /*
+  ============================================================
+  VIEW MEDICAL CERTIFICATE
+  ============================================================
+  */
+
+  async function handleViewMedicalCertificate() {
+    if (!expert?.medical_certificate_path) {
+      return;
+    }
+
+    try {
+      setIsOpeningCertificate(true);
+      setError(null);
+
+      const { data, error: storageError } =
+        await import('@/lib/supabase').then(
+          async ({
+            supabase,
+          }) => {
+            return supabase.storage
+              .from('medical-certificates')
+              .createSignedUrl(
+                expert.medical_certificate_path,
+                60 * 60
+              );
+          }
+        );
+
+      if (storageError) {
+        throw storageError;
+      }
+
+      if (!data?.signedUrl) {
+        throw new Error(
+          'Unable to generate certificate URL.'
+        );
+      }
+
+      window.open(
+        data.signedUrl,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    } catch (err) {
+      console.error(
+        'ADMIN MEDICAL CERTIFICATE OPEN ERROR:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to open medical certificate.'
+      );
+    } finally {
+      setIsOpeningCertificate(false);
     }
   }
 
@@ -254,6 +318,10 @@ export default function AdminExpertProfile() {
   const aiExperience =
     expert.previous_ai_experience?.trim() || '';
 
+  const certificateStatus =
+    expert.medical_certificate_status ||
+    'pending';
+
   /*
   ============================================================
   RENDER
@@ -289,8 +357,6 @@ export default function AdminExpertProfile() {
 
               <div className="flex min-w-0 items-center gap-4">
 
-                {/* Avatar */}
-
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 text-primary">
 
                   <span className="text-xl font-semibold">
@@ -302,8 +368,6 @@ export default function AdminExpertProfile() {
                   </span>
 
                 </div>
-
-                {/* Identity */}
 
                 <div className="min-w-0">
 
@@ -340,15 +404,15 @@ export default function AdminExpertProfile() {
 
               </div>
 
-              {/* Status */}
-
               <div className="shrink-0">
 
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-500/20 bg-yellow-500/5 px-3 py-1.5 text-xs text-yellow-600 dark:text-yellow-400">
 
                   <span className="h-1.5 w-1.5 rounded-full bg-yellow-500" />
 
-                  Pending review
+                  {expert.verification_status === 'approved'
+                    ? 'Approved'
+                    : 'Pending review'}
 
                 </span>
 
@@ -673,6 +737,117 @@ export default function AdminExpertProfile() {
             ) : (
 
               <EmptyState text="No resume uploaded." />
+
+            )}
+
+          </div>
+
+        </section>
+
+        {/* ====================================================
+            MEDICAL CERTIFICATE
+            ==================================================== */}
+
+        <section className="rounded-2xl border border-border/60 bg-card/70">
+
+          <div className="border-b border-border/60 p-5">
+
+            <div className="flex items-center gap-2">
+
+              <BadgeCheck className="h-4 w-4 text-primary" />
+
+              <h3 className="font-medium">
+                Medical Certificate
+              </h3>
+
+            </div>
+
+            <p className="mt-1 text-xs text-muted-foreground">
+              Review the medical certificate submitted by the expert
+              for professional verification.
+            </p>
+
+          </div>
+
+          <div className="p-5">
+
+            {expert.medical_certificate_path ? (
+
+              <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border/60 bg-muted/40">
+
+                    <BadgeCheck className="h-5 w-5 text-muted-foreground" />
+
+                  </div>
+
+                  <div>
+
+                    <p className="text-sm font-medium">
+
+                      {expert.medical_certificate_file_name ||
+                        'Medical certificate'}
+
+                    </p>
+
+                    <div className="mt-1 flex items-center gap-2">
+
+                      <span className="text-xs text-muted-foreground">
+                        Verification status:
+                      </span>
+
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide ${
+                          certificateStatus === 'approved'
+                            ? 'border-green-500/20 bg-green-500/5 text-green-600 dark:text-green-400'
+                            : certificateStatus === 'rejected'
+                              ? 'border-red-500/20 bg-red-500/5 text-red-600 dark:text-red-400'
+                              : 'border-yellow-500/20 bg-yellow-500/5 text-yellow-600 dark:text-yellow-400'
+                        }`}
+                      >
+                        {certificateStatus}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleViewMedicalCertificate
+                  }
+                  disabled={
+                    isOpeningCertificate
+                  }
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border/70 px-4 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                >
+
+                  {isOpeningCertificate ? (
+
+                    <Loader2 className="h-4 w-4 animate-spin" />
+
+                  ) : (
+
+                    <ExternalLink className="h-4 w-4" />
+
+                  )}
+
+                  {isOpeningCertificate
+                    ? 'Opening...'
+                    : 'View certificate'}
+
+                </button>
+
+              </div>
+
+            ) : (
+
+              <EmptyState text="No medical certificate uploaded." />
 
             )}
 
