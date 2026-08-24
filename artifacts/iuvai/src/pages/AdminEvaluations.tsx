@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import {
   getAllEvaluations,
   createEvaluation,
+  deleteEvaluation,
   type Evaluation,
 } from '@/lib/supabase';
 
@@ -19,6 +20,7 @@ import {
   Sparkles,
   AlertCircle,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 
 export default function AdminEvaluations() {
@@ -32,6 +34,9 @@ export default function AdminEvaluations() {
 
   const [creating, setCreating] =
     useState(false);
+
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
 
   const [error, setError] =
     useState('');
@@ -114,6 +119,53 @@ export default function AdminEvaluations() {
       );
     } finally {
       setCreating(false);
+    }
+  }
+
+  /*
+  ============================================================
+  DELETE EVALUATION
+  ============================================================
+  */
+
+  async function handleDeleteEvaluation(
+    evaluation: Evaluation
+  ) {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${evaluation.title}"?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingId(evaluation.id);
+      setError('');
+
+      await deleteEvaluation(
+        evaluation.id
+      );
+
+      setEvaluations((current) =>
+        current.filter(
+          (item) =>
+            item.id !== evaluation.id
+        )
+      );
+    } catch (err) {
+      console.error(
+        'ADMIN EVALUATION DELETE ERROR:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete evaluation.'
+      );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -289,7 +341,7 @@ export default function AdminEvaluations() {
               <div className="min-w-0 flex-1">
 
                 <p className="text-sm font-medium text-destructive">
-                  Unable to load evaluations
+                  Unable to process evaluations
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -461,7 +513,7 @@ export default function AdminEvaluations() {
                 DESKTOP TABLE HEADER
             ================================================== */}
 
-            <div className="hidden grid-cols-[minmax(0,1fr)_170px_150px_120px_32px] gap-4 border-b border-border/60 bg-muted/20 px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground lg:grid">
+            <div className="hidden grid-cols-[minmax(0,1fr)_170px_150px_120px_80px] gap-4 border-b border-border/60 bg-muted/20 px-5 py-3 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground lg:grid">
 
               <div>
                 Evaluation
@@ -479,7 +531,9 @@ export default function AdminEvaluations() {
                 Status
               </div>
 
-              <div />
+              <div className="text-right">
+                Actions
+              </div>
 
             </div>
 
@@ -498,27 +552,32 @@ export default function AdminEvaluations() {
                       evaluation.status
                     );
 
+                  const isDeleting =
+                    deletingId ===
+                    evaluation.id;
+
                   return (
 
-                    <button
+                    <div
                       key={evaluation.id}
-                      type="button"
-                      onClick={() =>
-                        handleEditEvaluation(
-                          evaluation.id
-                        )
-                      }
-                      className="group block w-full text-left transition-colors hover:bg-muted/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/40"
+                      className="group transition-colors hover:bg-muted/20"
                     >
 
-                      <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_170px_150px_120px_32px] lg:items-center lg:gap-4">
-
+                      <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_170px_150px_120px_80px] lg:items-center lg:gap-4">
 
                         {/* ======================================
                             EVALUATION
                         ======================================= */}
 
-                        <div className="min-w-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleEditEvaluation(
+                              evaluation.id
+                            )
+                          }
+                          className="min-w-0 text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        >
 
                           <div className="flex items-start gap-3">
 
@@ -562,7 +621,7 @@ export default function AdminEvaluations() {
 
                           </div>
 
-                        </div>
+                        </button>
 
 
                         {/* ======================================
@@ -651,33 +710,112 @@ export default function AdminEvaluations() {
 
 
                         {/* ======================================
-                            ARROW
+                            ACTIONS
                         ======================================= */}
 
-                        <div className="hidden justify-end lg:flex">
+                        <div className="flex items-center justify-end gap-1">
 
-                          <ChevronRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                          {/* Open */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEditEvaluation(
+                                evaluation.id
+                              )
+                            }
+                            aria-label={`Open ${evaluation.title}`}
+                            title="Open evaluation"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          >
+
+                            <ChevronRight className="h-4 w-4" />
+
+                          </button>
+
+
+                          {/* Delete */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDeleteEvaluation(
+                                evaluation
+                              )
+                            }
+                            disabled={isDeleting}
+                            aria-label={`Delete ${evaluation.title}`}
+                            title="Delete evaluation"
+                            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+
+                            {isDeleting ? (
+
+                              <Loader2 className="h-4 w-4 animate-spin" />
+
+                            ) : (
+
+                              <Trash2 className="h-4 w-4" />
+
+                            )}
+
+                          </button>
 
                         </div>
 
 
                         {/* ======================================
-                            MOBILE ACTION
+                            MOBILE INFORMATION / ACTIONS
                         ======================================= */}
 
-                        <div className="flex items-center justify-between border-t border-border/40 pt-3 lg:hidden">
+                        <div className="col-span-full flex items-center justify-between border-t border-border/40 pt-3 lg:hidden">
 
-                          <span className="text-xs text-muted-foreground">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleEditEvaluation(
+                                evaluation.id
+                              )
+                            }
+                            className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-primary"
+                          >
+
                             Open evaluation
-                          </span>
 
-                          <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                            <ChevronRight className="h-4 w-4" />
+
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDeleteEvaluation(
+                                evaluation
+                              )
+                            }
+                            disabled={isDeleting}
+                            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+
+                            {isDeleting ? (
+
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+
+                            ) : (
+
+                              <Trash2 className="h-3.5 w-3.5" />
+
+                            )}
+
+                            Delete
+
+                          </button>
 
                         </div>
 
                       </div>
 
-                    </button>
+                    </div>
 
                   );
                 }
