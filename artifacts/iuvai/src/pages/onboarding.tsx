@@ -182,6 +182,9 @@ const ALLOWED_CERTIFICATE_TYPES = [
   'image/png',
 ];
 
+const MEDICAL_CERTIFICATE_BUCKET =
+  'medical-certificates';
+
 
 // ============================================================
 // COMPONENT
@@ -232,34 +235,115 @@ export default function Onboarding() {
 
   useEffect(() => {
 
-    if (isSubmitting) {
-      return;
-    }
-
     if (
-      profile?.account_type ===
-      'expert'
+      isSubmitting ||
+      !profile?.account_type ||
+      !user?.id
     ) {
-      setLocation('/dashboard');
-
       return;
     }
 
-    if (
-      profile?.account_type ===
-      'company'
-    ) {
-      setLocation(
-        '/company-dashboard'
-      );
+    async function checkOnboardingStatus() {
 
-      return;
+      try {
+
+        // ====================================================
+        // COMPANY
+        // ====================================================
+
+        if (
+          profile?.account_type ===
+          'company'
+        ) {
+
+          setLocation(
+            '/company-dashboard'
+          );
+
+          return;
+        }
+
+
+        // ====================================================
+        // EXPERT
+        // ====================================================
+
+        if (
+          profile?.account_type ===
+          'expert'
+        ) {
+
+          const {
+            data,
+            error,
+          } = await supabase
+            .from('expert_profiles')
+            .select(
+              'medical_certificate_path'
+            )
+            .eq(
+              'id',
+              user.id
+            )
+            .maybeSingle();
+
+
+          if (error) {
+
+            console.error(
+              'ONBOARDING CERTIFICATE CHECK ERROR:',
+              error
+            );
+
+            return;
+          }
+
+
+          /*
+           * An expert is considered fully onboarded
+           * only when a certificate has actually been
+           * associated with the expert profile.
+           */
+
+          if (
+            data?.medical_certificate_path
+          ) {
+
+            setLocation(
+              '/dashboard'
+            );
+
+            return;
+          }
+
+
+          /*
+           * If account_type is expert but the
+           * certificate is missing, DO NOT redirect.
+           *
+           * The expert must remain on onboarding.
+           */
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          'ONBOARDING STATUS CHECK ERROR:',
+          error
+        );
+
+      }
+
     }
+
+    checkOnboardingStatus();
 
   }, [
     profile,
     isSubmitting,
     setLocation,
+    user?.id,
   ]);
 
 
@@ -378,10 +462,18 @@ export default function Onboarding() {
 
     setCertificateError('');
 
+
     if (!file) {
+
       setCertificateFile(null);
+
       return;
     }
+
+
+    // ========================================================
+    // FILE TYPE VALIDATION
+    // ========================================================
 
     if (
       !ALLOWED_CERTIFICATE_TYPES.includes(
@@ -400,6 +492,11 @@ export default function Onboarding() {
       return;
     }
 
+
+    // ========================================================
+    // FILE SIZE VALIDATION
+    // ========================================================
+
     if (
       file.size >
       MAX_CERTIFICATE_SIZE
@@ -416,7 +513,14 @@ export default function Onboarding() {
       return;
     }
 
+
+    // ========================================================
+    // VALID FILE
+    // ========================================================
+
     setCertificateFile(file);
+
+    setCertificateError('');
 
   };
 
@@ -426,6 +530,10 @@ export default function Onboarding() {
   // ==========================================================
 
   const removeCertificate = () => {
+
+    if (isSubmitting) {
+      return;
+    }
 
     setCertificateFile(null);
 
@@ -438,70 +546,96 @@ export default function Onboarding() {
   // UPLOAD CERTIFICATE
   // ==========================================================
 
-  const uploadCertificate =
-    async () => {
+  const uploadCertificate = async () => {
 
-      if (!certificateFile) {
-        return null;
-      }
+    /*
+     * Certificate is mandatory.
+     */
 
-      /*
-       * Each expert gets their own folder.
-       *
-       * Example:
-       *
-       * medical-certifiactes/
-       *   USER_ID/
-       *     timestamp-certificate.pdf
-       */
+    if (!certificateFile) {
 
-      const extension =
-        certificateFile.name
-          .split('.')
-          .pop()
-          ?.toLowerCase() || 'pdf';
+      throw new Error(
+        'Please upload your certificate before continuing.'
+      );
 
-      const filePath =
-        `${user.id}/${Date.now()}-certificate.${extension}`;
+    }
 
 
-      /*
-       * IMPORTANT:
-       *
-       * The bucket name must exactly match
-       * the bucket created in Supabase Storage.
-       *
-       * Your bucket is:
-       *
-       * medical-certifiactes
-       */
+    // ========================================================
+    // FILE EXTENSION
+    // ========================================================
 
-      const {
-        error,
-      } = await supabase.storage
-        .from('medical-certifiactes')
-        .upload(
-          filePath,
-          certificateFile,
-          {
-            cacheControl:
-              '3600',
-
-            upsert:
-              false,
-
-            contentType:
-              certificateFile.type,
-          }
-        );
+    const extension =
+      certificateFile.name
+        .split('.')
+        .pop()
+        ?.toLowerCase() || 'pdf';
 
 
-      if (error) {
-        throw error;
-      }
+    // ========================================================
+    // STORAGE PATH
+    // ========================================================
 
-      return filePath;
+    /*
+     * Each expert gets their own folder.
+     *
+     * Example:
+     *
+     * medical-certificates/
+     *   USER_ID/
+     *     timestamp-certificate.pdf
+     */
+
+    const filePath =
+      `${user.id}/${Date.now()}-certificate.${extension}`;
+
+
+    // ========================================================
+    // UPLOAD
+    // ========================================================
+
+    const {
+      error,
+    } = await supabase.storage
+      .from(
+        MEDICAL_CERTIFICATE_BUCKET
+      )
+      .upload(
+        filePath,
+        certificateFile,
+        {
+          cacheControl:
+            '3600',
+
+          upsert:
+            false,
+
+          contentType:
+            certificateFile.type,
+        }
+      );
+
+
+    if (error) {
+      throw error;
+    }
+
+
+    // ========================================================
+    // RETURN FILE INFORMATION
+    // ========================================================
+
+    return {
+
+      path:
+        filePath,
+
+      fileName:
+        certificateFile.name,
+
     };
+
+  };
 
 
   // ==========================================================
@@ -519,31 +653,126 @@ export default function Onboarding() {
           user.id
         );
 
+
       console.log(
         'IUVAI ONBOARDING VERIFIED PROFILE:',
         savedProfile
       );
 
+
+      // ========================================================
+      // PROFILE EXISTS
+      // ========================================================
+
       if (
         !savedProfile
       ) {
+
         throw new Error(
           'Your profile could not be verified after saving.'
         );
+
       }
+
+
+      // ========================================================
+      // ACCOUNT TYPE
+      // ========================================================
 
       if (
         savedProfile.account_type !==
         expectedAccountType
       ) {
+
         throw new Error(
           'Your account type was not saved correctly. Please try again.'
         );
+
       }
+
+
+      // ========================================================
+      // EXPERT CERTIFICATE VERIFICATION
+      // ========================================================
+
+      if (
+        expectedAccountType ===
+        'expert'
+      ) {
+
+        const {
+          data:
+            expertProfile,
+          error,
+        } = await supabase
+          .from('expert_profiles')
+          .select(
+            `
+              medical_certificate_path,
+              medical_certificate_file_name,
+              medical_certificate_status
+            `
+          )
+          .eq(
+            'id',
+            user.id
+          )
+          .maybeSingle();
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        // ======================================================
+        // CERTIFICATE PATH
+        // ======================================================
+
+        if (
+          !expertProfile?.medical_certificate_path
+        ) {
+
+          throw new Error(
+            'Your certificate was not successfully associated with your profile. Please upload it again.'
+          );
+
+        }
+
+
+        // ======================================================
+        // CERTIFICATE FILE NAME
+        // ======================================================
+
+        if (
+          !expertProfile
+            .medical_certificate_file_name
+        ) {
+
+          throw new Error(
+            'Your certificate filename could not be verified. Please upload it again.'
+          );
+
+        }
+
+
+        console.log(
+          'IUVAI CERTIFICATE VERIFIED:',
+          expertProfile
+        );
+
+      }
+
+
+      // ========================================================
+      // REFRESH AUTH PROFILE
+      // ========================================================
 
       await refreshProfile();
 
+
       return savedProfile;
+
     };
 
 
@@ -558,15 +787,16 @@ export default function Onboarding() {
       >
     ) => {
 
-      /*
-       * Certificate is required for expert onboarding.
-       */
+      // ======================================================
+      // HARD CERTIFICATE REQUIREMENT
+      // ======================================================
 
       if (!certificateFile) {
 
         setCertificateError(
           'Please upload a certificate or qualification document.'
         );
+
 
         toast({
 
@@ -577,25 +807,33 @@ export default function Onboarding() {
             'Certificate required',
 
           description:
-            'Please upload your qualification certificate before completing your profile.',
+            'You must upload your qualification certificate before completing your IUVAI expert profile.',
 
         });
 
+
         return;
+
       }
 
 
+      // ======================================================
+      // SUBMITTING
+      // ======================================================
+
       setIsSubmitting(true);
+
 
       try {
 
-        // ------------------------------------------------------
+        // ====================================================
         // MAIN PROFILE
-        // ------------------------------------------------------
+        // ====================================================
 
         await upsertProfile({
 
-          id: user.id,
+          id:
+            user.id,
 
           full_name:
             values.full_name,
@@ -609,13 +847,14 @@ export default function Onboarding() {
         });
 
 
-        // ------------------------------------------------------
+        // ====================================================
         // EXPERT PROFILE
-        // ------------------------------------------------------
+        // ====================================================
 
         await upsertExpertProfile({
 
-          id: user.id,
+          id:
+            user.id,
 
           primary_field:
             values.primary_field,
@@ -657,50 +896,93 @@ export default function Onboarding() {
         });
 
 
-        // ------------------------------------------------------
-        // CERTIFICATE
-        // ------------------------------------------------------
+        // ====================================================
+        // CERTIFICATE UPLOAD
+        // ====================================================
 
-        const uploadedCertificatePath =
+        const uploadedCertificate =
           await uploadCertificate();
 
+
         setCertificatePath(
-          uploadedCertificatePath
+          uploadedCertificate.path
         );
 
 
-        /*
-         * IMPORTANT:
-         *
-         * The certificate path is now stored in Supabase
-         * Storage.
-         *
-         * To make the certificate permanently associated
-         * with the expert profile, your Supabase database
-         * should also contain a certificate_path column
-         * in the expert_profiles table.
-         *
-         * That column should then be added to
-         * upsertExpertProfile().
-         */
+        // ====================================================
+        // SAVE CERTIFICATE METADATA
+        // ====================================================
+
+        const {
+          error:
+            certificateDatabaseError,
+        } = await supabase
+          .from('expert_profiles')
+          .update({
+
+            medical_certificate_path:
+              uploadedCertificate.path,
+
+            medical_certificate_file_name:
+              uploadedCertificate.fileName,
+
+            medical_certificate_status:
+              'pending',
+
+          })
+          .eq(
+            'id',
+            user.id
+          );
 
 
-        // ------------------------------------------------------
-        // VERIFY DATABASE STATE
-        // ------------------------------------------------------
+        // ====================================================
+        // DATABASE SAVE FAILED
+        // ====================================================
+
+        if (
+          certificateDatabaseError
+        ) {
+
+          /*
+           * The file was successfully uploaded,
+           * but the database association failed.
+           *
+           * Remove the uploaded file so we do not
+           * leave an orphaned document in Storage.
+           */
+
+          await supabase.storage
+            .from(
+              MEDICAL_CERTIFICATE_BUCKET
+            )
+            .remove([
+              uploadedCertificate.path,
+            ]);
+
+
+          throw certificateDatabaseError;
+
+        }
+
+
+        // ====================================================
+        // FINAL VERIFICATION
+        // ====================================================
 
         await verifyCompletedProfile(
           'expert'
         );
 
 
-        // ------------------------------------------------------
-        // REDIRECT
-        // ------------------------------------------------------
+        // ====================================================
+        // COMPLETE
+        // ====================================================
 
         console.log(
           'IUVAI: EXPERT ONBOARDING COMPLETE'
         );
+
 
         setLocation(
           '/dashboard'
@@ -714,6 +996,7 @@ export default function Onboarding() {
           'IUVAI EXPERT ONBOARDING ERROR:',
           error
         );
+
 
         toast({
 
@@ -751,15 +1034,17 @@ export default function Onboarding() {
 
       setIsSubmitting(true);
 
+
       try {
 
-        // ------------------------------------------------------
+        // ====================================================
         // MAIN PROFILE
-        // ------------------------------------------------------
+        // ====================================================
 
         await upsertProfile({
 
-          id: user.id,
+          id:
+            user.id,
 
           full_name:
             values.full_name,
@@ -770,13 +1055,14 @@ export default function Onboarding() {
         });
 
 
-        // ------------------------------------------------------
+        // ====================================================
         // COMPANY PROFILE
-        // ------------------------------------------------------
+        // ====================================================
 
         await upsertCompanyProfile({
 
-          id: user.id,
+          id:
+            user.id,
 
           company_name:
             values.company_name,
@@ -796,22 +1082,23 @@ export default function Onboarding() {
         });
 
 
-        // ------------------------------------------------------
+        // ====================================================
         // VERIFY DATABASE STATE
-        // ------------------------------------------------------
+        // ====================================================
 
         await verifyCompletedProfile(
           'company'
         );
 
 
-        // ------------------------------------------------------
-        // REDIRECT
-        // ------------------------------------------------------
+        // ====================================================
+        // COMPLETE
+        // ====================================================
 
         console.log(
           'IUVAI: COMPANY ONBOARDING COMPLETE'
         );
+
 
         setLocation(
           '/company-dashboard'
@@ -825,6 +1112,7 @@ export default function Onboarding() {
           'IUVAI COMPANY ONBOARDING ERROR:',
           error
         );
+
 
         toast({
 
@@ -929,9 +1217,11 @@ export default function Onboarding() {
 
           </div>
 
+
           <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-primary">
             IUVAI NETWORK / INITIALIZATION
           </div>
+
 
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
 
@@ -940,6 +1230,7 @@ export default function Onboarding() {
               : 'Build your profile.'}
 
           </h1>
+
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-muted-foreground sm:text-base">
 
@@ -952,7 +1243,9 @@ export default function Onboarding() {
           </p>
 
 
-          {/* PROGRESS */}
+          {/* =================================================
+              PROGRESS
+          ================================================== */}
 
           <div className="mx-auto mt-8 flex max-w-xs items-center gap-3">
 
@@ -1029,7 +1322,9 @@ export default function Onboarding() {
             >
 
 
-              {/* EXPERT */}
+              {/* =================================================
+                  EXPERT
+              ================================================== */}
 
               <button
                 type="button"
@@ -1059,17 +1354,21 @@ export default function Onboarding() {
 
                     </div>
 
+
                     <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-primary">
                       HUMAN EXPERT
                     </div>
+
 
                     <h2 className="text-2xl font-semibold tracking-tight">
                       I am an Expert
                     </h2>
 
+
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
                       Contribute your professional knowledge to evaluate, train, test, and improve AI systems.
                     </p>
+
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
 
@@ -1096,6 +1395,7 @@ export default function Onboarding() {
 
                     </div>
 
+
                     <div className="mt-7 text-sm font-medium text-primary">
 
                       Continue as Expert
@@ -1111,7 +1411,9 @@ export default function Onboarding() {
               </button>
 
 
-              {/* COMPANY */}
+              {/* =================================================
+                  COMPANY
+              ================================================== */}
 
               <button
                 type="button"
@@ -1141,17 +1443,21 @@ export default function Onboarding() {
 
                     </div>
 
+
                     <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.25em] text-primary">
                       ORGANIZATION
                     </div>
+
 
                     <h2 className="text-2xl font-semibold tracking-tight">
                       I am a Company
                     </h2>
 
+
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">
                       Connect with verified human experts to build, evaluate, and improve AI systems.
                     </p>
+
 
                     <div className="mt-7 space-y-3 border-t border-border/50 pt-5">
 
@@ -1177,6 +1483,7 @@ export default function Onboarding() {
                       )}
 
                     </div>
+
 
                     <div className="mt-7 text-sm font-medium text-primary">
 
@@ -1232,7 +1539,9 @@ export default function Onboarding() {
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-2xl shadow-primary/[0.03] backdrop-blur-xl">
 
 
-                  {/* FORM HEADER */}
+                  {/* =================================================
+                      FORM HEADER
+                  ================================================== */}
 
                   <div className="border-b border-border/60 bg-muted/20 px-6 py-5 sm:px-8">
 
@@ -1275,7 +1584,9 @@ export default function Onboarding() {
                       >
 
 
-                        {/* PERSONAL */}
+                        {/* =================================================
+                            PERSONAL
+                        ================================================== */}
 
                         <section>
 
@@ -1290,6 +1601,7 @@ export default function Onboarding() {
                             </p>
 
                           </div>
+
 
                           <div className="grid gap-5 sm:grid-cols-2">
 
@@ -1365,7 +1677,9 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* PROFESSIONAL EXPERTISE */}
+                        {/* =================================================
+                            PROFESSIONAL EXPERTISE
+                        ================================================== */}
 
                         <section>
 
@@ -1380,6 +1694,7 @@ export default function Onboarding() {
                             </p>
 
                           </div>
+
 
                           <div className="grid gap-5 sm:grid-cols-2">
 
@@ -1583,7 +1898,9 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* CAPABILITIES */}
+                        {/* =================================================
+                            CAPABILITIES
+                        ================================================== */}
 
                         <section className="space-y-5">
 
@@ -1765,18 +2082,32 @@ export default function Onboarding() {
 
                           <div className="mb-5">
 
-                            <h3 className="text-sm font-semibold">
-                              Qualification verification
-                            </h3>
+                            <div className="flex items-center gap-2">
+
+                              <h3 className="text-sm font-semibold">
+                                Qualification verification
+                              </h3>
+
+                              <span className="rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider text-primary">
+                                Required
+                              </span>
+
+                            </div>
 
                             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                              Upload a certificate or qualification document that supports your professional expertise.
+                              Upload a certificate or qualification document that supports your professional expertise. You must provide this document before your expert profile can be completed.
                             </p>
 
                           </div>
 
 
-                          <div className="rounded-xl border border-dashed border-border/80 bg-muted/10 p-5 transition-colors hover:border-primary/40">
+                          <div
+                            className={`rounded-xl border border-dashed p-5 transition-colors ${
+                              certificateError
+                                ? 'border-destructive/50 bg-destructive/5'
+                                : 'border-border/80 bg-muted/10 hover:border-primary/40'
+                            }`}
+                          >
 
                             {!certificateFile ? (
 
@@ -1791,17 +2122,21 @@ export default function Onboarding() {
 
                                 </div>
 
+
                                 <div className="text-sm font-medium">
                                   Upload certificate
                                 </div>
+
 
                                 <div className="mt-1 text-xs text-muted-foreground">
                                   PDF, JPG, or PNG · Maximum 10 MB
                                 </div>
 
+
                                 <div className="mt-4 rounded-lg border border-border/60 bg-background px-4 py-2 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary">
                                   Choose file
                                 </div>
+
 
                                 <Input
                                   id="certificate-upload"
@@ -1825,17 +2160,20 @@ export default function Onboarding() {
 
                                 </div>
 
+
                                 <div className="min-w-0 flex-1">
 
                                   <div className="truncate text-sm font-medium">
                                     {certificateFile.name}
                                   </div>
 
+
                                   <div className="mt-1 text-xs text-muted-foreground">
                                     {(certificateFile.size / 1024 / 1024).toFixed(2)} MB
                                   </div>
 
                                 </div>
+
 
                                 <Button
                                   type="button"
@@ -1863,11 +2201,12 @@ export default function Onboarding() {
 
                           {certificateError && (
 
-                            <p className="mt-2 text-xs text-destructive">
+                            <p className="mt-2 text-xs font-medium text-destructive">
                               {certificateError}
                             </p>
 
                           )}
+
 
                           <p className="mt-3 flex items-start gap-2 text-[11px] leading-5 text-muted-foreground">
 
@@ -1880,7 +2219,9 @@ export default function Onboarding() {
                         </section>
 
 
-                        {/* ACTIONS */}
+                        {/* =================================================
+                            ACTIONS
+                        ================================================== */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1906,7 +2247,8 @@ export default function Onboarding() {
                             type="submit"
                             size="lg"
                             disabled={
-                              isSubmitting
+                              isSubmitting ||
+                              !certificateFile
                             }
                             className="min-w-[180px]"
                           >
@@ -1914,17 +2256,21 @@ export default function Onboarding() {
                             {isSubmitting ? (
 
                               <>
+
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
                                 Creating profile...
+
                               </>
 
                             ) : (
 
                               <>
+
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
+
                               </>
 
                             )}
@@ -1981,7 +2327,9 @@ export default function Onboarding() {
                 <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/80 shadow-2xl shadow-primary/[0.03] backdrop-blur-xl">
 
 
-                  {/* FORM HEADER */}
+                  {/* =================================================
+                      FORM HEADER
+                  ================================================== */}
 
                   <div className="border-b border-border/60 bg-muted/20 px-6 py-5 sm:px-8">
 
@@ -1992,6 +2340,7 @@ export default function Onboarding() {
                         <Building2 className="h-4 w-4" />
 
                       </div>
+
 
                       <div>
 
@@ -2024,7 +2373,9 @@ export default function Onboarding() {
                       >
 
 
-                        {/* ACCOUNT OWNER */}
+                        {/* =================================================
+                            ACCOUNT OWNER
+                        ================================================== */}
 
                         <section>
 
@@ -2078,7 +2429,9 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* COMPANY DETAILS */}
+                        {/* =================================================
+                            COMPANY DETAILS
+                        ================================================== */}
 
                         <section>
 
@@ -2234,6 +2587,7 @@ export default function Onboarding() {
 
                                     </FormControl>
 
+
                                     <SelectContent>
 
                                       <SelectItem value="1-10">
@@ -2279,7 +2633,9 @@ export default function Onboarding() {
                         <div className="h-px bg-border/60" />
 
 
-                        {/* DESCRIPTION */}
+                        {/* =================================================
+                            DESCRIPTION
+                        ================================================== */}
 
                         <section>
 
@@ -2331,7 +2687,9 @@ export default function Onboarding() {
                         </section>
 
 
-                        {/* ACTIONS */}
+                        {/* =================================================
+                            ACTIONS
+                        ================================================== */}
 
                         <div className="flex flex-col-reverse gap-3 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
 
@@ -2365,17 +2723,21 @@ export default function Onboarding() {
                             {isSubmitting ? (
 
                               <>
+
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
 
                                 Creating profile...
+
                               </>
 
                             ) : (
 
                               <>
+
                                 Complete Profile
 
                                 <ArrowRight className="ml-2 h-4 w-4" />
+
                               </>
 
                             )}
@@ -2413,6 +2775,7 @@ export default function Onboarding() {
 
           </div>
 
+
           <p className="mt-4 text-[10px] leading-5 text-muted-foreground">
 
             IUVAI connects human expertise with the development of next-generation artificial intelligence.
@@ -2424,5 +2787,6 @@ export default function Onboarding() {
       </main>
 
     </div>
+
   );
 }
