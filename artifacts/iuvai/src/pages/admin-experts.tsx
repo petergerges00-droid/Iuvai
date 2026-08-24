@@ -6,12 +6,14 @@ import {
   ChevronRight,
   Search,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 
 import { AppLayout } from '@/components/layout/app-layout';
 import {
   getExperts,
   ExpertWithProfile,
+  supabase,
 } from '@/lib/supabase';
 
 export default function AdminExperts() {
@@ -27,6 +29,9 @@ export default function AdminExperts() {
 
   const [search, setSearch] =
     useState('');
+
+  const [deletingExpertId, setDeletingExpertId] =
+    useState<string | null>(null);
 
   /*
   ============================================================
@@ -61,6 +66,71 @@ export default function AdminExperts() {
 
     loadExperts();
   }, []);
+
+  /*
+  ============================================================
+  DELETE EXPERT
+  ============================================================
+  */
+
+  async function handleDeleteExpert(
+    expert: ExpertWithProfile
+  ) {
+    const name =
+      expert.profile?.full_name ||
+      'this expert';
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${name}?\n\n` +
+        `This will remove their IUVAI expert profile and associated records. ` +
+        `This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingExpertId(expert.id);
+      setError(null);
+
+      const { error } = await supabase.rpc(
+        'admin_delete_expert',
+        {
+          expert_id: expert.id,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      /*
+      Remove the deleted expert immediately
+      from the local UI.
+      */
+
+      setExperts((currentExperts) =>
+        currentExperts.filter(
+          (currentExpert) =>
+            currentExpert.id !== expert.id
+        )
+      );
+    } catch (err) {
+      console.error(
+        'ADMIN EXPERT DELETE ERROR:',
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete expert.'
+      );
+    } finally {
+      setDeletingExpertId(null);
+    }
+  }
 
   /*
   ============================================================
@@ -294,6 +364,10 @@ export default function AdminExperts() {
                       expert.specialization ||
                       '';
 
+                    const isDeleting =
+                      deletingExpertId ===
+                      expert.id;
+
                     return (
                       <Link
                         key={expert.id}
@@ -352,8 +426,37 @@ export default function AdminExperts() {
                           <div className="flex shrink-0 items-center gap-3">
 
                             <span className="rounded-full border border-border/60 bg-background/50 px-3 py-1 text-xs text-muted-foreground">
-                              Pending review
+
+                              {expert.verification_status ===
+                              'approved'
+                                ? 'Approved'
+                                : 'Pending review'}
+
                             </span>
+
+                            <button
+                              type="button"
+                              disabled={isDeleting}
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+
+                                handleDeleteExpert(
+                                  expert
+                                );
+                              }}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-destructive/20 text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                              title="Delete expert"
+                              aria-label={`Delete ${name}`}
+                            >
+
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+
+                            </button>
 
                             <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
 
